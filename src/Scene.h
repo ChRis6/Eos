@@ -41,7 +41,7 @@ public:
 	const Surface* getSurface( unsigned int id) const;
 	const LightSource* getLightSource(unsigned int id) const;
 
-	void render(const Camera& camera, char* outputImage);
+	void render(const Camera& camera, unsigned char* outputImage);
 
 private:
 	glm::vec4 rayTrace(const Ray& ray);

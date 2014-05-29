@@ -21,7 +21,7 @@
  */
 
 #include "Scene.h"
-
+#include <iostream>
 
 bool Scene::addSurface(Surface* surface){
 	if( surface != NULL){
@@ -60,7 +60,7 @@ const LightSource* Scene::getLightSource( unsigned int id) const{
 
 
 
-void Scene::render(const Camera& camera, char* outputImage){
+void Scene::render(const Camera& camera, unsigned char* outputImage){
 	
 	int viewWidth;
 	int viewHeight;
@@ -124,15 +124,17 @@ glm::vec4 Scene::rayTrace(const Ray& ray){
 	 */
 
 	// phong
-	if(rayCollided){
+	if(rayCollided == true){
 
-		// find color for every light source
+		// find diffuse color for every light source
 		int numLights = this->getNumLightSources();
 		glm::vec4 diffuseColor(0.0f);
 		for( int i = 0 ; i < numLights; i++){
 			const LightSource& lightSource = *(m_LightSources[i]);
 			diffuseColor += this->findDiffuseColor(lightSource, intersection);
 		}
+		// add ambient color
+		diffuseColor += intersection.getMaterial().getAmbientIntensity() * intersection.getMaterial().getDiffuseColor();
 		return diffuseColor;
 		
 	}
@@ -150,7 +152,9 @@ glm::vec4 Scene::findDiffuseColor(const LightSource& lightSource, const RayInter
 	glm::vec4 intersectionToLight;
 	const Material& material = intersection.getMaterial();
 
-	intersectionToLight = lightSource.getPosition() - glm::vec4(intersection.getPoint(), 1.0f);
+
+
+	intersectionToLight = glm::normalize(lightSource.getPosition() - glm::vec4(intersection.getPoint(), 1.0f));
 	float dot = glm::dot(intersectionToLight, glm::vec4(intersection.getNormal(), 0.0f));
 	if( dot > 0.0f){
 		return glm::vec4( dot * material.getDiffuseColor() * lightSource.getLightColor());
@@ -191,7 +195,8 @@ bool Scene::findMinDistanceIntersection(const Ray& ray, RayIntersection& interse
 			if( minTemp < minDist && minTemp > 0.0f){
 				// transform intersection point to world coordinates
 				min_point  = M * glm::vec4(tempIntersection.getPoint(), 1.0f);
-				min_normal = glm::transpose( glm::inverse(M)) * glm::vec4(tempIntersection.getNormal(), 0.0f); 
+				min_normal = glm::transpose(glm::inverse(M)) * glm::vec4(tempIntersection.getNormal(), 0.0f);
+				intersection.setMaterial(surface.getMaterial()); 
 			}
 		}
 	}

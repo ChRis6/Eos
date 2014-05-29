@@ -38,8 +38,8 @@ bool Sphere::hit(const Ray& ray, RayIntersection& intersection, float& distance)
 	displacement = ray.getOrigin() - m_Origin;
 
 	a = glm::dot(ray.getDirection(), ray.getDirection());
-    b = 2.0 * glm::dot(ray.getDirection(), displacement);
-    c = glm::dot(displacement, displacement) - m_RadiusSquared;
+  b = 2.0f * glm::dot(ray.getDirection(), displacement);
+  c = glm::dot(displacement, displacement) - m_RadiusSquared;
 
     t = -1;
     collision = this->quadSolve(a, b, c, t);

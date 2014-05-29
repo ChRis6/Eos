@@ -28,7 +28,7 @@
 class Material{
 
 public:
-	Material(): m_AmbientIntensity(0.0f), m_DiffuseColor(1.0f), m_SpecularColor(1.0f), m_Shininess(50){}
+	Material(): m_AmbientIntensity(0.2f), m_DiffuseColor(1.0f), m_SpecularColor(1.0f), m_Shininess(128){}
 	Material(float ambientFactor, glm::vec4 diffuseColor, glm::vec4 specularColor, int shininess):
 		m_AmbientIntensity(ambientFactor), m_DiffuseColor(diffuseColor), m_SpecularColor(specularColor), m_Shininess(shininess)
 		{}

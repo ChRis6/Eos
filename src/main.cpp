@@ -23,6 +23,9 @@
 #include "RayIntersection.h"
 #include "triangleMesh.h"
 #include "Camera.h"
+#include "Scene.h"
+#include "LightSource.h"
+#include "Material.h"
 
 #define WINDOW_WIDTH   640  // in pixels
 #define WINDOW_HEIGHT  480  // in pixels
@@ -376,7 +379,7 @@ int main(int argc, char **argv)
    /* clear buffer */
    //memset(imageBuffer, 0, sizeof(unsigned char) * 4 * WINDOW_WIDTH * WINDOW_HEIGHT);
 
-   Sphere mySphere(glm::vec3(0.0, 0.0, 0.0), 4);
+   //Sphere mySphere(glm::vec3(0.0, 0.0, 0.0), 4);
    
    /*
    TriangleMesh monkey;
@@ -390,9 +393,7 @@ int main(int argc, char **argv)
    std::cout <<"Num Vertices = " << monkey.getNumVertices() << std::endl;
    std::cout << "Triangles   =" << monkey.getNumTriangles() << std::endl;
    */
-   RayIntersection rayIntersection;
-
-
+  
 
    /*
    std::cout << "Ray tracing is over..." << std::endl;
@@ -408,10 +409,8 @@ int main(int argc, char **argv)
    fclose(imageFile);
    */
 
-   //glTexImage2D( GL_TEXTURE_2D, 0, GL_RGBA, texx , texy, 0, GL_RGBA, GL_UNSIGNED_BYTE, image_data);
+   // transfer pixels to texture via pixel buffer object
    glTexImage2D( GL_TEXTURE_2D, 0, GL_RGBA, WINDOW_WIDTH , WINDOW_HEIGHT, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
-
-
    // filtering
    glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
    glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
@@ -441,6 +440,17 @@ int main(int argc, char **argv)
    int fps = 0;
    float deltaTime = 0.0f;
 
+   // set up scene
+   Scene scene;
+   Material sphereMaterial(0.1f, glm::vec4(0.9f, 0.6f, 0.5f, 0.0f), glm::vec4(1.0f), 50);
+   LightSource* lightSource = new LightSource;
+   Sphere* sphere = new Sphere(glm::vec3(0.0f), 4);
+   sphere->setTransformation(M);
+   sphere->setMaterial(sphereMaterial);
+
+   scene.addSurface(sphere);
+   scene.addLightSource(lightSource);
+
    while (glfwGetKey(window, GLFW_KEY_ESCAPE) != GLFW_PRESS && !glfwWindowShouldClose(window))
    {
       currTime = glfwGetTime();
@@ -450,8 +460,6 @@ int main(int argc, char **argv)
       double xpos, ypos;
       glfwGetCursorPos(window, &xpos, &ypos);
       glfwSetCursorPos(window, WINDOW_WIDTH/2.0, WINDOW_HEIGHT/2.0);
-
-
 
       horizontalAngle -= mouseSpeed * float(WINDOW_WIDTH/2 - xpos );
       verticalAngle   += mouseSpeed * float( WINDOW_HEIGHT/2 - ypos );
@@ -490,6 +498,9 @@ int main(int argc, char **argv)
       camera.setPosition(cameraPos);
 
       /* Raytracing */
+      scene.render(camera, imageBuffer);
+
+      /*
       screen = imageBuffer;
       #pragma omp parallel for schedule(dynamic, 4)
       for( int y = 0 ; y < WINDOW_HEIGHT; y++){
@@ -562,6 +573,7 @@ int main(int argc, char **argv)
             }         
          }
       }
+      */
 
       // copy pixels to GPU buffer (async copy)
       glBufferSubData(GL_PIXEL_UNPACK_BUFFER, 0, sizeof(GLchar) * WINDOW_WIDTH * WINDOW_HEIGHT * 4, imageBuffer);
