@@ -98,7 +98,7 @@ void Scene::render(const Camera& camera, unsigned char* outputImage){
     		
     		Ray ray(rayOrigin,rayDirection);
     		// find color
-    		glm::vec4 finalColor = this->rayTrace(ray);
+    		glm::vec4 finalColor = this->rayTrace(ray, camera);
     		// store color
     		outputImage[4 * (x + y * viewWidth)]      = floor(finalColor.x == 1.0 ? 255 : std::min(finalColor.x * 256.0, 255.0));
             outputImage[1 +  4 * (x + y * viewWidth)] = floor(finalColor.y == 1.0 ? 255 : std::min(finalColor.y * 256.0, 255.0));
@@ -108,7 +108,7 @@ void Scene::render(const Camera& camera, unsigned char* outputImage){
     }
 }
 
-glm::vec4 Scene::rayTrace(const Ray& ray){
+glm::vec4 Scene::rayTrace(const Ray& ray, const Camera& camera){
 
 	bool rayCollided = false;
 	RayIntersection intersection;
@@ -128,14 +128,15 @@ glm::vec4 Scene::rayTrace(const Ray& ray){
 
 		// find diffuse color for every light source
 		int numLights = this->getNumLightSources();
-		glm::vec4 diffuseColor(0.0f);
+		glm::vec4 phongColor(0.0f);
 		for( int i = 0 ; i < numLights; i++){
 			const LightSource& lightSource = *(m_LightSources[i]);
-			diffuseColor += this->findDiffuseColor(lightSource, intersection);
+			//diffuseColor += this->findDiffuseColor(lightSource, intersection);
+			phongColor += this->calcPhong(camera, lightSource, intersection);
 		}
 		// add ambient color
-		diffuseColor += intersection.getMaterial().getAmbientIntensity() * intersection.getMaterial().getDiffuseColor();
-		return diffuseColor;
+		phongColor += intersection.getMaterial().getAmbientIntensity() * intersection.getMaterial().getDiffuseColor();
+		return phongColor;
 		
 	}
 	else{
@@ -153,7 +154,6 @@ glm::vec4 Scene::findDiffuseColor(const LightSource& lightSource, const RayInter
 	const Material& material = intersection.getMaterial();
 
 
-
 	intersectionToLight = glm::normalize(lightSource.getPosition() - glm::vec4(intersection.getPoint(), 1.0f));
 	float dot = glm::dot(intersectionToLight, glm::vec4(intersection.getNormal(), 0.0f));
 	if( dot > 0.0f){
@@ -162,6 +162,35 @@ glm::vec4 Scene::findDiffuseColor(const LightSource& lightSource, const RayInter
 
 	// normal is pointing the other way.No color contribution for this light source
 	return glm::vec4(0.0f);
+}
+
+glm::vec4 Scene::calcPhong( const Camera& camera, const LightSource& lightSource, const RayIntersection& intersection){
+
+
+	glm::vec4 diffuseColor;
+	glm::vec4 specularColor(0.0f);
+	glm::vec4 intersectionToLight;
+	glm::vec4 reflectedVector;
+	glm::vec4 viewVector;
+
+	glm::vec4 intersectionPointInWorld  = glm::vec4(intersection.getPoint() , 1.0f);
+	glm::vec4 intersectionNormalInWorld = glm::vec4(intersection.getNormal(), 0.0f);
+
+	diffuseColor = this->findDiffuseColor(lightSource, intersection);
+
+	// add specular reflection
+	intersectionToLight = glm::normalize(lightSource.getPosition() - intersectionPointInWorld);
+	viewVector          = glm::normalize(glm::vec4(camera.getPosition(),1.0f) - intersectionPointInWorld);
+	reflectedVector     = glm::normalize((2.0f * glm::dot(intersectionNormalInWorld, intersectionToLight) * intersectionNormalInWorld) - intersectionToLight);
+
+	float dot = glm::dot( viewVector, reflectedVector);
+	if( dot > 0.0f){
+
+		float specularTerm = glm::pow(dot, (float)intersection.getMaterial().getShininess());
+		specularColor = specularTerm * lightSource.getLightColor() * intersection.getMaterial().getSpecularColor();
+	}
+
+	return diffuseColor + specularColor;
 }
 
 bool Scene::findMinDistanceIntersection(const Ray& ray, RayIntersection& intersection){

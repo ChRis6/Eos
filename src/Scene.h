@@ -44,8 +44,9 @@ public:
 	void render(const Camera& camera, unsigned char* outputImage);
 
 private:
-	glm::vec4 rayTrace(const Ray& ray);
+	glm::vec4 rayTrace(const Ray& ray, const Camera& camera);
 	bool findMinDistanceIntersection(const Ray& ray, RayIntersection& intersection);
+	glm::vec4 calcPhong( const Camera& camera, const LightSource& lightSource, const RayIntersection& intersection);
 	glm::vec4 findDiffuseColor(const LightSource& lightSource, const RayIntersection& intersection);
 
 private:
