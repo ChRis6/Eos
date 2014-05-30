@@ -167,8 +167,8 @@ glm::vec4 Scene::findDiffuseColor(const LightSource& lightSource, const RayInter
 glm::vec4 Scene::calcPhong( const Camera& camera, const LightSource& lightSource, const RayIntersection& intersection){
 
 
-	glm::vec4 diffuseColor;
-	glm::vec4 specularColor(0.0f);
+	glm::vec4 diffuseColor(0.0f, 0.0f, 0.0f, 0.0f);
+	glm::vec4 specularColor(0.0f, 0.0f, 0.0f, 0.0f);
 	glm::vec4 intersectionToLight;
 	glm::vec4 reflectedVector;
 	glm::vec4 viewVector;

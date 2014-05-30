@@ -54,89 +54,6 @@ std::string readShaderFromFile(const char* filename){
    return str;
 }
 
-bool triangle_intersection( glm::vec3 v1, glm::vec3 v2, glm::vec3 v3, glm::vec3 rayOrigin, glm::vec3 rayDirection, float* out){
-
-   glm::vec3 e1, e2;  //Edge1, Edge2
-   glm::vec3 P, Q, T;
-   float det, inv_det, u, v;
-   float t;
- 
-   //Find vectors for two edges sharing V1
-   e1  = v2 - v1;
-   e2 =  v3 -  v1;
-   //Begin calculating determinant - also used to calculate u parameter
-   P = glm::cross(rayDirection, e2);
-   //if determinant is near zero, ray lies in plane of triangle
-   det = glm::dot(e1, P);
-   //NOT CULLING
-   if(det > -EPSILON && det < EPSILON) return false;
-   inv_det = 1.f / det;
- 
-   //calculate distance from V1 to ray origin
-   T = rayOrigin - v1;
- 
-   //Calculate u parameter and test bound
-   u = glm::dot(T, P) * inv_det;
-   //The intersection lies outside of the triangle
-   if(u < 0.f || u > 1.f) return false;
- 
-   //Prepare to test v parameter
-   Q =  glm::cross(T, e1);
- 
-   //Calculate V parameter and test bound
-   v = glm::dot(rayDirection, Q) * inv_det;
-   //The intersection lies outside of the triangle
-   if(v < 0.f || u + v  > 1.f) return false;
- 
-   t = glm::dot(e2, Q) * inv_det;
- 
-   if(t > EPSILON) { //ray intersection
-    *out = t;
-    return false;
-  }
- 
-   // No hit, no win
-   return false;
-}
-
-bool quadSolve( float a, float b, float c, float *t){
-
-   float dis = (b * b) - (4.0 * a * c);
-   if( dis < 0.0 )
-      return false;
-
-   float t1,t2;
-
-   t1 = ( -b + sqrt(dis)) / (float) ( 2.0 * a);
-   t2 = ( -b - sqrt(dis)) / (float) ( 2.0 * a);
-
-
-   if( t1 > EPSILON){
-      if( t2 > EPSILON){
-         if( t1 > t2 ){
-            *t = t2;
-            
-         }
-         else{
-            *t = t1;
-         }
-         //std::cout << "Returning : " << *t << std::endl;
-         return true;
-      }
-      *t = t1;
-      //std::cout << "Returning : " << *t << std::endl;
-      return true;      
-   }
-
-   if( t2 > EPSILON){
-      *t = t2;
-      //std::cout << "Returning: " << *t << std::endl;
-      return true;
-   }
-
-   return false;
-
-}
 
 GLuint loadShader( const char* vertexShaderSrc, const  char* fragmentShaderSrc){
 
@@ -302,7 +219,6 @@ int main(int argc, char **argv)
    glBufferData(GL_ARRAY_BUFFER, sizeof(quad), quad, GL_STATIC_DRAW);   // copy to device memory
 
    unsigned char* imageBuffer = new unsigned char[ WINDOW_WIDTH * WINDOW_HEIGHT * 4];
-   unsigned char* screen = imageBuffer;
    memset(imageBuffer, 0, sizeof(unsigned char) * 4 * WINDOW_WIDTH * WINDOW_HEIGHT);
 
    GLuint pbo;
@@ -352,18 +268,13 @@ int main(int argc, char **argv)
 
 
 
-   //float angle = tan( FOV * 0.5 * M_PI / 180 );
-   //float aspectRatio = WINDOW_WIDTH/ (float) WINDOW_HEIGHT;
-
    glm::vec4 sphereOrigin(0.0, 0.0, 0.0, 1.0);
    glm::vec4 sphereColor( 0.6f , 0.6f , 0.6f, 0.0);
 
    glm::vec4 lightPosition( 120.0f, 0.0f , 0.0f, 1.0f);
    glm::vec4 lightColor( 1.0, 1.0, 1.0, 0.0);
-   float lightAmbientIntesity = 0.1f;
-
+   
    float fovx_rad = FOV * M_PI / (float) 180.0;
-   //float fovy_rad =  (aspectRatio * FOV) * M_PI / (float)180.0;
    float fovy_rad =  FOV * M_PI / (float)180.0;
 
    float tan_fovx = tan( fovx_rad / (float) 2);
@@ -372,42 +283,11 @@ int main(int argc, char **argv)
    std::cout << "tan_FOVX = " << tan_fovx << " tan_FOVY = " << tan_fovy << std::endl;
 
 
-   glm::mat4 M = glm::translate( glm::mat4(1.0), glm::vec3(-2.0, 0.0, -20.0));
-   glm::mat4 inv_M = glm::inverse(M);
+   glm::mat4 M = glm::translate( glm::mat4(1.0), glm::vec3(-2.0, 0.0, -40.0));
    glm::mat4 identity(1.0f);
    glm::mat4 mat_rot = glm::rotate(identity, 0.1f, glm::vec3(0.0f, 0.0f,1.0f));
-   /* clear buffer */
-   //memset(imageBuffer, 0, sizeof(unsigned char) * 4 * WINDOW_WIDTH * WINDOW_HEIGHT);
 
-   //Sphere mySphere(glm::vec3(0.0, 0.0, 0.0), 4);
-   
-   /*
-   TriangleMesh monkey;
-   bool loaded = monkey.loadFromFile("monkey.obj");
-   if( loaded == false){
-      std::cout << "Monkey not loaded...." <<std::endl;
-      glfwTerminate();
-      return -1;
-   }
-   std::cout << "Monkey loaded" << std::endl;
-   std::cout <<"Num Vertices = " << monkey.getNumVertices() << std::endl;
-   std::cout << "Triangles   =" << monkey.getNumTriangles() << std::endl;
-   */
   
-
-   /*
-   std::cout << "Ray tracing is over..." << std::endl;
-  
-   screen = imageBuffer;
-   FILE *imageFile;
-   imageFile = fopen("RayTraced.ppm", "wb");
-   fprintf(imageFile, "P6\n%d %d\n255\n", WINDOW_WIDTH, WINDOW_HEIGHT);
-   for( int j = 0 ; j < WINDOW_HEIGHT; j++)
-      for( int i = 0 ; i < WINDOW_WIDTH; i++, screen += 4)
-         fwrite(screen, 1, 3, imageFile);
-
-   fclose(imageFile);
-   */
 
    // transfer pixels to texture via pixel buffer object
    glTexImage2D( GL_TEXTURE_2D, 0, GL_RGBA, WINDOW_WIDTH , WINDOW_HEIGHT, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
@@ -442,14 +322,16 @@ int main(int argc, char **argv)
 
    // set up scene
    Scene scene;
-   Material sphereMaterial(0.1f, glm::vec4(0.9f, 0.6f, 0.5f, 0.0f), glm::vec4(1.0f), 50);
-   LightSource* lightSource = new LightSource;
-   Sphere* sphere = new Sphere(glm::vec3(0.0f), 4);
+   Material sphereMaterial(0.1f, glm::vec4(0.8f, 0.6f, 0.6f, 0.0f), glm::vec4(0.0f), 40);
+   //LightSource* lightSource  = new LightSource;
+   LightSource* lightSource1 = new LightSource(glm::vec4( 0.0f, 100.0f, 0.0f, 1.0f), glm::vec4(1.0f)); 
+   Sphere* sphere = new Sphere(glm::vec3(0.0f), 10);
    sphere->setTransformation(M);
    sphere->setMaterial(sphereMaterial);
 
    scene.addSurface(sphere);
-   scene.addLightSource(lightSource);
+   //scene.addLightSource(lightSource);
+   scene.addLightSource(lightSource1);
 
    while (glfwGetKey(window, GLFW_KEY_ESCAPE) != GLFW_PRESS && !glfwWindowShouldClose(window))
    {
@@ -463,6 +345,11 @@ int main(int argc, char **argv)
 
       horizontalAngle -= mouseSpeed * float(WINDOW_WIDTH/2 - xpos );
       verticalAngle   += mouseSpeed * float( WINDOW_HEIGHT/2 - ypos );
+
+      if( verticalAngle > 85.0f)
+         verticalAngle = 85.0f;
+      else if( verticalAngle < -85.0f)
+         verticalAngle = -85.0f;
 
       glm::vec3 viewDirection(cos(verticalAngle) * sin(horizontalAngle),
                           sin(verticalAngle),
