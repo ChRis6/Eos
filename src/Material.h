@@ -39,7 +39,7 @@ public:
 
 	float getAmbientIntensity()  const { return m_AmbientIntensity;}
 	glm::vec4 getDiffuseColor()  const { return m_DiffuseColor;}
-	glm::vec4 getSpecularColor() const { return m_DiffuseColor;}
+	glm::vec4 getSpecularColor() const { return m_SpecularColor;}
 	int getShininess()           const { return m_Shininess;}
 
 private:

@@ -4,7 +4,6 @@
 #include <streambuf>
 
 
-#include <omp.h>
 #include <math.h>
 #include <string.h>
 #include <stdlib.h>
@@ -283,7 +282,7 @@ int main(int argc, char **argv)
    std::cout << "tan_FOVX = " << tan_fovx << " tan_FOVY = " << tan_fovy << std::endl;
 
 
-   glm::mat4 M = glm::translate( glm::mat4(1.0), glm::vec3(-2.0, 0.0, -40.0));
+   glm::mat4 M = glm::translate( glm::mat4(1.0f), glm::vec3(0.0f, -2.0f, -10.0f));
    glm::mat4 identity(1.0f);
    glm::mat4 mat_rot = glm::rotate(identity, 0.1f, glm::vec3(0.0f, 0.0f,1.0f));
 
@@ -322,15 +321,32 @@ int main(int argc, char **argv)
 
    // set up scene
    Scene scene;
-   Material sphereMaterial(0.1f, glm::vec4(0.8f, 0.6f, 0.6f, 0.0f), glm::vec4(0.0f), 40);
-   //LightSource* lightSource  = new LightSource;
-   LightSource* lightSource1 = new LightSource(glm::vec4( 0.0f, 100.0f, 0.0f, 1.0f), glm::vec4(1.0f)); 
+   Material sphereMaterial(0.1f, glm::vec4(0.5f, 0.5f, 0.5f, 0.0f), glm::vec4(1.0f), 40);
+   //Material gridMaterial(0.1f, glm::vec4(0.8f, 0.8f, 0.7f, 0.0f), glm::vec4(0.0f), 40);
+   LightSource* lightSource  = new LightSource;
+   LightSource* lightSource1 = new LightSource(glm::vec4( 0.0f, 200.0f, 0.0f, 1.0f), glm::vec4(1.0f));
+
    Sphere* sphere = new Sphere(glm::vec3(0.0f), 10);
    sphere->setTransformation(M);
    sphere->setMaterial(sphereMaterial);
 
    scene.addSurface(sphere);
-   //scene.addLightSource(lightSource);
+
+   Sphere* sphere1 = new Sphere(glm::vec3(10.0f, 2.0f, 0.0f), 20);
+   sphere1->setTransformation(M);
+   sphere1->setMaterial(sphereMaterial);
+
+   scene.addSurface(sphere1);
+   
+   /*
+   TriangleMesh* grid = new TriangleMesh;
+   grid->loadFromFile("grid.obj");
+   grid->setTransformation(M);
+   grid->setMaterial(gridMaterial);
+
+   scene.addSurface(grid);
+ */
+   scene.addLightSource(lightSource);
    scene.addLightSource(lightSource1);
 
    while (glfwGetKey(window, GLFW_KEY_ESCAPE) != GLFW_PRESS && !glfwWindowShouldClose(window))
@@ -343,8 +359,8 @@ int main(int argc, char **argv)
       glfwGetCursorPos(window, &xpos, &ypos);
       glfwSetCursorPos(window, WINDOW_WIDTH/2.0, WINDOW_HEIGHT/2.0);
 
-      horizontalAngle -= mouseSpeed * float(WINDOW_WIDTH/2 - xpos );
-      verticalAngle   += mouseSpeed * float( WINDOW_HEIGHT/2 - ypos );
+      horizontalAngle += mouseSpeed * float(WINDOW_WIDTH/2 - xpos );
+      verticalAngle   -= mouseSpeed * float( WINDOW_HEIGHT/2 - ypos );
 
       if( verticalAngle > 85.0f)
          verticalAngle = 85.0f;
@@ -356,8 +372,10 @@ int main(int argc, char **argv)
                           cos(verticalAngle) * cos(horizontalAngle));
 
       // Right vector
-      glm::vec3 rightDirection = glm::vec3(sin(horizontalAngle - 3.1415f/2.0f),0, cos(horizontalAngle - 3.1415f/2.0f));
-      glm::vec3 upDirection = glm::cross( rightDirection, viewDirection  );
+      glm::vec3 rightDirection = glm::normalize(glm::vec3(sin(horizontalAngle - 3.1415f/2.0f),0, cos(horizontalAngle - 3.1415f/2.0f)));
+      glm::vec3 upDirection    = glm::normalize(glm::cross( viewDirection, rightDirection));
+
+      rightDirection   = glm::normalize(glm::cross(viewDirection, upDirection));
 
       glm::vec3 cameraPos = camera.getPosition();
       // Move forward

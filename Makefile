@@ -11,8 +11,8 @@ OBJS    := $(patsubst %.$(SRCEXT),$(OBJDIR)/%.o,$(SRCS))
 
 DEBUG    = -g
 INCLUDES = -I.
-CFLAGS   = -Wall -pedantic -ansi -c $(DEBUG) $(INCLUDES) -O3
-LDFLAGS  =  -lglfw -lGLEW -lGL -lassimp
+CFLAGS   = -Wall -pedantic -ansi -c $(DEBUG) $(INCLUDES) -O3 -fopenmp
+LDFLAGS  =  -lglfw -lGLEW -lGL -lassimp -fopenmp
 
 ifeq ($(SRCEXT), cpp)
 CC       = $(CXX)

@@ -37,7 +37,7 @@ public:
 
 	void setPoint(glm::vec3 point);
 	void setNormal(glm::vec3 normal);
-	void setMaterial(Material material);
+	void setMaterial(const Material& material);
 
 	glm::vec3 getPoint() const;
 	glm::vec3 getNormal() const;

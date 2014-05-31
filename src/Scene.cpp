@@ -22,6 +22,7 @@
 
 #include "Scene.h"
 #include <iostream>
+ #include <omp.h>
 
 bool Scene::addSurface(Surface* surface){
 	if( surface != NULL){
@@ -81,18 +82,25 @@ void Scene::render(const Camera& camera, unsigned char* outputImage){
     viewWidth  = camera.getWidth();
     viewHeight = camera.getHeight();
 
+    float norm_width  = viewWidth  / 2.0f;
+    float norm_height = viewHeight / 2.0f;  
+
+    float inv_norm_width  = 1.0f / norm_width;
+    float inv_norm_height = 1.0f / norm_height; 
+
     viewDirection = camera.getViewingDirection();
     right         = camera.getRightVector();
     up            = camera.getUpVector();
     rayOrigin     = camera.getPosition();
 
+    #pragma omp parallel for
     for( int y = 0 ; y < viewHeight; y++){
     	// how much 'up'
-    	float bb = ((y - (viewHeight/2.0f)) / (float)(viewHeight/ 2.0f));
+    	float bb = (y - norm_height) * inv_norm_height;
     	for( int x = 0 ; x < viewWidth; x++){
     		
     		// how much 'right'
-    		float aa = (( x - viewWidth/2.0f) / (float)( viewWidth / 2.0f));
+    		float aa = ( x - norm_width) * inv_norm_width;
 			glm::vec3 rayDirection = (aa * right ) + ( bb * up ) + viewDirection;
     		rayDirection = glm::normalize(rayDirection);
     		
@@ -185,9 +193,8 @@ glm::vec4 Scene::calcPhong( const Camera& camera, const LightSource& lightSource
 
 	float dot = glm::dot( viewVector, reflectedVector);
 	if( dot > 0.0f){
-
 		float specularTerm = glm::pow(dot, (float)intersection.getMaterial().getShininess());
-		specularColor = specularTerm * lightSource.getLightColor() * intersection.getMaterial().getSpecularColor();
+		specularColor += specularTerm * lightSource.getLightColor() * intersection.getMaterial().getSpecularColor();
 	}
 
 	return diffuseColor + specularColor;
