@@ -218,7 +218,7 @@ bool Scene::findMinDistanceIntersection(const Ray& ray, RayIntersection& interse
 		Surface& surface = *(m_SurfaceObjects[i]);
 		const glm::mat4& M = surface.transformation();
 
-		// Transform the ray to local coordinates
+		// Transform the ray to object local coordinates
 		glm::vec3 localRayOrigin    = glm::vec3(glm::inverse(M) * glm::vec4(ray.getOrigin(), 1.0f));
 		glm::vec3 localRayDirection = glm::vec3(glm::inverse(M) * glm::vec4(ray.getDirection(), 0.0f)); 
 		Ray localRay(localRayOrigin, localRayDirection);
@@ -228,8 +228,9 @@ bool Scene::findMinDistanceIntersection(const Ray& ray, RayIntersection& interse
 		if(intersected){
 			intersectionFound = true;
 			// is it closer to the ray ?
-			if( minTemp < minDist && minTemp > 0.0f){
+			if( minTemp < minDist && minTemp > 0.0f){ 		// closest positive value
 				// transform intersection point to world coordinates
+				minDist = minTemp;
 				min_point  = M * glm::vec4(tempIntersection.getPoint(), 1.0f);
 				min_normal = glm::transpose(glm::inverse(M)) * glm::vec4(tempIntersection.getNormal(), 0.0f);
 				intersection.setMaterial(surface.getMaterial()); 

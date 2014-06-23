@@ -25,6 +25,7 @@
 #include "Scene.h"
 #include "LightSource.h"
 #include "Material.h"
+#include "Plane.h"
 
 #define WINDOW_WIDTH   640  // in pixels
 #define WINDOW_HEIGHT  480  // in pixels
@@ -282,7 +283,7 @@ int main(int argc, char **argv)
    std::cout << "tan_FOVX = " << tan_fovx << " tan_FOVY = " << tan_fovy << std::endl;
 
 
-   glm::mat4 M = glm::translate( glm::mat4(1.0f), glm::vec3(0.0f, -2.0f, -10.0f));
+   glm::mat4 M = glm::translate( glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f));
    glm::mat4 identity(1.0f);
    glm::mat4 mat_rot = glm::rotate(identity, 0.1f, glm::vec3(0.0f, 0.0f,1.0f));
 
@@ -306,8 +307,9 @@ int main(int argc, char **argv)
    camera.setWidth(WINDOW_WIDTH);
    camera.setHeight(WINDOW_HEIGHT);
 
-   float horizontalAngle = 3.1415f;
-   float verticalAngle = 3.1414f / 4.0f;
+   float horizontalAngle = 0.0f;
+   float verticalAngle = 45.0f;
+   const float maxAbsoluteVerticalAngle = 3.1415f / 2.0f - 0.001f;
    float speed = 5.0f; // 3 units / second
    float mouseSpeed = 0.005f;
 
@@ -322,30 +324,33 @@ int main(int argc, char **argv)
    // set up scene
    Scene scene;
    Material sphereMaterial(0.1f, glm::vec4(0.5f, 0.5f, 0.5f, 0.0f), glm::vec4(1.0f), 40);
-   //Material gridMaterial(0.1f, glm::vec4(0.8f, 0.8f, 0.7f, 0.0f), glm::vec4(0.0f), 40);
-   LightSource* lightSource  = new LightSource;
-   LightSource* lightSource1 = new LightSource(glm::vec4( 0.0f, 200.0f, 0.0f, 1.0f), glm::vec4(1.0f));
+   Material sphereMaterial1(0.1f, glm::vec4(1.f, 0.0f, 0.0f, 0.0f), glm::vec4(1.0f), 40);
+   Material gridMaterial(0.1f, glm::vec4(0.8f, 0.8f, 0.7f, 0.0f), glm::vec4(0.0f), 40);
+   LightSource* lightSource  = new LightSource(glm::vec4( 100.0f, 0.0f, 0.0f, 1.0f), glm::vec4(1.0f));
+   LightSource* lightSource1 = new LightSource(glm::vec4( 0.0f, -100.0f, 0.0f, 1.0f), glm::vec4(1.0f));
 
-   Sphere* sphere = new Sphere(glm::vec3(0.0f), 10);
+   Sphere* sphere = new Sphere(glm::vec3(0.0f), 2);
    sphere->setTransformation(M);
    sphere->setMaterial(sphereMaterial);
 
    scene.addSurface(sphere);
 
-   Sphere* sphere1 = new Sphere(glm::vec3(10.0f, 2.0f, 0.0f), 20);
+   Sphere* sphere1 = new Sphere(glm::vec3(4.0f, 0.0f, 0.0f), 2);
    sphere1->setTransformation(M);
-   sphere1->setMaterial(sphereMaterial);
+   sphere1->setMaterial(sphereMaterial1);
 
    scene.addSurface(sphere1);
    
    /*
-   TriangleMesh* grid = new TriangleMesh;
-   grid->loadFromFile("grid.obj");
-   grid->setTransformation(M);
+   TriangleMesh* grid = new TriangleMesh();
+   glm::mat4 gridTransformation = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -5.0f, 0.0f));
+   grid->loadFromFile("triangle_grid.obj");
+   grid->setTransformation(gridTransformation);
    grid->setMaterial(gridMaterial);
 
-   scene.addSurface(grid);
- */
+   */
+   //scene.addSurface(grid);
+ 
    scene.addLightSource(lightSource);
    scene.addLightSource(lightSource1);
 
@@ -360,22 +365,29 @@ int main(int argc, char **argv)
       glfwSetCursorPos(window, WINDOW_WIDTH/2.0, WINDOW_HEIGHT/2.0);
 
       horizontalAngle += mouseSpeed * float(WINDOW_WIDTH/2 - xpos );
-      verticalAngle   -= mouseSpeed * float( WINDOW_HEIGHT/2 - ypos );
+      verticalAngle   += mouseSpeed * float( WINDOW_HEIGHT/2 - ypos );
 
-      if( verticalAngle > 85.0f)
-         verticalAngle = 85.0f;
-      else if( verticalAngle < -85.0f)
-         verticalAngle = -85.0f;
+      if( verticalAngle > maxAbsoluteVerticalAngle)
+         verticalAngle = maxAbsoluteVerticalAngle;
+      else if( verticalAngle < -maxAbsoluteVerticalAngle)
+         verticalAngle = -maxAbsoluteVerticalAngle;
 
-      glm::vec3 viewDirection(cos(verticalAngle) * sin(horizontalAngle),
-                          sin(verticalAngle),
-                          cos(verticalAngle) * cos(horizontalAngle));
+      //glm::vec3 viewDirection(cos(verticalAngle) * sin(horizontalAngle),
+      //                    sin(verticalAngle),
+      //                    cos(verticalAngle) * cos(horizontalAngle));
+
+      glm::mat4 viewTransformationX = glm::rotate(glm::mat4(1.0f), horizontalAngle, glm::vec3(0.0f, 1.0f, 0.0f));
+      glm::mat4 viewTransformation = glm::rotate(viewTransformationX, verticalAngle, glm::vec3(1.0f, 0.0f, 0.0f));
+
+      glm::vec3 viewDirection  = glm::vec3( viewTransformation * glm::vec4(0.0f, 0.0f, -1.0f, 0.0f));
+      glm::vec3 rightDirection = glm::normalize( glm::cross(viewDirection, glm::vec3(0.0f, 1.0f, 0.0f)));
+      glm::vec3 upDirection = glm::normalize(glm::cross(rightDirection, viewDirection)); 
 
       // Right vector
-      glm::vec3 rightDirection = glm::normalize(glm::vec3(sin(horizontalAngle - 3.1415f/2.0f),0, cos(horizontalAngle - 3.1415f/2.0f)));
-      glm::vec3 upDirection    = glm::normalize(glm::cross( viewDirection, rightDirection));
+      //glm::vec3 rightDirection = glm::normalize(glm::vec3(sin(horizontalAngle - 3.1415f/2.0f),0, cos(horizontalAngle - 3.1415f/2.0f)));
+      //glm::vec3 upDirection    = glm::normalize(glm::cross( viewDirection, rightDirection));
 
-      rightDirection   = glm::normalize(glm::cross(viewDirection, upDirection));
+      //rightDirection   = glm::normalize(glm::cross(viewDirection, upDirection));
 
       glm::vec3 cameraPos = camera.getPosition();
       // Move forward
