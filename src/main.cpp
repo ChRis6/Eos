@@ -283,7 +283,7 @@ int main(int argc, char **argv)
    std::cout << "tan_FOVX = " << tan_fovx << " tan_FOVY = " << tan_fovy << std::endl;
 
 
-   glm::mat4 M = glm::translate( glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f));
+   glm::mat4 M = glm::translate( glm::mat4(1.0f), glm::vec3(-1.0f, -0.2f, 0.0f));
    glm::mat4 identity(1.0f);
    glm::mat4 mat_rot = glm::rotate(identity, 0.1f, glm::vec3(0.0f, 0.0f,1.0f));
 
@@ -308,7 +308,7 @@ int main(int argc, char **argv)
    camera.setHeight(WINDOW_HEIGHT);
 
    float horizontalAngle = 0.0f;
-   float verticalAngle = 45.0f;
+   float verticalAngle = 0.0f;
    const float maxAbsoluteVerticalAngle = 3.1415f / 2.0f - 0.001f;
    float speed = 5.0f; // 3 units / second
    float mouseSpeed = 0.005f;
@@ -325,32 +325,32 @@ int main(int argc, char **argv)
    Scene scene;
    Material sphereMaterial(0.1f, glm::vec4(0.5f, 0.5f, 0.5f, 0.0f), glm::vec4(1.0f), 40);
    Material sphereMaterial1(0.1f, glm::vec4(1.f, 0.0f, 0.0f, 0.0f), glm::vec4(1.0f), 40);
-   Material gridMaterial(0.1f, glm::vec4(0.8f, 0.8f, 0.7f, 0.0f), glm::vec4(0.0f), 40);
-   LightSource* lightSource  = new LightSource(glm::vec4( 100.0f, 0.0f, 0.0f, 1.0f), glm::vec4(1.0f));
-   LightSource* lightSource1 = new LightSource(glm::vec4( 0.0f, -100.0f, 0.0f, 1.0f), glm::vec4(1.0f));
+   Material gridMaterial(0.5f, glm::vec4(0.8f, 0.8f, 0.7f, 0.0f), glm::vec4(0.0f), 40);
+   LightSource* lightSource  = new LightSource(glm::vec4( 100.0f, 100.0f, 0.0f, 1.0f), glm::vec4(1.0f));
+   LightSource* lightSource1 = new LightSource(glm::vec4( -100.0f, 100.0f, 0.0f, 1.0f), glm::vec4(1.0f));
 
-   Sphere* sphere = new Sphere(glm::vec3(0.0f), 2);
+   Sphere* sphere = new Sphere(glm::vec3(0.0f), 0.3f);
    sphere->setTransformation(M);
    sphere->setMaterial(sphereMaterial);
 
    scene.addSurface(sphere);
 
-   Sphere* sphere1 = new Sphere(glm::vec3(4.0f, 0.0f, 0.0f), 2);
+   Sphere* sphere1 = new Sphere(glm::vec3(2.0f, 0.0f, 0.0f), 0.5f);
    sphere1->setTransformation(M);
    sphere1->setMaterial(sphereMaterial1);
 
    scene.addSurface(sphere1);
    
-   /*
    TriangleMesh* grid = new TriangleMesh();
-   glm::mat4 gridTransformation = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -5.0f, 0.0f));
+   glm::mat4 gridTransformation = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -1.0f, 0.0f));
    grid->loadFromFile("triangle_grid.obj");
    grid->setTransformation(gridTransformation);
    grid->setMaterial(gridMaterial);
 
-   */
-   //scene.addSurface(grid);
- 
+   scene.addSurface(grid);
+   
+
+
    scene.addLightSource(lightSource);
    scene.addLightSource(lightSource1);
 
