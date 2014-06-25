@@ -106,7 +106,7 @@ void Scene::render(const Camera& camera, unsigned char* outputImage){
     		
     		Ray ray(rayOrigin,rayDirection);
     		// find color
-    		glm::vec4 finalColor = this->rayTrace(ray, camera);
+    		glm::vec4 finalColor = this->rayTrace(ray, camera, 0); // 0 depth
     		// store color
     		outputImage[4 * (x + y * viewWidth)]      = floor(finalColor.x == 1.0 ? 255 : std::min(finalColor.x * 256.0, 255.0));
             outputImage[1 +  4 * (x + y * viewWidth)] = floor(finalColor.y == 1.0 ? 255 : std::min(finalColor.y * 256.0, 255.0));
@@ -116,7 +116,7 @@ void Scene::render(const Camera& camera, unsigned char* outputImage){
     }
 }
 
-glm::vec4 Scene::rayTrace(const Ray& ray, const Camera& camera){
+glm::vec4 Scene::rayTrace(const Ray& ray, const Camera& camera, int depth){
 
 	bool rayCollided = false;
 	RayIntersection intersection;
@@ -133,19 +133,8 @@ glm::vec4 Scene::rayTrace(const Ray& ray, const Camera& camera){
 
 	// phong
 	if(rayCollided == true){
-
-		// find diffuse color for every light source
-		int numLights = this->getNumLightSources();
-		glm::vec4 phongColor(0.0f);
-		for( int i = 0 ; i < numLights; i++){
-			const LightSource& lightSource = *(m_LightSources[i]);
-			//diffuseColor += this->findDiffuseColor(lightSource, intersection);
-			phongColor += this->calcPhong(camera, lightSource, intersection);
-		}
-		// add ambient color
-		phongColor += intersection.getMaterial().getAmbientIntensity() * intersection.getMaterial().getDiffuseColor();
-		return phongColor;
-		
+		finalColor += shadeIntersection(intersection, ray, camera);
+		return finalColor;
 	}
 	else{
 		// return background color
@@ -153,6 +142,39 @@ glm::vec4 Scene::rayTrace(const Ray& ray, const Camera& camera){
 	}
 
 	return glm::vec4(1.0f);
+}
+
+glm::vec4 Scene::shadeIntersection(const RayIntersection& intersection, const Ray& ray, const Camera& camera){
+
+	int numLights;
+	const float epsilon = 1e-5;
+	glm::vec4 calculatedColour(0.0f);
+	RayIntersection dummyIntersection;
+	//glm::vec3 epsVector(epsilon, epsilon, epsilon);
+
+	numLights = this->getNumLightSources();
+	for( int i = 0 ; i < numLights; i++){
+		// light source i
+		const LightSource& lightSource = *(m_LightSources[i]);
+
+
+		// find the shadow ray
+		glm::vec3 shadowRayDirection = glm::normalize(glm::vec3(lightSource.getPosition()) - intersection.getPoint()); // lightPos - intersection point
+		glm::vec3 shadowRayOrigin    = intersection.getPoint() + epsilon * shadowRayDirection;
+
+		Ray shadowRay(shadowRayOrigin, shadowRayDirection);  
+		
+		// is the point in shadow ?
+		if( this->findMinDistanceIntersection(shadowRay, dummyIntersection) == false) {
+			// point is not in shadow.Calculate phong
+			calculatedColour += this->calcPhong(camera, lightSource, intersection);
+		}
+	}
+
+	// add ambient color
+	//calculatedColour += intersection.getMaterial().getAmbientIntensity() * intersection.getMaterial().getDiffuseColor();
+	return calculatedColour;
+
 }
 
 glm::vec4 Scene::findDiffuseColor(const LightSource& lightSource, const RayIntersection& intersection){
