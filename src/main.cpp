@@ -273,7 +273,8 @@ int main(int argc, char **argv)
 
    glm::vec4 lightPosition( 120.0f, 0.0f , 0.0f, 1.0f);
    glm::vec4 lightColor( 1.0, 1.0, 1.0, 0.0);
-   
+  
+  /* 
    float fovx_rad = FOV * M_PI / (float) 180.0;
    float fovy_rad =  FOV * M_PI / (float)180.0;
 
@@ -281,11 +282,10 @@ int main(int argc, char **argv)
    float tan_fovy = tan( fovy_rad / (float) 2);
    std::cout << "FOVX = " << fovx_rad << " FOVY = " << fovy_rad << std::endl;
    std::cout << "tan_FOVX = " << tan_fovx << " tan_FOVY = " << tan_fovy << std::endl;
-
+   */
 
    glm::mat4 M = glm::translate( glm::mat4(1.0f), glm::vec3(-1.0f, -0.2f, 0.0f));
-   glm::mat4 identity(1.0f);
-   glm::mat4 mat_rot = glm::rotate(identity, 0.1f, glm::vec3(0.0f, 0.0f,1.0f));
+   
 
   
 
@@ -309,8 +309,8 @@ int main(int argc, char **argv)
 
    float horizontalAngle = 0.0f;
    float verticalAngle = 0.0f;
-   const float maxAbsoluteVerticalAngle = 3.1415f / 2.0f - 0.001f;
-   float speed = 5.0f; // 3 units / second
+   const float maxAbsoluteVerticalAngle = 90.0f - 0.001f;
+   float speed = 5.0f; 
    float mouseSpeed = 0.005f;
 
    glfwSetCursorPos(window, WINDOW_WIDTH/2.0, WINDOW_HEIGHT/2.0);
@@ -325,7 +325,7 @@ int main(int argc, char **argv)
    Scene scene;
    Material sphereMaterial(0.1f, glm::vec4(0.5f, 0.5f, 0.5f, 0.0f), glm::vec4(1.0f), 40);
    Material sphereMaterial1(0.1f, glm::vec4(1.f, 0.0f, 0.0f, 0.0f), glm::vec4(1.0f), 40);
-   Material gridMaterial(0.5f, glm::vec4(0.8f, 0.8f, 0.7f, 0.0f), glm::vec4(0.0f), 40);
+   Material gridMaterial(0.6f, glm::vec4(0.8f, 0.8f, 0.7f, 0.0f), glm::vec4(0.0f), 40);
    LightSource* lightSource  = new LightSource(glm::vec4( 100.0f, 100.0f, 0.0f, 1.0f), glm::vec4(1.0f));
    LightSource* lightSource1 = new LightSource(glm::vec4( -100.0f, 100.0f, 0.0f, 1.0f), glm::vec4(1.0f));
 
@@ -357,7 +357,6 @@ int main(int argc, char **argv)
    while (glfwGetKey(window, GLFW_KEY_ESCAPE) != GLFW_PRESS && !glfwWindowShouldClose(window))
    {
       currTime = glfwGetTime();
-      lightPosition = mat_rot * lightPosition;
       memset(imageBuffer, 0, sizeof(unsigned char) * 4 * WINDOW_WIDTH * WINDOW_HEIGHT);
       // handle input
       double xpos, ypos;
@@ -365,7 +364,7 @@ int main(int argc, char **argv)
       glfwSetCursorPos(window, WINDOW_WIDTH/2.0, WINDOW_HEIGHT/2.0);
 
       horizontalAngle += mouseSpeed * float(WINDOW_WIDTH/2 - xpos );
-      verticalAngle   += mouseSpeed * float( WINDOW_HEIGHT/2 - ypos );
+      verticalAngle   -= mouseSpeed * float( WINDOW_HEIGHT/2 - ypos );
 
       if( verticalAngle > maxAbsoluteVerticalAngle)
          verticalAngle = maxAbsoluteVerticalAngle;
