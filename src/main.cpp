@@ -326,16 +326,16 @@ int main(int argc, char **argv)
    Material sphereMaterial(0.1f, glm::vec4(0.5f, 0.5f, 0.5f, 0.0f), glm::vec4(1.0f), 40);
    Material sphereMaterial1(0.1f, glm::vec4(1.f, 0.0f, 0.0f, 0.0f), glm::vec4(1.0f), 40);
    Material gridMaterial(0.6f, glm::vec4(0.8f, 0.8f, 0.7f, 0.0f), glm::vec4(0.0f), 40);
-   LightSource* lightSource  = new LightSource(glm::vec4( 100.0f, 100.0f, 0.0f, 1.0f), glm::vec4(1.0f));
-   LightSource* lightSource1 = new LightSource(glm::vec4( -100.0f, 100.0f, 0.0f, 1.0f), glm::vec4(1.0f));
+   LightSource* lightSource  = new LightSource(glm::vec4(-200.0f, 100.0f, 0.0f, 1.0f), glm::vec4(1.0f));
+   LightSource* lightSource1 = new LightSource(glm::vec4(200.0f, 100.0f, 0.0f, 1.0f), glm::vec4(1.0f));
 
-   Sphere* sphere = new Sphere(glm::vec3(0.0f), 0.3f);
+   Sphere* sphere = new Sphere(glm::vec3(-0.5f, 0.0f, 0.6f), 0.1f);
    sphere->setTransformation(M);
    sphere->setMaterial(sphereMaterial);
 
    scene.addSurface(sphere);
 
-   Sphere* sphere1 = new Sphere(glm::vec3(2.0f, 0.0f, 0.0f), 0.5f);
+   Sphere* sphere1 = new Sphere(glm::vec3(2.0f, 0.0f, -0.3f), 0.2f);
    sphere1->setTransformation(M);
    sphere1->setMaterial(sphereMaterial1);
 
