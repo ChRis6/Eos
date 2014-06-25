@@ -172,7 +172,7 @@ glm::vec4 Scene::shadeIntersection(const RayIntersection& intersection, const Ra
 	}
 
 	// add ambient color
-	//calculatedColour += intersection.getMaterial().getAmbientIntensity() * intersection.getMaterial().getDiffuseColor();
+	calculatedColour += intersection.getMaterial().getAmbientIntensity() * intersection.getMaterial().getDiffuseColor();
 	return calculatedColour;
 
 }
