@@ -26,6 +26,7 @@
 #include "LightSource.h"
 #include "Material.h"
 #include "Plane.h"
+#include "Disk.h"
 
 #define WINDOW_WIDTH   640  // in pixels
 #define WINDOW_HEIGHT  480  // in pixels
@@ -325,7 +326,7 @@ int main(int argc, char **argv)
    Scene scene;
    Material sphereMaterial(0.1f, glm::vec4(0.5f, 0.5f, 0.5f, 0.0f), glm::vec4(1.0f), 40);
    Material sphereMaterial1(0.1f, glm::vec4(1.f, 0.0f, 0.0f, 0.0f), glm::vec4(1.0f), 40);
-   Material gridMaterial(0.6f, glm::vec4(0.8f, 0.8f, 0.7f, 0.0f), glm::vec4(0.0f), 40);
+   Material gridMaterial(0.1f, glm::vec4(0.8f, 0.8f, 0.7f, 0.0f), glm::vec4(0.0f), 40);
    LightSource* lightSource  = new LightSource(glm::vec4(-200.0f, 100.0f, 0.0f, 1.0f), glm::vec4(1.0f));
    LightSource* lightSource1 = new LightSource(glm::vec4(200.0f, 100.0f, 0.0f, 1.0f), glm::vec4(1.0f));
 
@@ -341,6 +342,7 @@ int main(int argc, char **argv)
 
    scene.addSurface(sphere1);
    
+   /*
    TriangleMesh* grid = new TriangleMesh();
    glm::mat4 gridTransformation = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -1.0f, 0.0f));
    grid->loadFromFile("triangle_grid.obj");
@@ -348,7 +350,16 @@ int main(int argc, char **argv)
    grid->setMaterial(gridMaterial);
 
    scene.addSurface(grid);
-   
+   */
+   float diskRadiusSquared = 2.0f;
+   glm::vec3 diskPlanePoint(0.0f, -1.0f, 0.0f);
+   glm::vec3 diskNormal(0.0f, 1.0f, 0.0f);
+
+   Disk *disk = new Disk(diskRadiusSquared, diskPlanePoint, diskNormal);
+   disk->setTransformation(glm::mat4(1.0f));
+   disk->setMaterial(gridMaterial);
+
+   scene.addSurface(disk);
 
 
    scene.addLightSource(lightSource);

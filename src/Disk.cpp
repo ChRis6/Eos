@@ -20,27 +20,24 @@
  * 3. This notice may not be removed or altered from any source distribution.
  */
 
-#include "Plane.h"
+#include "Disk.h"
+#include <glm/gtx/norm.hpp>
 
-bool Plane::hit(const Ray& ray, RayIntersection& intersection, float& distance){
+bool Disk::hit(const Ray& ray, RayIntersection& intersection, float& distance){
 
-	float denom;
-	const float eps = 1e-5;
+	RayIntersection dummyIntersection;
+	bool collisionFound;
+	float t;
 
-	denom = glm::dot( ray.getDirection(), this->getPlaneNormal());
-	if( denom > eps || denom < -eps ){ // |denom| > eps
-		distance = glm::dot( this->getPlanePoint() - ray.getOrigin(), this->getPlaneNormal()) / (float) denom;
-		glm::vec3 point = ray.getOrigin() + ray.getDirection() * distance;
-
-		intersection.setPoint(point);
-		intersection.setNormal(this->getPlaneNormal());
-		intersection.setMaterial(this->getMaterial());
-		return distance >= 0.0f;
-	}
-
+	collisionFound = inherited::hit(ray, dummyIntersection, t);
+	if(collisionFound){
+		// is the intersection point inside the disk ?
+		if( glm::length2(intersection.getPoint() - this->getPlanePoint()) <  m_RadiusSquared){
+			// yes
+			distance = t;
+			intersection = dummyIntersection;
+			return true;
+		}
+	} 
 	return false;
-}
-
-Box Plane::boundingBox(){
-	return Box();
 }
