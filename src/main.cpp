@@ -324,9 +324,14 @@ int main(int argc, char **argv)
 
    // set up scene
    Scene scene;
+   scene.setMaxTracedDepth(2);
+
    Material sphereMaterial(0.1f, glm::vec4(0.5f, 0.5f, 0.5f, 0.0f), glm::vec4(1.0f), 40);
+   sphereMaterial.setReflective(false);
    Material sphereMaterial1(0.1f, glm::vec4(1.f, 0.0f, 0.0f, 0.0f), glm::vec4(1.0f), 40);
-   Material gridMaterial(0.1f, glm::vec4(0.8f, 0.8f, 0.7f, 0.0f), glm::vec4(0.0f), 40);
+   sphereMaterial1.setReflective(false);
+
+   Material gridMaterial(0.1f, glm::vec4(0.8f, 0.8f, 0.7f, 0.0f), glm::vec4(1.0f), 80);
    LightSource* lightSource  = new LightSource(glm::vec4(-200.0f, 100.0f, 0.0f, 1.0f), glm::vec4(1.0f));
    LightSource* lightSource1 = new LightSource(glm::vec4(200.0f, 100.0f, 0.0f, 1.0f), glm::vec4(1.0f));
 
@@ -357,6 +362,8 @@ int main(int argc, char **argv)
 
    Disk *disk = new Disk(diskRadiusSquared, diskPlanePoint, diskNormal);
    disk->setTransformation(glm::mat4(1.0f));
+
+   gridMaterial.setReflective(true);
    disk->setMaterial(gridMaterial);
 
    scene.addSurface(disk);

@@ -34,19 +34,22 @@ public:
 		{}
 
 	void setAmbientIntensity(float ambientIntensity) { m_AmbientIntensity = ambientIntensity;}
-	void setDiffuseColor(glm::vec4 diffuseColor)     { m_DiffuseColor = diffuseColor;}
-	void setSpecularColor(glm::vec4 specularColor)   { m_SpecularColor = specularColor;}
+	void setDiffuseColor(glm::vec4 diffuseColor)     { m_DiffuseColor     = diffuseColor;}
+	void setSpecularColor(glm::vec4 specularColor)   { m_SpecularColor    = specularColor;}
+	void setReflective(bool reflective)				 { m_Reflective       = reflective;}
 
 	float getAmbientIntensity()  const { return m_AmbientIntensity;}
 	glm::vec4 getDiffuseColor()  const { return m_DiffuseColor;}
 	glm::vec4 getSpecularColor() const { return m_SpecularColor;}
 	int getShininess()           const { return m_Shininess;}
+	bool isReflective()			 const {return m_Reflective;}
 
 private:
 	float m_AmbientIntensity;
 	glm::vec4 m_DiffuseColor;
 	glm::vec4 m_SpecularColor;
 	int m_Shininess;
+	bool m_Reflective;
 
 };
 

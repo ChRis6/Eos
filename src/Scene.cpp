@@ -122,6 +122,9 @@ glm::vec4 Scene::rayTrace(const Ray& ray, const Camera& camera, int depth){
 	RayIntersection intersection;
 	glm::vec4 finalColor(0.0f);
 	
+	if( depth > this->getMaxTracedDepth())
+		return finalColor;
+
 	/*
 	 * Find min distance intersection
 	 */
@@ -133,7 +136,7 @@ glm::vec4 Scene::rayTrace(const Ray& ray, const Camera& camera, int depth){
 
 	// phong
 	if(rayCollided == true){
-		finalColor += shadeIntersection(intersection, ray, camera);
+		finalColor += shadeIntersection(intersection, ray, camera, depth);
 		return finalColor;
 	}
 	else{
@@ -144,7 +147,7 @@ glm::vec4 Scene::rayTrace(const Ray& ray, const Camera& camera, int depth){
 	return glm::vec4(1.0f);
 }
 
-glm::vec4 Scene::shadeIntersection(const RayIntersection& intersection, const Ray& ray, const Camera& camera){
+glm::vec4 Scene::shadeIntersection(const RayIntersection& intersection, const Ray& ray, const Camera& camera, int depth){
 
 	int numLights;
 	const float epsilon = 1e-5;
@@ -169,6 +172,16 @@ glm::vec4 Scene::shadeIntersection(const RayIntersection& intersection, const Ra
 			// point is not in shadow.Calculate phong
 			calculatedColour += this->calcPhong(camera, lightSource, intersection);
 		}
+	}
+
+	if( intersection.getMaterial().isReflective()){
+
+		glm::vec3 reflectedRayDirection = glm::normalize(ray.getDirection() - 2.0f * (glm::dot(ray.getDirection(), intersection.getNormal())) * intersection.getNormal());
+		glm::vec3 reflectedRayOrigin    = intersection.getPoint() + epsilon * reflectedRayDirection;
+
+		Ray reflectedRay(reflectedRayOrigin, reflectedRayDirection);
+
+		calculatedColour += intersection.getMaterial().getSpecularColor() * this->rayTrace( reflectedRay, camera, depth + 1);
 	}
 
 	// add ambient color
