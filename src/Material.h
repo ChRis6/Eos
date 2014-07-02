@@ -33,16 +33,18 @@ public:
 		m_AmbientIntensity(ambientFactor), m_DiffuseColor(diffuseColor), m_SpecularColor(specularColor), m_Shininess(shininess)
 		{}
 
-	void setAmbientIntensity(float ambientIntensity) { m_AmbientIntensity = ambientIntensity;}
-	void setDiffuseColor(glm::vec4 diffuseColor)     { m_DiffuseColor     = diffuseColor;}
-	void setSpecularColor(glm::vec4 specularColor)   { m_SpecularColor    = specularColor;}
-	void setReflective(bool reflective)				 { m_Reflective       = reflective;}
+	void setAmbientIntensity(float ambientIntensity) { m_AmbientIntensity    = ambientIntensity;}
+	void setDiffuseColor(glm::vec4 diffuseColor)     { m_DiffuseColor        = diffuseColor;}
+	void setSpecularColor(glm::vec4 specularColor)   { m_SpecularColor       = specularColor;}
+	void setReflective(bool reflective)				 { m_Reflective          = reflective;}
+	void setReflectionIntensity(float intensity)     { m_ReflectionIntensity = intensity; }
 
-	float getAmbientIntensity()  const { return m_AmbientIntensity;}
-	glm::vec4 getDiffuseColor()  const { return m_DiffuseColor;}
-	glm::vec4 getSpecularColor() const { return m_SpecularColor;}
-	int getShininess()           const { return m_Shininess;}
-	bool isReflective()			 const {return m_Reflective;}
+	float getAmbientIntensity()    const { return m_AmbientIntensity;}
+	glm::vec4 getDiffuseColor()    const { return m_DiffuseColor;}
+	glm::vec4 getSpecularColor()   const { return m_SpecularColor;}
+	int getShininess()             const { return m_Shininess;}
+	bool isReflective()			   const { return m_Reflective;}
+	float getReflectiveIntensity() const { return m_ReflectionIntensity;}
 
 private:
 	float m_AmbientIntensity;
@@ -50,7 +52,7 @@ private:
 	glm::vec4 m_SpecularColor;
 	int m_Shininess;
 	bool m_Reflective;
-
+	float m_ReflectionIntensity;
 };
 
 #endif

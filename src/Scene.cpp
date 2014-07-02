@@ -150,7 +150,7 @@ glm::vec4 Scene::rayTrace(const Ray& ray, const Camera& camera, int depth){
 glm::vec4 Scene::shadeIntersection(const RayIntersection& intersection, const Ray& ray, const Camera& camera, int depth){
 
 	int numLights;
-	const float epsilon = 1e-5;
+	const float epsilon = 1e-5f;
 	glm::vec4 calculatedColour(0.0f);
 	RayIntersection dummyIntersection;
 	//glm::vec3 epsVector(epsilon, epsilon, epsilon);
@@ -181,7 +181,7 @@ glm::vec4 Scene::shadeIntersection(const RayIntersection& intersection, const Ra
 
 		Ray reflectedRay(reflectedRayOrigin, reflectedRayDirection);
 
-		calculatedColour += intersection.getMaterial().getSpecularColor() * this->rayTrace( reflectedRay, camera, depth + 1);
+		calculatedColour += intersection.getMaterial().getReflectiveIntensity() * intersection.getMaterial().getSpecularColor() * this->rayTrace( reflectedRay, camera, depth + 1);
 	}
 
 	// add ambient color

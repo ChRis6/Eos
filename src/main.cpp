@@ -324,10 +324,13 @@ int main(int argc, char **argv)
 
    // set up scene
    Scene scene;
-   scene.setMaxTracedDepth(2);
+   scene.setMaxTracedDepth(3);
 
+   float refletionIntensity = 0.2f;
    Material sphereMaterial(0.1f, glm::vec4(0.5f, 0.5f, 0.5f, 0.0f), glm::vec4(1.0f), 40);
-   sphereMaterial.setReflective(false);
+   sphereMaterial.setReflective(true);
+   sphereMaterial.setReflectionIntensity(refletionIntensity);
+
    Material sphereMaterial1(0.1f, glm::vec4(1.f, 0.0f, 0.0f, 0.0f), glm::vec4(1.0f), 40);
    sphereMaterial1.setReflective(false);
 
