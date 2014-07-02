@@ -288,39 +288,39 @@ Box TriangleMesh::boundingBox(){
 
 bool TriangleMesh::RayBoxIntersection(const Ray& ray, const Box& box){
 
-// lb is the corner of AABB with minimal coordinates - left bottom, rt is maximal corner
-glm::vec3 lb = box.getMinVertex();
-glm::vec3 rt = box.getMaxVertex();
+	// lb is the corner of AABB with minimal coordinates - left bottom, rt is maximal corner
+	glm::vec3 lb = box.getMinVertex();
+	glm::vec3 rt = box.getMaxVertex();
 
-glm::vec3 rayOrigin = ray.getOrigin();
-glm::vec3 rayInvDirection = ray.getInvDirection();
+	glm::vec3 rayOrigin = ray.getOrigin();
+	glm::vec3 rayInvDirection = ray.getInvDirection();
 
-float t1 = (lb.x - rayOrigin.x) * rayInvDirection.x;
-float t2 = (rt.x - rayOrigin.x) * rayInvDirection.x;
-float t3 = (lb.y - rayOrigin.y) * rayInvDirection.y;
-float t4 = (rt.y - rayOrigin.y) * rayInvDirection.y;
-float t5 = (lb.z - rayOrigin.z) * rayInvDirection.z;
-float t6 = (rt.z - rayOrigin.z) * rayInvDirection.z;
+	float t1 = (lb.x - rayOrigin.x) * rayInvDirection.x;
+	float t2 = (rt.x - rayOrigin.x) * rayInvDirection.x;
+	float t3 = (lb.y - rayOrigin.y) * rayInvDirection.y;
+	float t4 = (rt.y - rayOrigin.y) * rayInvDirection.y;
+	float t5 = (lb.z - rayOrigin.z) * rayInvDirection.z;
+	float t6 = (rt.z - rayOrigin.z) * rayInvDirection.z;
 
-float tmin = MAX(MAX(MIN(t1, t2), MIN(t3, t4)), MIN(t5, t6));
-float tmax = MIN(MIN(MAX(t1, t2), MAX(t3, t4)), MAX(t5, t6));
+	float tmin = MAX(MAX(MIN(t1, t2), MIN(t3, t4)), MIN(t5, t6));
+	float tmax = MIN(MIN(MAX(t1, t2), MAX(t3, t4)), MAX(t5, t6));
 
-// if tmax < 0, ray (line) is intersecting AABB, but whole AABB is behing us
-if (tmax < 0)
-{
-    //t = tmax;
-    return false;
-}
+	// if tmax < 0, ray (line) is intersecting AABB, but whole AABB is behing us
+	if (tmax < 0)
+	{
+    	//t = tmax;
+    	return false;
+	}
 
-// if tmin > tmax, ray doesn't intersect AABB
-if (tmin > tmax)
-{
-    //t = tmax;
-    return false;
-}
+	// if tmin > tmax, ray doesn't intersect AABB
+	if (tmin > tmax)
+	{
+    	//t = tmax;
+    	return false;
+	}
 
-//t = tmin;
-return true;
+	//t = tmin;
+	return true;
 }
 
 const glm::mat4& TriangleMesh::transformation(){
