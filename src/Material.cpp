@@ -21,12 +21,18 @@
  */
 #include "Material.h"
 
-const float REFRACTIVE_INDEX_VACUUM        = 1.0f;
-const float REFRACTIVE_INDEX_AIR           = 1.0002f;
-const float REFRACTIVE_INDEX_LIQUID_HELIUM = 1.025f;
-const float REFRACTIVE_INDEX_ICE		   = 1.31f;          
-const float REFRACTIVE_INDEX_WATER		   = 1.333f;
-const float REFRACTIVE_INDEX_CORNEA        = 1.38f;
-const float REFRACTIVE_INDEX_GLASS_IMPURE  = 1.65f;
-const float REFRACTIVE_INDEX_GLASS_PURE    = 1.52f;
-const float REFRACTIVE_INDEX_DIAMOND       = 2.419f;
+const float REFRACTIVE_INDEX_VACUUM              = 1.0f;
+const float REFRACTIVE_INDEX_AIR                 = 1.0002f;
+const float REFRACTIVE_INDEX_LIQUID_HELIUM       = 1.025f;
+const float REFRACTIVE_INDEX_ICE		         = 1.31f;          
+const float REFRACTIVE_INDEX_WATER		         = 1.333f;
+const float REFRACTIVE_INDEX_CORNEA              = 1.38f;
+const float REFRACTIVE_INDEX_CROWN_GLASS_IMPURE  = 1.65f;
+const float REFRACTIVE_INDEX_CROWN_GLASS_PURE    = 1.52f;
+const float REFRACTIVE_INDEX_DIAMOND             = 2.419f;
+const float REFRACTIVE_INDEX_AMBER               = 1.55f;
+const float REFRACTIVE_INDEX_FLINT_GLASS_PURE    = 1.612f;
+const float REFRACTIVE_INDEX_SHAPPHIRE           = 1.771f;
+const float REFRACTIVE_INDEX_BOROSILICATE_GLASS  = 1.47f;
+
+

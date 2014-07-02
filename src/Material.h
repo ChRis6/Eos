@@ -31,9 +31,14 @@ extern const float REFRACTIVE_INDEX_LIQUID_HELIUM ;
 extern const float REFRACTIVE_INDEX_ICE;          
 extern const float REFRACTIVE_INDEX_WATER;
 extern const float REFRACTIVE_INDEX_CORNEA ;
-extern const float REFRACTIVE_INDEX_GLASS_IMPURE;
-extern const float REFRACTIVE_INDEX_GLASS_PURE;
+extern const float REFRACTIVE_INDEX_CROWN_GLASS_IMPURE;
+extern const float REFRACTIVE_INDEX_CROWN_GLASS_PURE;
+extern const float REFRACTIVE_INDEX_FLINT_GLASS_PURE;
 extern const float REFRACTIVE_INDEX_DIAMOND;
+extern const float REFRACTIVE_INDEX_AMBER;
+
+extern const float REFRACTIVE_INDEX_SHAPPHIRE;
+extern const float REFRACTIVE_INDEX_BOROSILICATE_GLASS; 	// pyrex
 
 class Material{
 
