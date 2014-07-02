@@ -47,6 +47,7 @@ int Scene::getNumLightSources() const {
 	return m_LightSources.size();
 }
 
+
 const Surface* Scene::getSurface(unsigned int id) const{
 	if( id < m_SurfaceObjects.size() )
 		return m_SurfaceObjects[id];
@@ -59,6 +60,13 @@ const LightSource* Scene::getLightSource( unsigned int id) const{
 	return NULL;
 }
 
+float Scene::getAmbientRefractiveIndex() const{
+	return m_AmbientRefractiveIndex;
+}
+
+void Scene::setAmbientRefractiveIndex(float refractiveIndex){
+	m_AmbientRefractiveIndex = refractiveIndex;
+}
 
 
 void Scene::render(const Camera& camera, unsigned char* outputImage){
@@ -106,7 +114,7 @@ void Scene::render(const Camera& camera, unsigned char* outputImage){
     		
     		Ray ray(rayOrigin,rayDirection);
     		// find color
-    		glm::vec4 finalColor = this->rayTrace(ray, camera, 0); // 0 depth
+    		glm::vec4 finalColor = this->rayTrace(ray, camera, this->getAmbientRefractiveIndex(), 0); // 0 depth
     		// store color
     		outputImage[4 * (x + y * viewWidth)]      = floor(finalColor.x == 1.0 ? 255 : std::min(finalColor.x * 256.0, 255.0));
             outputImage[1 +  4 * (x + y * viewWidth)] = floor(finalColor.y == 1.0 ? 255 : std::min(finalColor.y * 256.0, 255.0));
@@ -116,7 +124,7 @@ void Scene::render(const Camera& camera, unsigned char* outputImage){
     }
 }
 
-glm::vec4 Scene::rayTrace(const Ray& ray, const Camera& camera, int depth){
+glm::vec4 Scene::rayTrace(const Ray& ray, const Camera& camera, float sourceRefactionIndex, int depth){
 
 	bool rayCollided = false;
 	RayIntersection intersection;
@@ -136,7 +144,7 @@ glm::vec4 Scene::rayTrace(const Ray& ray, const Camera& camera, int depth){
 
 	// phong
 	if(rayCollided == true){
-		finalColor += shadeIntersection(intersection, ray, camera, depth);
+		finalColor += shadeIntersection(intersection, ray, camera, sourceRefactionIndex, depth);
 		return finalColor;
 	}
 	else{
@@ -147,13 +155,16 @@ glm::vec4 Scene::rayTrace(const Ray& ray, const Camera& camera, int depth){
 	return glm::vec4(1.0f);
 }
 
-glm::vec4 Scene::shadeIntersection(const RayIntersection& intersection, const Ray& ray, const Camera& camera, int depth){
+glm::vec4 Scene::shadeIntersection(const RayIntersection& intersection, const Ray& ray, const Camera& camera, float sourceRefactionIndex, int depth){
 
 	int numLights;
-	const float epsilon = 1e-5f;
+	const float epsilon = 1e-3f;
 	glm::vec4 calculatedColour(0.0f);
+	glm::vec3 zeroVector(0.0f);
 	RayIntersection dummyIntersection;
-	//glm::vec3 epsVector(epsilon, epsilon, epsilon);
+	glm::vec4 reflectedColour(0.0f);
+	glm::vec4 refractedColour(0.0f);
+	float n1,n2;
 
 	numLights = this->getNumLightSources();
 	for( int i = 0 ; i < numLights; i++){
@@ -174,18 +185,86 @@ glm::vec4 Scene::shadeIntersection(const RayIntersection& intersection, const Ra
 		}
 	}
 
-	if( intersection.getMaterial().isReflective()){
+	if( intersection.getMaterial().isReflective() || intersection.getMaterial().isTransparent()){
 
-		glm::vec3 reflectedRayDirection = glm::normalize(ray.getDirection() - 2.0f * (glm::dot(ray.getDirection(), intersection.getNormal())) * intersection.getNormal());
+		glm::vec3 reflectedRayDirection = glm::normalize(glm::reflect(ray.getDirection(), intersection.getNormal()));
 		glm::vec3 reflectedRayOrigin    = intersection.getPoint() + epsilon * reflectedRayDirection;
 
 		Ray reflectedRay(reflectedRayOrigin, reflectedRayDirection);
 
-		calculatedColour += intersection.getMaterial().getReflectiveIntensity() * intersection.getMaterial().getSpecularColor() * this->rayTrace( reflectedRay, camera, depth + 1);
+		reflectedColour += intersection.getMaterial().getSpecularColor() * 
+		                   this->rayTrace( reflectedRay, camera, sourceRefactionIndex, depth + 1);
 	}
 
+	if( intersection.getMaterial().isTransparent()){
+		
+		glm::vec3 incident = glm::normalize(ray.getDirection());
+
+		float iDOTn = glm::dot(incident, intersection.getNormal());
+		float refractionRatio;
+		if( iDOTn < 0 ){
+			//Ray is outside of the material going in
+			n1 = sourceRefactionIndex;
+			n2 = intersection.getMaterial().getRefractiveIndex();
+			refractionRatio = n1 / n2;
+
+			// find refraction ray
+			glm::vec3 refractedRayDirection = glm::normalize( glm::refract(incident, intersection.getNormal(), refractionRatio));
+			glm::vec3 refractedRayOrigin    = intersection.getPoint() + epsilon * refractedRayDirection;
+			Ray refractedRay(refractedRayOrigin, refractedRayDirection);
+
+			//refractedColour += this->rayTrace(refractedRay, camera, intersection.getMaterial().getRefractiveIndex(), depth + 1);
+			calculatedColour += this->rayTrace(refractedRay, camera, intersection.getMaterial().getRefractiveIndex(), depth + 1);
+			
+
+			//float k = this->slickApprox(incident, intersection.getNormal(), n1, n2);
+			//calculatedColour += k * reflectedColour + (1.0f - k ) * refractedColour;
+		}
+		else{
+			// ray is inside a primitive going out
+			n1 = sourceRefactionIndex;
+			/*
+			 * suppose the other side is the scene's ambient refractive index
+			 * We need find which surface owns the intersection point
+			 * and get the surface's material
+			 */
+			n2 = this->getAmbientRefractiveIndex(); 		
+			refractionRatio = n1 / n2;
+
+			// find refraction ray
+			glm::vec3 newNormal = zeroVector - intersection.getNormal();
+			glm::vec3 refractedRayDirection = glm::normalize( glm::refract(incident, newNormal, refractionRatio));
+			glm::vec3 refractedRayOrigin    = intersection.getPoint() + epsilon * refractedRayDirection;
+			Ray refractedRay(refractedRayOrigin, refractedRayDirection);
+			
+			//refractedColour += this->rayTrace(refractedRay, camera, this->getAmbientRefractiveIndex(), depth + 1);
+			calculatedColour += this->rayTrace(refractedRay, camera, this->getAmbientRefractiveIndex(), depth + 1);
+
+			// need to find the new reflection
+			/*
+			glm::vec3 reflectedRayDirection = glm::normalize(glm::reflect(refractedRayDirection, newNormal));
+			glm::vec3 reflectedRayOrigin    = intersection.getPoint() + epsilon * reflectedRayDirection;
+
+			Ray reflectedRay(reflectedRayOrigin, reflectedRayDirection);
+
+			glm::vec4 newReflectedColour = intersection.getMaterial().getSpecularColor() * 
+		                   this->rayTrace( reflectedRay, camera, this->getAmbientRefractiveIndex(), depth + 1);
+
+			float k = this->slickApprox(incident, newNormal, n1, n2);
+			calculatedColour += k * newReflectedColour + (1.0f - k ) * refractedColour;
+			*/
+		}
+
+		//float k = this->slickApprox(ray.getDirection(), intersection.getNormal(), n1, n2);
+		//calculatedColour += k * reflectedColour + (1.0f - k ) * refractedColour;
+	}
+
+	if( intersection.getMaterial().isReflective() && !(intersection.getMaterial().isTransparent()))
+		calculatedColour += intersection.getMaterial().getReflectiveIntensity() * reflectedColour;
+
+
 	// add ambient color
-	calculatedColour += intersection.getMaterial().getAmbientIntensity() * intersection.getMaterial().getDiffuseColor();
+	//calculatedColour += intersection.getMaterial().getAmbientIntensity() * intersection.getMaterial().getDiffuseColor();
 	return calculatedColour;
 
 }
@@ -278,3 +357,39 @@ bool Scene::findMinDistanceIntersection(const Ray& ray, RayIntersection& interse
 	intersection.setNormal(glm::vec3(min_normal));
 	return intersectionFound;
 }
+
+float Scene::slickApprox(const glm::vec3& incident, const glm::vec3& normal, float n1, float n2){
+	
+	/*
+	float rO = (n1 - n2) / (float) (n1 + n2);
+
+	// rO ^ 2
+	rO *= rO;
+
+	float cosX = -glm::dot(incident, normal);
+	if( n1 > n2){
+		float ratio = n1 / n2;
+		float sinT2 = ratio * ratio * ( 1.0f  - cosX * cosX);
+		if( sinT2 > 1.0f) return 1.0f;  // Total internal reflection
+
+		cosX = sqrtf(1.0f - sinT2);
+	}
+
+	float x = 1.0f - cosX;
+	return rO + ( 1.0f - rO) * x * x * x * x * x;
+	*/
+
+	float n = n1 / n2;
+	float cosI  = -glm::dot(normal, incident);
+	float sinT2 = n * n * ( 1.0f - cosI * cosI);
+	if( sinT2 > 1.0f) return 1.0f; // TIR
+
+	float cosT = sqrtf( 1.0f - sinT2);
+	float rOrth = ( n1 * cosI - n2 * cosT) / ( n1 * cosI + n2 * cosT);
+	float rPar  = (n2 * cosI - n1 * cosT) / (n2 * cosI + n1 * cosT);
+
+	return ( rOrth * rOrth + rPar * rPar) / 2.0f; 
+
+
+}
+

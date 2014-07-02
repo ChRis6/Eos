@@ -25,6 +25,16 @@
 
 #include <glm/glm.hpp>
 
+extern const float REFRACTIVE_INDEX_VACUUM;
+extern const float REFRACTIVE_INDEX_AIR;
+extern const float REFRACTIVE_INDEX_LIQUID_HELIUM ;
+extern const float REFRACTIVE_INDEX_ICE;          
+extern const float REFRACTIVE_INDEX_WATER;
+extern const float REFRACTIVE_INDEX_CORNEA ;
+extern const float REFRACTIVE_INDEX_GLASS_IMPURE;
+extern const float REFRACTIVE_INDEX_GLASS_PURE;
+extern const float REFRACTIVE_INDEX_DIAMOND;
+
 class Material{
 
 public:
@@ -38,6 +48,8 @@ public:
 	void setSpecularColor(glm::vec4 specularColor)   { m_SpecularColor       = specularColor;}
 	void setReflective(bool reflective)				 { m_Reflective          = reflective;}
 	void setReflectionIntensity(float intensity)     { m_ReflectionIntensity = intensity; }
+	void setTransparent(bool transparent)			 { m_Transparent         = transparent;}
+	void setRefractiveIndex(float refractiveIndex)   { m_RefractiveIndex     = refractiveIndex;}
 
 	float getAmbientIntensity()    const { return m_AmbientIntensity;}
 	glm::vec4 getDiffuseColor()    const { return m_DiffuseColor;}
@@ -45,6 +57,8 @@ public:
 	int getShininess()             const { return m_Shininess;}
 	bool isReflective()			   const { return m_Reflective;}
 	float getReflectiveIntensity() const { return m_ReflectionIntensity;}
+	bool isTransparent()		   const { return m_Transparent;}
+	float getRefractiveIndex()     const { return m_RefractiveIndex;}
 
 private:
 	float m_AmbientIntensity;
@@ -53,6 +67,9 @@ private:
 	int m_Shininess;
 	bool m_Reflective;
 	float m_ReflectionIntensity;
+
+	bool m_Transparent;
+	float m_RefractiveIndex;
 };
 
 #endif

@@ -37,6 +37,9 @@ public:
 	bool addLightSource(LightSource* light);   
 	int getNumSurfaces() const;
 	int getNumLightSources() const;
+	float getAmbientRefractiveIndex() const;
+
+	void setAmbientRefractiveIndex(float refractiveIndex);
 
 	const Surface* getSurface( unsigned int id) const;
 	const LightSource* getLightSource(unsigned int id) const;
@@ -46,16 +49,18 @@ public:
 	int getMaxTracedDepth() const     {return m_MaxTracedDepth;}
 
 private:
-	glm::vec4 rayTrace(const Ray& ray, const Camera& camera, int depth);
+	glm::vec4 rayTrace(const Ray& ray, const Camera& camera, float sourceRefactionIndex, int depth);
 	bool findMinDistanceIntersection(const Ray& ray, RayIntersection& intersection);
 	glm::vec4 calcPhong( const Camera& camera, const LightSource& lightSource, const RayIntersection& intersection);
 	glm::vec4 findDiffuseColor(const LightSource& lightSource, const RayIntersection& intersection);
-	glm::vec4 shadeIntersection(const RayIntersection& intersection, const Ray& ray, const Camera& camera, int depth);
+	glm::vec4 shadeIntersection(const RayIntersection& intersection, const Ray& ray, const Camera& camera, float sourceRefactionIndex, int depth);
+	float slickApprox(const glm::vec3& incident, const glm::vec3& normal, float n1, float n2);
 
 private:
 	std::vector<Surface*> m_SurfaceObjects;
 	std::vector<LightSource*> m_LightSources;
-	int m_MaxTracedDepth; 
+	int m_MaxTracedDepth;
+	float m_AmbientRefractiveIndex; 
 };
 
 #endif

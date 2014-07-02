@@ -285,7 +285,7 @@ int main(int argc, char **argv)
    std::cout << "tan_FOVX = " << tan_fovx << " tan_FOVY = " << tan_fovy << std::endl;
    */
 
-   glm::mat4 M = glm::translate( glm::mat4(1.0f), glm::vec3(-1.0f, -0.2f, 0.0f));
+   glm::mat4 M = glm::translate( glm::mat4(1.0f), glm::vec3(-1.0f, 10.0f, -10.0f));
    
 
   
@@ -324,27 +324,32 @@ int main(int argc, char **argv)
 
    // set up scene
    Scene scene;
-   scene.setMaxTracedDepth(3);
+   scene.setMaxTracedDepth(2);
+   scene.setAmbientRefractiveIndex(REFRACTIVE_INDEX_GLASS_PURE);
 
-   float refletionIntensity = 0.2f;
-   Material sphereMaterial(0.1f, glm::vec4(0.5f, 0.5f, 0.5f, 0.0f), glm::vec4(1.0f), 40);
+   float refletionIntensity = 0.4f;
+   Material sphereMaterial(0.1f, glm::vec4(1.0f, 0.0f, 0.0f, 0.0f), glm::vec4(1.0f), 40);
    sphereMaterial.setReflective(true);
    sphereMaterial.setReflectionIntensity(refletionIntensity);
+   sphereMaterial.setTransparent(false);
 
-   Material sphereMaterial1(0.1f, glm::vec4(1.f, 0.0f, 0.0f, 0.0f), glm::vec4(1.0f), 40);
+   Material sphereMaterial1(0.1f, glm::vec4(0.73331f, 0.7331f, 0.7331f, 0.0f), glm::vec4(1.0f), 40);
    sphereMaterial1.setReflective(false);
+   sphereMaterial1.setTransparent(true);
+   sphereMaterial1.setRefractiveIndex(REFRACTIVE_INDEX_ICE);
 
    Material gridMaterial(0.1f, glm::vec4(0.8f, 0.8f, 0.7f, 0.0f), glm::vec4(1.0f), 80);
+   gridMaterial.setTransparent(false);
    LightSource* lightSource  = new LightSource(glm::vec4(-200.0f, 100.0f, 0.0f, 1.0f), glm::vec4(1.0f));
    LightSource* lightSource1 = new LightSource(glm::vec4(200.0f, 100.0f, 0.0f, 1.0f), glm::vec4(1.0f));
 
-   Sphere* sphere = new Sphere(glm::vec3(-0.5f, 0.0f, 0.6f), 0.1f);
+   Sphere* sphere = new Sphere(glm::vec3(-0.5f, 0.0f, 0.6f), 1.1f);
    sphere->setTransformation(M);
    sphere->setMaterial(sphereMaterial);
 
    scene.addSurface(sphere);
 
-   Sphere* sphere1 = new Sphere(glm::vec3(2.0f, 0.0f, -0.3f), 0.2f);
+   Sphere* sphere1 = new Sphere(glm::vec3(2.0f, 0.0f, -0.3f), 1.2f);
    sphere1->setTransformation(M);
    sphere1->setMaterial(sphereMaterial1);
 
@@ -369,7 +374,7 @@ int main(int argc, char **argv)
    gridMaterial.setReflective(true);
    disk->setMaterial(gridMaterial);
 
-   scene.addSurface(disk);
+   //scene.addSurface(disk);
 
 
    scene.addLightSource(lightSource);
