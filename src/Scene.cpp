@@ -101,7 +101,7 @@ void Scene::render(const Camera& camera, unsigned char* outputImage){
     up            = camera.getUpVector();
     rayOrigin     = camera.getPosition();
 
-    #pragma omp parallel for
+    #pragma omp parallel for schedule(static,5)
     for( int y = 0 ; y < viewHeight; y++){
     	// how much 'up'
     	float bb = (y - norm_height) * inv_norm_height;
@@ -225,7 +225,7 @@ glm::vec4 Scene::shadeIntersection(const RayIntersection& intersection, const Ra
 			Ray reflectedRay(reflectedRayOrig, reflectedRayDir);
 
 			glm::vec4 reflectionColour = this->rayTrace(reflectedRay, camera, intersection.getMaterial().getRefractiveIndex(), depth + 1); 
-			float k = this->slickApprox(incident, intersection.getNormal(), n1, n2);
+			float k = this->fresnel(incident, intersection.getNormal(), n1, n2);
 			calculatedColour += k * reflectionColour + (1.0f - k ) * refractedColour;
 		}
 		else{
@@ -255,7 +255,7 @@ glm::vec4 Scene::shadeIntersection(const RayIntersection& intersection, const Ra
 			Ray reflectedRay(reflectedRayOrig, reflectedRayDir);
 
 			glm::vec4 reflectionColour = this->rayTrace(reflectedRay, camera, this->getAmbientRefractiveIndex(), depth + 1); 
-			float k = this->slickApprox(incident, newNormal, n1, n2);
+			float k = this->fresnel(incident, newNormal, n1, n2);
 			calculatedColour += k * reflectionColour + (1.0f - k ) * refractedColour;
 		}
 
@@ -359,27 +359,8 @@ bool Scene::findMinDistanceIntersection(const Ray& ray, RayIntersection& interse
 	return intersectionFound;
 }
 
-float Scene::slickApprox(const glm::vec3& incident, const glm::vec3& normal, float n1, float n2){
-	
-	/*
-	float rO = (n1 - n2) / (float) (n1 + n2);
-
-	// rO ^ 2
-	rO *= rO;
-
-	float cosX = -glm::dot(incident, normal);
-	if( n1 > n2){
-		float ratio = n1 / n2;
-		float sinT2 = ratio * ratio * ( 1.0f  - cosX * cosX);
-		if( sinT2 > 1.0f) return 1.0f;  // Total internal reflection
-
-		cosX = sqrtf(1.0f - sinT2);
-	}
-
-	float x = 1.0f - cosX;
-	return rO + ( 1.0f - rO) * x * x * x * x * x;
-	*/
-
+float Scene::fresnel(const glm::vec3& incident, const glm::vec3& normal, float n1, float n2){
+	// (Bram de Greve 2006)
 	float n = n1 / n2;
 	float cosI  = -glm::dot(normal, incident);
 	float sinT2 = n * n * ( 1.0f - cosI * cosI);
@@ -390,7 +371,5 @@ float Scene::slickApprox(const glm::vec3& incident, const glm::vec3& normal, flo
 	float rPar  = (n2 * cosI - n1 * cosT) / (n2 * cosI + n1 * cosT);
 
 	return ( rOrth * rOrth + rPar * rPar) / 2.0f; 
-
-
 }
 

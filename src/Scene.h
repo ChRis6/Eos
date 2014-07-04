@@ -54,7 +54,7 @@ private:
 	glm::vec4 calcPhong( const Camera& camera, const LightSource& lightSource, const RayIntersection& intersection);
 	glm::vec4 findDiffuseColor(const LightSource& lightSource, const RayIntersection& intersection);
 	glm::vec4 shadeIntersection(const RayIntersection& intersection, const Ray& ray, const Camera& camera, float sourceRefactionIndex, int depth);
-	float slickApprox(const glm::vec3& incident, const glm::vec3& normal, float n1, float n2);
+	float fresnel(const glm::vec3& incident, const glm::vec3& normal, float n1, float n2);
 
 private:
 	std::vector<Surface*> m_SurfaceObjects;
