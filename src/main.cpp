@@ -324,8 +324,8 @@ int main(int argc, char **argv)
 
    // set up scene
    Scene scene;
-   scene.setMaxTracedDepth(2);
-   scene.setAmbientRefractiveIndex(REFRACTIVE_INDEX_GLASS_PURE);
+   scene.setMaxTracedDepth(5);
+   scene.setAmbientRefractiveIndex(REFRACTIVE_INDEX_AIR);
 
    float refletionIntensity = 0.4f;
    Material sphereMaterial(0.1f, glm::vec4(1.0f, 0.0f, 0.0f, 0.0f), glm::vec4(1.0f), 40);
@@ -333,17 +333,17 @@ int main(int argc, char **argv)
    sphereMaterial.setReflectionIntensity(refletionIntensity);
    sphereMaterial.setTransparent(false);
 
-   Material sphereMaterial1(0.1f, glm::vec4(0.73331f, 0.7331f, 0.7331f, 0.0f), glm::vec4(1.0f), 40);
+   Material sphereMaterial1(0.1f, glm::vec4(0.8f, 0.8f, 0.8f, 0.0f), glm::vec4(1.0f), 40);
    sphereMaterial1.setReflective(false);
    sphereMaterial1.setTransparent(true);
-   sphereMaterial1.setRefractiveIndex(REFRACTIVE_INDEX_ICE);
+   sphereMaterial1.setRefractiveIndex(REFRACTIVE_INDEX_CROWN_GLASS_PURE);
 
-   Material gridMaterial(0.1f, glm::vec4(0.8f, 0.8f, 0.7f, 0.0f), glm::vec4(1.0f), 80);
+   Material gridMaterial(0.1f, glm::vec4(0.01f, 0.01f, 0.01f, 0.0f), glm::vec4(1.0f), 80);
    gridMaterial.setTransparent(false);
-   LightSource* lightSource  = new LightSource(glm::vec4(-200.0f, 100.0f, 0.0f, 1.0f), glm::vec4(1.0f));
-   LightSource* lightSource1 = new LightSource(glm::vec4(200.0f, 100.0f, 0.0f, 1.0f), glm::vec4(1.0f));
+   LightSource* lightSource  = new LightSource(glm::vec4(0.0f, 100.0f, 0.0f, 1.0f), glm::vec4(1.0f));
+   LightSource* lightSource1 = new LightSource(glm::vec4(200.0f, 0.0f, 100.0f, 1.0f), glm::vec4(1.0f));
 
-   Sphere* sphere = new Sphere(glm::vec3(-0.5f, 0.0f, 0.6f), 1.1f);
+   Sphere* sphere = new Sphere(glm::vec3(-10.5f, 0.0f, 0.6f), 2.1f);
    sphere->setTransformation(M);
    sphere->setMaterial(sphereMaterial);
 

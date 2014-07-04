@@ -185,17 +185,19 @@ glm::vec4 Scene::shadeIntersection(const RayIntersection& intersection, const Ra
 		}
 	}
 
-	if( intersection.getMaterial().isReflective() || intersection.getMaterial().isTransparent()){
+	// calculate reflections for the surface
+	if( intersection.getMaterial().isReflective()){
 
 		glm::vec3 reflectedRayDirection = glm::normalize(glm::reflect(ray.getDirection(), intersection.getNormal()));
 		glm::vec3 reflectedRayOrigin    = intersection.getPoint() + epsilon * reflectedRayDirection;
 
 		Ray reflectedRay(reflectedRayOrigin, reflectedRayDirection);
 
-		reflectedColour += intersection.getMaterial().getSpecularColor() * 
+		calculatedColour += intersection.getMaterial().getReflectiveIntensity() * intersection.getMaterial().getSpecularColor() * 
 		                   this->rayTrace( reflectedRay, camera, sourceRefactionIndex, depth + 1);
 	}
 
+	// is the surface transparent ? calculate refraction
 	if( intersection.getMaterial().isTransparent()){
 		
 		glm::vec3 incident = glm::normalize(ray.getDirection());
@@ -213,12 +215,18 @@ glm::vec4 Scene::shadeIntersection(const RayIntersection& intersection, const Ra
 			glm::vec3 refractedRayOrigin    = intersection.getPoint() + epsilon * refractedRayDirection;
 			Ray refractedRay(refractedRayOrigin, refractedRayDirection);
 
-			//refractedColour += this->rayTrace(refractedRay, camera, intersection.getMaterial().getRefractiveIndex(), depth + 1);
-			calculatedColour += this->rayTrace(refractedRay, camera, intersection.getMaterial().getRefractiveIndex(), depth + 1);
+			refractedColour += this->rayTrace(refractedRay, camera, intersection.getMaterial().getRefractiveIndex(), depth + 1);
+			//calculatedColour += this->rayTrace(refractedRay, camera, intersection.getMaterial().getRefractiveIndex(), depth + 1);
 			
+			// find reflection
+			glm::vec3 reflectedRayDir  = glm::normalize(glm::reflect(incident, intersection.getNormal()));
+			glm::vec3 reflectedRayOrig = intersection.getPoint() + epsilon * reflectedRayDir;
 
-			//float k = this->slickApprox(incident, intersection.getNormal(), n1, n2);
-			//calculatedColour += k * reflectedColour + (1.0f - k ) * refractedColour;
+			Ray reflectedRay(reflectedRayOrig, reflectedRayDir);
+
+			glm::vec4 reflectionColour = this->rayTrace(reflectedRay, camera, intersection.getMaterial().getRefractiveIndex(), depth + 1); 
+			float k = this->slickApprox(incident, intersection.getNormal(), n1, n2);
+			calculatedColour += k * reflectionColour + (1.0f - k ) * refractedColour;
 		}
 		else{
 			// ray is inside a primitive going out
@@ -237,30 +245,23 @@ glm::vec4 Scene::shadeIntersection(const RayIntersection& intersection, const Ra
 			glm::vec3 refractedRayOrigin    = intersection.getPoint() + epsilon * refractedRayDirection;
 			Ray refractedRay(refractedRayOrigin, refractedRayDirection);
 			
-			//refractedColour += this->rayTrace(refractedRay, camera, this->getAmbientRefractiveIndex(), depth + 1);
-			calculatedColour += this->rayTrace(refractedRay, camera, this->getAmbientRefractiveIndex(), depth + 1);
+			refractedColour += this->rayTrace(refractedRay, camera, this->getAmbientRefractiveIndex(), depth + 1);
+			//calculatedColour += this->rayTrace(refractedRay, camera, this->getAmbientRefractiveIndex(), depth + 1);
 
-			// need to find the new reflection
-			/*
-			glm::vec3 reflectedRayDirection = glm::normalize(glm::reflect(refractedRayDirection, newNormal));
-			glm::vec3 reflectedRayOrigin    = intersection.getPoint() + epsilon * reflectedRayDirection;
+			// find reflection
+			glm::vec3 reflectedRayDir  = glm::normalize(glm::reflect(incident, newNormal));
+			glm::vec3 reflectedRayOrig = intersection.getPoint() + epsilon * reflectedRayDir;
 
-			Ray reflectedRay(reflectedRayOrigin, reflectedRayDirection);
+			Ray reflectedRay(reflectedRayOrig, reflectedRayDir);
 
-			glm::vec4 newReflectedColour = intersection.getMaterial().getSpecularColor() * 
-		                   this->rayTrace( reflectedRay, camera, this->getAmbientRefractiveIndex(), depth + 1);
-
+			glm::vec4 reflectionColour = this->rayTrace(reflectedRay, camera, this->getAmbientRefractiveIndex(), depth + 1); 
 			float k = this->slickApprox(incident, newNormal, n1, n2);
-			calculatedColour += k * newReflectedColour + (1.0f - k ) * refractedColour;
-			*/
+			calculatedColour += k * reflectionColour + (1.0f - k ) * refractedColour;
 		}
 
 		//float k = this->slickApprox(ray.getDirection(), intersection.getNormal(), n1, n2);
 		//calculatedColour += k * reflectedColour + (1.0f - k ) * refractedColour;
 	}
-
-	if( intersection.getMaterial().isReflective() && !(intersection.getMaterial().isTransparent()))
-		calculatedColour += intersection.getMaterial().getReflectiveIntensity() * reflectedColour;
 
 
 	// add ambient color
