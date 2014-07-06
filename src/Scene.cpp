@@ -206,7 +206,7 @@ glm::vec4 Scene::shadeIntersection(const RayIntersection& intersection, const Ra
 		float refractionRatio;
 		if( iDOTn < 0 ){
 			//Ray is outside of the material going in
-			n1 = sourceRefactionIndex;
+			n1 = this->getAmbientRefractiveIndex();
 			n2 = intersection.getMaterial().getRefractiveIndex();
 			refractionRatio = n1 / n2;
 
@@ -219,6 +219,7 @@ glm::vec4 Scene::shadeIntersection(const RayIntersection& intersection, const Ra
 			//calculatedColour += this->rayTrace(refractedRay, camera, intersection.getMaterial().getRefractiveIndex(), depth + 1);
 			
 			// find reflection
+			/*
 			glm::vec3 reflectedRayDir  = glm::normalize(glm::reflect(incident, intersection.getNormal()));
 			glm::vec3 reflectedRayOrig = intersection.getPoint() + epsilon * reflectedRayDir;
 
@@ -227,6 +228,9 @@ glm::vec4 Scene::shadeIntersection(const RayIntersection& intersection, const Ra
 			glm::vec4 reflectionColour = this->rayTrace(reflectedRay, camera, intersection.getMaterial().getRefractiveIndex(), depth + 1); 
 			float k = this->fresnel(incident, intersection.getNormal(), n1, n2);
 			calculatedColour += k * reflectionColour + (1.0f - k ) * refractedColour;
+			std::cout << "k = " << k << std::endl;
+			*/
+			calculatedColour += refractedColour;
 		}
 		else{
 			// ray is inside a primitive going out
@@ -248,6 +252,7 @@ glm::vec4 Scene::shadeIntersection(const RayIntersection& intersection, const Ra
 			refractedColour += this->rayTrace(refractedRay, camera, this->getAmbientRefractiveIndex(), depth + 1);
 			//calculatedColour += this->rayTrace(refractedRay, camera, this->getAmbientRefractiveIndex(), depth + 1);
 
+			/*
 			// find reflection
 			glm::vec3 reflectedRayDir  = glm::normalize(glm::reflect(incident, newNormal));
 			glm::vec3 reflectedRayOrig = intersection.getPoint() + epsilon * reflectedRayDir;
@@ -257,6 +262,8 @@ glm::vec4 Scene::shadeIntersection(const RayIntersection& intersection, const Ra
 			glm::vec4 reflectionColour = this->rayTrace(reflectedRay, camera, this->getAmbientRefractiveIndex(), depth + 1); 
 			float k = this->fresnel(incident, newNormal, n1, n2);
 			calculatedColour += k * reflectionColour + (1.0f - k ) * refractedColour;
+			*/
+			calculatedColour += refractedColour;
 		}
 
 		//float k = this->slickApprox(ray.getDirection(), intersection.getNormal(), n1, n2);
