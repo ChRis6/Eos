@@ -25,6 +25,9 @@
 
 #include <glm/glm.hpp>
 
+/*
+ * Axis aligned Bounding Box
+ */
 class Box{
 
 public:
@@ -36,6 +39,8 @@ public:
 
 	glm::vec3 getMinVertex() const;
 	glm::vec3 getMaxVertex() const;
+
+	void expandToIncludeBox(const Box& newBox);
 
 private:
 	glm::vec3 m_MinVertex;

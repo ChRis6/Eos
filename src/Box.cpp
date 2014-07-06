@@ -38,3 +38,16 @@ glm::vec3 Box::getMinVertex() const{
 glm::vec3 Box::getMaxVertex() const{
 	return m_MaxVertex;
 }
+
+void Box::expandToIncludeBox(const Box& newBox){
+	glm::vec3 newBoxMinVertex = newBox.getMinVertex();
+	glm::vec3 newBoxMaxVertex = newBox.getMaxVertex();
+
+	m_MinVertex.x = glm::min(m_MinVertex.x, newBoxMinVertex.x);
+	m_MinVertex.y = glm::min(m_MinVertex.y, newBoxMinVertex.y);
+	m_MinVertex.z = glm::min(m_MinVertex.z, newBoxMinVertex.z);
+
+	m_MaxVertex.x = glm::max(m_MaxVertex.x, newBoxMaxVertex.x);
+	m_MaxVertex.y = glm::max(m_MaxVertex.y, newBoxMaxVertex.y);
+	m_MaxVertex.z = glm::max(m_MaxVertex.z, newBoxMaxVertex.z);
+}
