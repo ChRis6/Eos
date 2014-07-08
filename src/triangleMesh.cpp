@@ -238,7 +238,7 @@ bool TriangleMesh::hit(const Ray& ray, RayIntersection& intersection, float& dis
 
 	// check first for ray-box intersection
 
-	if( (this->RayBoxIntersection(ray, this->boundingBox())) == false){
+	if( (this->RayBoxIntersection(ray, this->getLocalBoundingBox())) == false){
 	//	std::cout << "BOX-RAY intersection NOT found..." << std::endl;
 		return false;
 	}
@@ -282,7 +282,7 @@ bool TriangleMesh::hit(const Ray& ray, RayIntersection& intersection, float& dis
 	return intersectionFound;
 }
 
-Box TriangleMesh::boundingBox(){
+Box TriangleMesh::getLocalBoundingBox(){
 	return Box(m_BoxMin, m_BoxMax);
 }
 

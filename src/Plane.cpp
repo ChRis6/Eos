@@ -41,6 +41,6 @@ bool Plane::hit(const Ray& ray, RayIntersection& intersection, float& distance){
 	return false;
 }
 
-Box Plane::boundingBox(){
+Box Plane::getLocalBoundingBox(){
 	return Box();
 }

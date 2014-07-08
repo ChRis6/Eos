@@ -41,7 +41,7 @@ public:
 	const glm::vec3& getPlaneNormal() const {return m_PlaneNormal;}
 
 	virtual bool hit(const Ray& ray, RayIntersection& intersection, float& distance);
-	virtual Box boundingBox();
+	virtual Box getLocalBoundingBox();
 	virtual const glm::mat4& transformation()               {return m_Transformation;}
 	virtual void setTransformation(glm::mat4 transformation){m_Transformation = transformation;}
 	virtual const Material& getMaterial()             {return m_Material;}

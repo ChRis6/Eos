@@ -91,7 +91,7 @@ bool Sphere::quadSolve(float a, float b, float c, float& t){
 
 }
 
-Box Sphere::boundingBox(){
+Box Sphere::getLocalBoundingBox(){
   return Box();
 }
 

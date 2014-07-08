@@ -35,7 +35,7 @@ public:
 	Sphere(glm::vec3 origin, float radiusSquared, Material material): m_Origin(origin), m_RadiusSquared(radiusSquared), m_Material(material)
 	      { m_LocalToWorldTransformation = glm::mat4(1.0f);}
 
-	virtual Box boundingBox(); // TODO
+	virtual Box getLocalBoundingBox(); // TODO
 	virtual const glm::mat4& transformation();
 	virtual bool hit(const Ray& ray, RayIntersection& intersection, float& distance);
 	virtual void setTransformation(glm::mat4 transformation); 
