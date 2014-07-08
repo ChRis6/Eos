@@ -20,6 +20,7 @@
  * 3. This notice may not be removed or altered from any source distribution.
  */
 
+
 #include "Box.h"
 
 
@@ -50,4 +51,61 @@ void Box::expandToIncludeBox(const Box& newBox){
 	m_MaxVertex.x = glm::max(m_MaxVertex.x, newBoxMaxVertex.x);
 	m_MaxVertex.y = glm::max(m_MaxVertex.y, newBoxMaxVertex.y);
 	m_MaxVertex.z = glm::max(m_MaxVertex.z, newBoxMaxVertex.z);
+}
+
+bool Box::intersectWithRay(const Ray& ray){
+
+
+	// lb is the corner of AABB with minimal coordinates - left bottom, rt is maximal corner
+	glm::vec3 lb = this->getMinVertex();
+	glm::vec3 rt = this->getMaxVertex();
+
+	glm::vec3 rayOrigin = ray.getOrigin();
+	glm::vec3 rayInvDirection = ray.getInvDirection();
+
+	float t1 = (lb.x - rayOrigin.x) * rayInvDirection.x;
+	float t2 = (rt.x - rayOrigin.x) * rayInvDirection.x;
+	float t3 = (lb.y - rayOrigin.y) * rayInvDirection.y;
+	float t4 = (rt.y - rayOrigin.y) * rayInvDirection.y;
+	float t5 = (lb.z - rayOrigin.z) * rayInvDirection.z;
+	float t6 = (rt.z - rayOrigin.z) * rayInvDirection.z;
+
+	float tmin = glm::max(glm::max(glm::min(t1, t2), glm::min(t3, t4)), glm::min(t5, t6));
+	float tmax = glm::min(glm::min(glm::max(t1, t2), glm::max(t3, t4)), glm::max(t5, t6));
+
+	// if tmax < 0, ray (line) is intersecting AABB, but whole AABB is behing
+	if (tmax < 0)
+	{
+    	//t = tmax;
+    	return false;
+	}
+
+	// if tmin > tmax, ray doesn't intersect AABB
+	if (tmin > tmax)
+	{
+    	//t = tmax;
+    	return false;
+	}
+
+	//t = tmin;
+	return true;
+}
+
+void Box::transformBoundingBox(const glm::mat4& transformation){
+
+	/*
+	 * Transform the axis aligned bounding box 
+	 * and create a new one AABB
+	 */
+	glm::vec4 transformedMin = transformation * glm::vec4(m_MinVertex, 1.0f);
+	glm::vec4 transformedMax = transformation * glm::vec4(m_MaxVertex, 1.0f);
+
+	m_MinVertex.x = glm::min(m_MinVertex.x, transformedMin.x);
+	m_MinVertex.y = glm::min(m_MinVertex.y, transformedMin.y);
+	m_MinVertex.z = glm::min(m_MinVertex.z, transformedMin.z);
+
+	m_MaxVertex.x = glm::max(m_MaxVertex.x, transformedMax.x);
+	m_MaxVertex.y = glm::max(m_MaxVertex.y, transformedMax.y);
+	m_MaxVertex.z = glm::max(m_MaxVertex.z, transformedMax.z);
+
 }

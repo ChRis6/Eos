@@ -24,6 +24,7 @@
 #define _BOX_H
 
 #include <glm/glm.hpp>
+#include "Ray.h"
 
 /*
  * Axis aligned Bounding Box
@@ -41,6 +42,8 @@ public:
 	glm::vec3 getMaxVertex() const;
 
 	void expandToIncludeBox(const Box& newBox);
+	bool intersectWithRay(const Ray& ray);
+	void transformBoundingBox(const glm::mat4& transformation);
 
 private:
 	glm::vec3 m_MinVertex;
