@@ -92,7 +92,19 @@ bool Sphere::quadSolve(float a, float b, float c, float& t){
 }
 
 Box Sphere::getLocalBoundingBox(){
-  return Box();
+
+  float minX,minY,minZ;
+  float maxX,maxY,maxZ;
+
+  minX = m_Origin.x - m_RadiusSquared;
+  minY = m_Origin.y - m_RadiusSquared;
+  minZ = m_Origin.z - m_RadiusSquared;
+
+  maxX = m_Origin.x + m_RadiusSquared;
+  maxY = m_Origin.y + m_RadiusSquared;
+  maxZ = m_Origin.z + m_RadiusSquared;
+
+  return Box(glm::vec3(minX, minY, minZ), glm::vec3(maxX, maxY, maxZ));
 }
 
 const glm::mat4& Sphere::transformation(){
