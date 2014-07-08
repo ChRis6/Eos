@@ -118,7 +118,7 @@ GLuint loadShader( const char* vertexShaderSrc, const  char* fragmentShaderSrc){
    glAttachShader(ProgramID, FragmentShaderID);
    glLinkProgram(ProgramID);
  
-   // Check the program
+   // Check status
    glGetProgramiv(ProgramID, GL_LINK_STATUS, &res);
    if( res == GL_FALSE ){
 
@@ -165,7 +165,7 @@ int main(int argc, char **argv)
    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-   window = glfwCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "RayTracing", NULL, NULL);
+   window = glfwCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "Eos Renderer", NULL, NULL);
    if(!window)
    {
       std::cerr << "Failed to open GLFW window...\n";
@@ -173,10 +173,10 @@ int main(int argc, char **argv)
       return -1;
    }
 
-   std::cout<< "Going to Create context\n";
+   std::cout<< "Creating context\n";
    glfwMakeContextCurrent(window);
 
-   std::cout << "Going to initialize GLEW...\n";
+   //std::cout << "Going to initialize GLEW...\n";
    glewExperimental = GL_TRUE;
    if (glewInit() != GLEW_OK)
    {
@@ -184,8 +184,13 @@ int main(int argc, char **argv)
       glfwTerminate();
       return -1;
    }
-  
-   std::cout << "Going to Create Vertex Array Object...\n";
+
+   // hide the cursor
+   glfwSetInputMode (window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);     
+
+
+
+   std::cout << "Creating Vertex Array...\n";
    GLuint vao;
    glGenVertexArrays(1, &vao);
    glBindVertexArray(vao);
@@ -285,7 +290,7 @@ int main(int argc, char **argv)
    std::cout << "tan_FOVX = " << tan_fovx << " tan_FOVY = " << tan_fovy << std::endl;
    */
 
-   glm::mat4 M = glm::translate( glm::mat4(1.0f), glm::vec3(-1.0f, 10.0f, -10.0f));
+   glm::mat4 M = glm::translate( glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -10.0f));
    
 
   
@@ -328,33 +333,58 @@ int main(int argc, char **argv)
    scene.setAmbientRefractiveIndex(REFRACTIVE_INDEX_AIR);
 
    float refletionIntensity = 0.4f;
-   Material sphereMaterial(0.1f, glm::vec4(1.0f, 0.0f, 0.0f, 0.0f), glm::vec4(1.0f), 40);
+   Material sphereMaterial(0.2f, glm::vec4(0.0f, 0.0f, 1.0f, 0.0f), glm::vec4(1.0f), 40);
    sphereMaterial.setReflective(true);
    sphereMaterial.setReflectionIntensity(refletionIntensity);
    sphereMaterial.setTransparent(false);
 
-   Material sphereMaterial1(0.1f, glm::vec4(0.8f, 0.8f, 0.8f, 0.0f), glm::vec4(1.0f), 40);
-   sphereMaterial1.setReflective(false);
-   sphereMaterial1.setTransparent(true);
+   Material sphereMaterial1(0.2f, glm::vec4(0.0f, 1.0f, 0.0f, 0.0f), glm::vec4(1.0f), 120);
+   sphereMaterial1.setReflective(true);
+   sphereMaterial1.setTransparent(false);
+   sphereMaterial1.setReflectionIntensity(refletionIntensity);
    sphereMaterial1.setRefractiveIndex(REFRACTIVE_INDEX_CROWN_GLASS_PURE);
 
-   Material gridMaterial(0.1f, glm::vec4(0.01f, 0.01f, 0.01f, 0.0f), glm::vec4(1.0f), 80);
-   gridMaterial.setTransparent(false);
-   LightSource* lightSource  = new LightSource(glm::vec4(0.0f, 100.0f, 0.0f, 1.0f), glm::vec4(1.0f));
-   LightSource* lightSource1 = new LightSource(glm::vec4(200.0f, 0.0f, 100.0f, 1.0f), glm::vec4(1.0f));
+   Material sphereMaterial2(0.2f, glm::vec4(1.0f, 0.0f, 1.0f, 0.0f), glm::vec4(1.0f), 120);
+   sphereMaterial2.setReflective(true);
+   sphereMaterial2.setTransparent(false);
+   sphereMaterial2.setReflectionIntensity(refletionIntensity);
 
-   Sphere* sphere = new Sphere(glm::vec3(-10.5f, 0.0f, 0.6f), 2.1f);
+   Material sphereMaterial3(0.2f, glm::vec4(1.0f, 0.0f, 0.0f, 0.0f), glm::vec4(1.0f), 120);
+   sphereMaterial3.setReflective(true);
+   sphereMaterial3.setTransparent(false);
+   sphereMaterial3.setReflectionIntensity(refletionIntensity);
+
+   Material gridMaterial(0.2f, glm::vec4(0.01f, 0.01f, 0.01f, 0.0f), glm::vec4(1.0f), 80);
+   gridMaterial.setTransparent(false);
+   LightSource* lightSource  = new LightSource(glm::vec4(0.0f, 0.0f, 0.0f, 1.0f), glm::vec4(1.0f));  // location , color
+   LightSource* lightSource1 = new LightSource(glm::vec4(0.0f, 50.0f, -50.0f, 1.0f), glm::vec4(1.0f));
+
+   Sphere* sphere = new Sphere(glm::vec3(0.8f, 1.65f, 0.0f), 0.7f);
    sphere->setTransformation(M);
    sphere->setMaterial(sphereMaterial);
 
    scene.addSurface(sphere);
 
-   Sphere* sphere1 = new Sphere(glm::vec3(2.0f, 0.0f, -0.3f), 1.2f);
+   Sphere* sphere1 = new Sphere(glm::vec3(0.8f, 0.0f, 0.0f), 0.7f);
    sphere1->setTransformation(M);
    sphere1->setMaterial(sphereMaterial1);
 
    scene.addSurface(sphere1);
    
+   Sphere* sphere2 = new Sphere(glm::vec3(-0.8f, 0.0f, 0.0f), 0.7f);
+   sphere2->setTransformation(M);
+   sphere2->setMaterial(sphereMaterial2);
+
+   scene.addSurface(sphere2);
+
+   Sphere* sphere3 = new Sphere(glm::vec3(-0.8f, 1.65f, 0.0f), 0.7f);
+   sphere3->setTransformation(M);
+   sphere3->setMaterial(sphereMaterial3);
+
+   scene.addSurface(sphere3);
+   
+
+
    /*
    TriangleMesh* grid = new TriangleMesh();
    glm::mat4 gridTransformation = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -1.0f, 0.0f));
