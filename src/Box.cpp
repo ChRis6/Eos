@@ -107,5 +107,14 @@ void Box::transformBoundingBox(const glm::mat4& transformation){
 	m_MaxVertex.x = glm::max(m_MaxVertex.x, transformedMax.x);
 	m_MaxVertex.y = glm::max(m_MaxVertex.y, transformedMax.y);
 	m_MaxVertex.z = glm::max(m_MaxVertex.z, transformedMax.z);
+}
+
+float Box::computeVolume(){
+
+	float width  = m_MaxVertex.x - m_MinVertex.x;
+	float height = m_MaxVertex.y - m_MinVertex.y;
+	float length = m_MaxVertex.z - m_MinVertex.z;
+
+	return width * height * length; 
 
 }

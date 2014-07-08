@@ -41,6 +41,7 @@ public:
 	glm::vec3 getMinVertex() const;
 	glm::vec3 getMaxVertex() const;
 
+	float computeVolume();
 	void expandToIncludeBox(const Box& newBox);
 	bool intersectWithRay(const Ray& ray);
 	void transformBoundingBox(const glm::mat4& transformation);
