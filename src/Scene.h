@@ -28,6 +28,7 @@
 #include "LightSource.h"
 #include "Ray.h"
 #include "Camera.h"
+#include "BVH.h"
 
 class Scene{
 
@@ -45,12 +46,18 @@ public:
 	const LightSource* getLightSource(unsigned int id) const;
 
 	void render(const Camera& camera, unsigned char* outputImage);
+	
 	void setMaxTracedDepth(int depth) { m_MaxTracedDepth = depth;}
 	int getMaxTracedDepth() const     {return m_MaxTracedDepth;}
 
+	void useBvh(bool use) { m_UsingBvh = use;}
+	bool isUsingBvh() const {return m_UsingBvh;}
+	void flush();
+
 private:
 	glm::vec4 rayTrace(const Ray& ray, const Camera& camera, float sourceRefactionIndex, int depth);
-	bool findMinDistanceIntersection(const Ray& ray, RayIntersection& intersection);
+	bool findMinDistanceIntersectionLinear(const Ray& ray, RayIntersection& intersection);
+	bool findMinDistanceIntersectionBVH(const Ray& ray, RayIntersection& intersection);
 	glm::vec4 calcPhong( const Camera& camera, const LightSource& lightSource, const RayIntersection& intersection);
 	glm::vec4 findDiffuseColor(const LightSource& lightSource, const RayIntersection& intersection);
 	glm::vec4 shadeIntersection(const RayIntersection& intersection, const Ray& ray, const Camera& camera, float sourceRefactionIndex, int depth);
@@ -61,6 +68,10 @@ private:
 	std::vector<LightSource*> m_LightSources;
 	int m_MaxTracedDepth;
 	float m_AmbientRefractiveIndex; 
+
+	// bounding volume hierarchy
+	BVH m_Bvh;
+	bool m_UsingBvh;
 };
 
 #endif

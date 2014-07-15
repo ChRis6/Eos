@@ -136,7 +136,10 @@ glm::vec4 Scene::rayTrace(const Ray& ray, const Camera& camera, float sourceRefa
 	/*
 	 * Find min distance intersection
 	 */
-	rayCollided = this->findMinDistanceIntersection(ray, intersection);
+	if(this->isUsingBvh())
+		rayCollided = this->findMinDistanceIntersectionBVH(ray, intersection); 		// use bounding volume hierarchy
+	else
+		rayCollided = this->findMinDistanceIntersectionLinear(ray, intersection);   // use linear search
 
 	/*
 	 * Apply light
@@ -171,18 +174,25 @@ glm::vec4 Scene::shadeIntersection(const RayIntersection& intersection, const Ra
 		// light source i
 		const LightSource& lightSource = *(m_LightSources[i]);
 
-
+		
 		// find the shadow ray
 		glm::vec3 shadowRayDirection = glm::normalize(glm::vec3(lightSource.getPosition()) - intersection.getPoint()); // lightPos - intersection point
 		glm::vec3 shadowRayOrigin    = intersection.getPoint() + epsilon * shadowRayDirection;
 
 		Ray shadowRay(shadowRayOrigin, shadowRayDirection);  
 		
+		bool inShadow = false;
+		if( this->isUsingBvh())
+			inShadow = this->findMinDistanceIntersectionBVH(shadowRay, dummyIntersection);
+		else
+			inShadow = this->findMinDistanceIntersectionLinear(shadowRay, dummyIntersection);
+
 		// is the point in shadow ?
-		if( this->findMinDistanceIntersection(shadowRay, dummyIntersection) == false) {
+		if( inShadow == false) {
 			// point is not in shadow.Calculate phong
 			calculatedColour += this->calcPhong(camera, lightSource, intersection);
 		}
+
 	}
 
 	// calculate reflections for the surface
@@ -321,8 +331,16 @@ glm::vec4 Scene::calcPhong( const Camera& camera, const LightSource& lightSource
 
 	return diffuseColor + specularColor;
 }
+bool Scene::findMinDistanceIntersectionBVH(const Ray& ray, RayIntersection& intersection){
 
-bool Scene::findMinDistanceIntersection(const Ray& ray, RayIntersection& intersection){
+	Surface* intersectedSurface = this->m_Bvh.intersectRay(ray, intersection);
+	if( intersectedSurface != NULL)
+		return true;
+	return false;
+
+}
+
+bool Scene::findMinDistanceIntersectionLinear(const Ray& ray, RayIntersection& intersection){
 
 	bool intersectionFound;
 	int numSurfaces;
@@ -380,3 +398,9 @@ float Scene::fresnel(const glm::vec3& incident, const glm::vec3& normal, float n
 	return ( rOrth * rOrth + rPar * rPar) / 2.0f; 
 }
 
+void Scene::flush(){
+	if(this->isUsingBvh() == true){
+		// build hierarchy
+		m_Bvh.buildHierarchy(&m_SurfaceObjects[0], this->getNumSurfaces());
+	}
+}
