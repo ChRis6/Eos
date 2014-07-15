@@ -41,6 +41,10 @@ bool Plane::hit(const Ray& ray, RayIntersection& intersection, float& distance){
 	return false;
 }
 
+glm::vec3 Plane::getCentroid(){
+	return m_PlanePoint;
+}
+
 Box Plane::getLocalBoundingBox(){
 	return Box();
 }

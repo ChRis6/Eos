@@ -24,7 +24,7 @@
 #include "sphere.h"
 
 #ifndef EPSILON
-#define EPSILON 1e-3
+#define EPSILON 1e-4
 #endif
 
 
@@ -96,15 +96,20 @@ Box Sphere::getLocalBoundingBox(){
   float minX,minY,minZ;
   float maxX,maxY,maxZ;
 
-  minX = m_Origin.x - m_RadiusSquared;
-  minY = m_Origin.y - m_RadiusSquared;
-  minZ = m_Origin.z - m_RadiusSquared;
+
+  minX = m_Origin.x - m_RadiusSquared; 
+  minY = m_Origin.y - m_RadiusSquared; 
+  minZ = m_Origin.z - m_RadiusSquared; 
 
   maxX = m_Origin.x + m_RadiusSquared;
   maxY = m_Origin.y + m_RadiusSquared;
   maxZ = m_Origin.z + m_RadiusSquared;
 
   return Box(glm::vec3(minX, minY, minZ), glm::vec3(maxX, maxY, maxZ));
+}
+
+glm::vec3 Sphere::getCentroid(){
+  return m_Origin;
 }
 
 const glm::mat4& Sphere::transformation(){

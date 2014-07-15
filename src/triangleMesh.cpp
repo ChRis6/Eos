@@ -329,3 +329,8 @@ const glm::mat4& TriangleMesh::transformation(){
 void  TriangleMesh::setTransformation(glm::mat4 transformation){
 	m_LocalToWorldTransformation = transformation;
 }
+
+glm::vec3 TriangleMesh::getCentroid(){
+	// TODO
+	return glm::vec3(0.0f);
+}

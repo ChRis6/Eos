@@ -36,6 +36,7 @@ public:
 	// implement interface methods
 	virtual bool hit(const Ray& ray, RayIntersection& intersection, float& distance);
 	virtual Box getLocalBoundingBox();
+	virtual glm::vec3 getCentroid();
 	virtual const glm::mat4& transformation();
 	virtual void setTransformation(glm::mat4 transformation);
 	virtual const Material& getMaterial();
