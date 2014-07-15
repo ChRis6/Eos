@@ -291,6 +291,7 @@ int main(int argc, char **argv)
    */
 
    glm::mat4 M = glm::translate( glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -10.0f));
+   //glm::mat4 M(1.0f);
    
 
   
@@ -331,6 +332,7 @@ int main(int argc, char **argv)
    Scene scene;
    scene.setMaxTracedDepth(5);
    scene.setAmbientRefractiveIndex(REFRACTIVE_INDEX_AIR);
+   scene.useBvh(true);
 
    float refletionIntensity = 0.4f;
    Material sphereMaterial(0.2f, glm::vec4(0.0f, 0.0f, 1.0f, 0.0f), glm::vec4(1.0f), 40);
@@ -382,6 +384,7 @@ int main(int argc, char **argv)
    sphere3->setMaterial(sphereMaterial3);
 
    scene.addSurface(sphere3);
+
    
 
 
@@ -409,6 +412,9 @@ int main(int argc, char **argv)
 
    scene.addLightSource(lightSource);
    scene.addLightSource(lightSource1);
+
+   // flush changes
+   scene.flush();
 
    while (glfwGetKey(window, GLFW_KEY_ESCAPE) != GLFW_PRESS && !glfwWindowShouldClose(window))
    {
