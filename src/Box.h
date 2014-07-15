@@ -34,16 +34,19 @@ class Box{
 public:
 	Box(): m_MinVertex(0.0f), m_MaxVertex(0.0f){}
 	Box(glm::vec3 minVertex, glm::vec3 maxVertex): m_MinVertex(minVertex), m_MaxVertex(maxVertex){}
+	Box(glm::vec3 vertex): m_MinVertex(vertex), m_MaxVertex(vertex){}
 
 	void setMinVertex(glm::vec3 min);
 	void setMaxVertex(glm::vec3 max);
 
 	glm::vec3 getMinVertex() const;
 	glm::vec3 getMaxVertex() const;
+	int getBiggestDimension() const;
 
 	float computeVolume();
 	void expandToIncludeBox(const Box& newBox);
-	bool intersectWithRay(const Ray& ray);
+	void expandToIncludeVertex(const glm::vec3& vertex);
+	bool intersectWithRay(const Ray& ray, float& distance);
 	void transformBoundingBox(const glm::mat4& transformation);
 
 private:

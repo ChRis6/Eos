@@ -53,7 +53,7 @@ void Box::expandToIncludeBox(const Box& newBox){
 	m_MaxVertex.z = glm::max(m_MaxVertex.z, newBoxMaxVertex.z);
 }
 
-bool Box::intersectWithRay(const Ray& ray){
+bool Box::intersectWithRay(const Ray& ray, float& distance){
 
 
 	// lb is the corner of AABB with minimal coordinates - left bottom, rt is maximal corner
@@ -88,8 +88,10 @@ bool Box::intersectWithRay(const Ray& ray){
 	}
 
 	//t = tmin;
+	distance = tmin;
 	return true;
 }
+
 
 void Box::transformBoundingBox(const glm::mat4& transformation){
 
@@ -116,5 +118,33 @@ float Box::computeVolume(){
 	float length = m_MaxVertex.z - m_MinVertex.z;
 
 	return width * height * length; 
+}
 
+void Box::expandToIncludeVertex(const glm::vec3& vertex){
+
+	m_MinVertex.x = glm::min(m_MinVertex.x, vertex.x);
+	m_MinVertex.y = glm::min(m_MinVertex.y, vertex.y);
+	m_MinVertex.z = glm::min(m_MinVertex.z, vertex.z);
+
+	m_MaxVertex.x = glm::max(m_MaxVertex.x, vertex.x);
+	m_MaxVertex.y = glm::max(m_MaxVertex.y, vertex.y);
+	m_MaxVertex.z = glm::max(m_MaxVertex.z, vertex.z);
+}
+
+int Box::getBiggestDimension() const{
+	int biggest;
+	float diffX,diffY,diffZ;
+
+	diffX = m_MaxVertex.x - m_MinVertex.x;
+	diffY = m_MaxVertex.y - m_MinVertex.y;
+	diffZ = m_MaxVertex.z - m_MinVertex.z;
+
+	// assume X
+	biggest = 0;
+	if(diffY > diffX) 
+		biggest = 1; // Y
+	if(diffZ > diffY)
+		biggest = 2; // Z
+
+	return biggest;
 }
