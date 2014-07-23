@@ -101,14 +101,37 @@ void Box::transformBoundingBox(const glm::mat4& transformation){
 	 */
 	glm::vec4 transformedMin = transformation * glm::vec4(m_MinVertex, 1.0f);
 	glm::vec4 transformedMax = transformation * glm::vec4(m_MaxVertex, 1.0f);
+	float newMinX,newMinY,newMinZ;
+	float newMaxX,newMaxY,newMaxZ;
 
-	m_MinVertex.x = glm::min(m_MinVertex.x, transformedMin.x);
-	m_MinVertex.y = glm::min(m_MinVertex.y, transformedMin.y);
-	m_MinVertex.z = glm::min(m_MinVertex.z, transformedMin.z);
+	newMinX = newMinY = newMinZ = 99999999.0f;
+	newMaxX = newMaxY = newMaxZ = -999999999.0f;
 
-	m_MaxVertex.x = glm::max(m_MaxVertex.x, transformedMax.x);
-	m_MaxVertex.y = glm::max(m_MaxVertex.y, transformedMax.y);
-	m_MaxVertex.z = glm::max(m_MaxVertex.z, transformedMax.z);
+	// find new min
+	newMinX = glm::min(newMinX, transformedMin.x);
+	newMinY = glm::min(newMinY, transformedMin.y);
+	newMinZ = glm::min(newMinZ, transformedMin.z);
+
+	newMinX = glm::min(newMinX, transformedMax.x);
+	newMinY = glm::min(newMinY, transformedMax.y);
+	newMinZ = glm::min(newMinZ, transformedMax.z);
+
+	// find new max
+	newMaxX = glm::max(newMaxX, transformedMax.x);
+	newMaxY = glm::max(newMaxY, transformedMax.y);
+	newMaxZ = glm::max(newMaxZ, transformedMax.z);
+
+	newMaxX = glm::max(newMaxX, transformedMin.x);
+	newMaxY = glm::max(newMaxY, transformedMin.y);
+	newMaxZ = glm::max(newMaxZ, transformedMin.z);
+
+	m_MinVertex.x = newMinX;
+	m_MinVertex.y = newMinY;
+	m_MinVertex.z = newMinZ;
+
+	m_MaxVertex.x = newMaxX;
+	m_MaxVertex.y = newMaxY;
+	m_MaxVertex.z = newMaxZ;
 }
 
 float Box::computeVolume(){

@@ -186,7 +186,9 @@ int main(int argc, char **argv)
    }
 
    // hide the cursor
-   glfwSetInputMode (window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);     
+   glfwSetInputMode (window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
+   // vsync = off
+   glfwSwapInterval(0);     
 
 
 
@@ -290,12 +292,9 @@ int main(int argc, char **argv)
    std::cout << "tan_FOVX = " << tan_fovx << " tan_FOVY = " << tan_fovy << std::endl;
    */
 
-   glm::mat4 M = glm::translate( glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -10.0f));
+   glm::mat4 M = glm::translate( glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -20.0f));
    //glm::mat4 M(1.0f);
-   
-
   
-
    // transfer pixels to texture via pixel buffer object
    glTexImage2D( GL_TEXTURE_2D, 0, GL_RGBA, WINDOW_WIDTH , WINDOW_HEIGHT, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
    // filtering

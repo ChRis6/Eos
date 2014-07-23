@@ -19,7 +19,7 @@
  *
  * 3. This notice may not be removed or altered from any source distribution.
  */
-
+#include <iostream>
 #include "BVH.h"
 
 void BVH::buildHierarchy(Surface** surfaces, int numSurfaces){
@@ -63,8 +63,10 @@ void BVH::buildTopDown(BvhNode** tree, Surface** surfaces, int numSurfaces){
 
 Box BVH::computeBoxWithSurfaces(Surface** surfaces, int numSurfaces){
 
-	Box computedBox(glm::vec3(0.0f), glm::vec3(0.0f));
-	for( int i = 0 ; i < numSurfaces; i++){
+	Box computedBox = surfaces[0]->getLocalBoundingBox();
+	computedBox.transformBoundingBox(surfaces[0]->transformation());
+
+	for( int i = 1; i < numSurfaces; i++){
 		// get the bounding box in local surface coordinates
 		Box surfaceBox = surfaces[i]->getLocalBoundingBox();
 		// transform box in world coords
@@ -72,6 +74,7 @@ Box BVH::computeBoxWithSurfaces(Surface** surfaces, int numSurfaces){
 		// expand resulting bounding box
 		computedBox.expandToIncludeBox(surfaceBox);
 	}
+
 	return computedBox;
 }
 
