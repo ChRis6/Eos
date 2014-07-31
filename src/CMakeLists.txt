@@ -1,0 +1,16 @@
+find_package(OpenMP)
+if (OPENMP_FOUND)
+    set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
+    set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+endif()
+
+find_package(GLEW REQUIRED)
+find_package(CUDA REQUIRED)
+include_directories(${GLEW_INLUDE_PATH})
+
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+FILE(GLOB CodeSources *.cpp *cu)
+include_directories(${Eos_SOURCE_DIR}/glfw-3.0.4/include)
+set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS};-x cu -arch=sm_20)
+cuda_add_executable(Eos ${CodeSources})
+target_link_libraries(Eos glfw ${GLFW_LIBRARIES} ${GLEW_LIBRARY})
