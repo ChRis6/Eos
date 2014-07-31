@@ -20,7 +20,7 @@
 #include "Ray.h"
 #include "sphere.h"
 #include "RayIntersection.h"
-#include "triangleMesh.h"
+//#include "triangleMesh.h"
 #include "Camera.h"
 #include "Scene.h"
 #include "LightSource.h"
