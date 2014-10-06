@@ -6,11 +6,18 @@ endif()
 
 find_package(GLEW REQUIRED)
 find_package(CUDA REQUIRED)
+find_package(ASSIMP REQUIRED)
 include_directories(${GLEW_INLUDE_PATH})
+include_directories(${ASSIMP_INCLUDE_DIR})
+
+SET(CUDA_SEPARABLE_COMPILATION ON)
+set(BUILD_SHARED_LIBS OFF)
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
-FILE(GLOB CodeSources *.cpp *cu)
+FILE(GLOB CPPSources *.cpp)
+FILE(GLOB CUSources *.cu)
+
 include_directories(${Eos_SOURCE_DIR}/glfw-3.0.4/include)
 set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS}; -O3 -arch=sm_20)
-cuda_add_executable(Eos ${CodeSources})
-target_link_libraries(Eos glfw ${GLFW_LIBRARIES} ${GLEW_LIBRARY})
+cuda_add_executable(Eos ${CPPSources} ${CUSources})
+target_link_libraries(Eos glfw ${GLFW_LIBRARIES} ${GLEW_LIBRARY} ${ASSIMP_LIBRARIES})
