@@ -36,9 +36,9 @@ void RayIntersection::setPoint(glm::vec3 point) {
 void RayIntersection::setNormal(glm::vec3 normal){
 	m_Normal = normal;
 }
-void RayIntersection::setMaterial(const Material& material){
+void RayIntersection::setMaterial(Material& material){
 	m_Material = material;
 }
-const Material& RayIntersection::getMaterial() const{
+Material& RayIntersection::getMaterial(){
 	return m_Material;
 }

@@ -20,25 +20,25 @@
  * 3. This notice may not be removed or altered from any source distribution.
  */
 
- #include "Ray.h"
+#include "Ray.h"
 
-void Ray::setOrigin(glm::vec3 origin){
+DEVICE HOST void Ray::setOrigin(glm::vec3 origin){
 	m_Origin = origin;
 }
 
-void Ray::setDirection(glm::vec3 direction) {
+DEVICE HOST void Ray::setDirection(glm::vec3 direction) {
 	m_Direction = direction;
 	m_InvDirection = glm::vec3( 1.0f/ direction.x, 1.0f/direction.y, 1.0/direction.z); 
 }
 
-glm::vec3 Ray::getOrigin() const{
+DEVICE HOST glm::vec3 Ray::getOrigin() const{
 	return m_Origin;
 }
 
-glm::vec3 Ray::getDirection() const{
+DEVICE HOST glm::vec3 Ray::getDirection() const{
 	return m_Direction;
 }
 
-glm::vec3 Ray::getInvDirection() const{
+DEVICE HOST glm::vec3 Ray::getInvDirection() const{
 	return m_InvDirection;
 }

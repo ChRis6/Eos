@@ -37,11 +37,11 @@ public:
 
 	void setPoint(glm::vec3 point);
 	void setNormal(glm::vec3 normal);
-	void setMaterial(const Material& material);
+	void setMaterial(Material& material);
 
 	glm::vec3 getPoint() const;
 	glm::vec3 getNormal() const;
-	const Material& getMaterial()const;
+	Material& getMaterial();
 
 private:
 	glm::vec3 m_Point;

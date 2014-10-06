@@ -116,6 +116,6 @@ const glm::mat4& Sphere::transformation(){
   return m_LocalToWorldTransformation;
 }
 
-void Sphere::setTransformation(glm::mat4 transformation){
+void Sphere::setTransformation(glm::mat4& transformation){
   m_LocalToWorldTransformation = transformation;
 }

@@ -27,6 +27,7 @@
 #include "Material.h"
 #include "Plane.h"
 #include "Disk.h"
+#include "cudaWrapper.h"
 
 #define WINDOW_WIDTH   640  // in pixels
 #define WINDOW_HEIGHT  480  // in pixels
@@ -152,6 +153,8 @@ GLuint loadShader( const char* vertexShaderSrc, const  char* fragmentShaderSrc){
 
 int main(int argc, char **argv)
 {
+   printHelloGPU();
+
    GLFWwindow* window;
    glfwSetErrorCallback(glfwErrorCallback);
 
@@ -396,6 +399,7 @@ int main(int argc, char **argv)
 
    scene.addSurface(grid);
    */
+   /*
    float diskRadiusSquared = 2.0f;
    glm::vec3 diskPlanePoint(0.0f, -1.0f, 0.0f);
    glm::vec3 diskNormal(0.0f, 1.0f, 0.0f);
@@ -406,6 +410,7 @@ int main(int argc, char **argv)
    gridMaterial.setReflective(true);
    disk->setMaterial(gridMaterial);
 
+ */
    //scene.addSurface(disk);
 
 

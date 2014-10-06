@@ -58,9 +58,9 @@ private:
 	glm::vec4 rayTrace(const Ray& ray, const Camera& camera, float sourceRefactionIndex, int depth);
 	bool findMinDistanceIntersectionLinear(const Ray& ray, RayIntersection& intersection);
 	bool findMinDistanceIntersectionBVH(const Ray& ray, RayIntersection& intersection);
-	glm::vec4 calcPhong( const Camera& camera, const LightSource& lightSource, const RayIntersection& intersection);
-	glm::vec4 findDiffuseColor(const LightSource& lightSource, const RayIntersection& intersection);
-	glm::vec4 shadeIntersection(const RayIntersection& intersection, const Ray& ray, const Camera& camera, float sourceRefactionIndex, int depth);
+	glm::vec4 calcPhong( const Camera& camera, const LightSource& lightSource, RayIntersection& intersection);
+	glm::vec4 findDiffuseColor(const LightSource& lightSource, RayIntersection& intersection);
+	glm::vec4 shadeIntersection(RayIntersection& intersection, const Ray& ray, const Camera& camera, float sourceRefactionIndex, int depth);
 	float fresnel(const glm::vec3& incident, const glm::vec3& normal, float n1, float n2);
 
 private:

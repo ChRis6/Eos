@@ -158,7 +158,7 @@ glm::vec4 Scene::rayTrace(const Ray& ray, const Camera& camera, float sourceRefa
 	return glm::vec4(1.0f);
 }
 
-glm::vec4 Scene::shadeIntersection(const RayIntersection& intersection, const Ray& ray, const Camera& camera, float sourceRefactionIndex, int depth){
+glm::vec4 Scene::shadeIntersection(RayIntersection& intersection, const Ray& ray, const Camera& camera, float sourceRefactionIndex, int depth){
 
 	int numLights;
 	const float epsilon = 1e-3f;
@@ -287,7 +287,7 @@ glm::vec4 Scene::shadeIntersection(const RayIntersection& intersection, const Ra
 
 }
 
-glm::vec4 Scene::findDiffuseColor(const LightSource& lightSource, const RayIntersection& intersection){
+glm::vec4 Scene::findDiffuseColor(const LightSource& lightSource, RayIntersection& intersection){
 
 	glm::vec4 diffuseColor;
 	glm::vec4 intersectionToLight;
@@ -304,7 +304,7 @@ glm::vec4 Scene::findDiffuseColor(const LightSource& lightSource, const RayInter
 	return glm::vec4(0.0f);
 }
 
-glm::vec4 Scene::calcPhong( const Camera& camera, const LightSource& lightSource, const RayIntersection& intersection){
+glm::vec4 Scene::calcPhong( const Camera& camera, const LightSource& lightSource, RayIntersection& intersection){
 
 
 	glm::vec4 diffuseColor(0.0f, 0.0f, 0.0f, 0.0f);

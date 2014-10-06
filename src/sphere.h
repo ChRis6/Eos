@@ -39,10 +39,10 @@ public:
 	virtual glm::vec3 getCentroid();
 	virtual const glm::mat4& transformation();
 	virtual bool hit(const Ray& ray, RayIntersection& intersection, float& distance);
-	virtual void setTransformation(glm::mat4 transformation); 
+	virtual void setTransformation(glm::mat4& transformation); 
 
-	virtual const Material& getMaterial(){return m_Material;}
-	virtual void setMaterial(const Material& material){m_Material = material;}
+	virtual Material& getMaterial(){return m_Material;}
+	virtual void setMaterial(Material& material){m_Material = material;}
 
 private:
 	bool quadSolve(float a, float b, float c, float& t);

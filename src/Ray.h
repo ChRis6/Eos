@@ -23,23 +23,23 @@
 #ifndef _RAY_H
 #define _RAY_H
 
-
 #include <glm/glm.hpp>
+#include "cudaWrapper.h"
 
 class Ray{
 
 public:
-	Ray(glm::vec3 origin, glm::vec3 direction): m_Origin(origin), m_Direction(direction)
+	DEVICE HOST Ray(glm::vec3 origin, glm::vec3 direction): m_Origin(origin), m_Direction(direction)
 	{
 		m_InvDirection = glm::vec3( 1.0 / direction.x, 1.0/ direction.y, 1.0/direction.z);
 	}
-	
-	void setOrigin(glm::vec3 origin);
-	void setDirection(glm::vec3 direction);
 
-	glm::vec3 getOrigin() const;
-	glm::vec3 getDirection() const;
-	glm::vec3 getInvDirection() const;
+	DEVICE HOST void setOrigin(glm::vec3 origin);
+	DEVICE HOST void setDirection(glm::vec3 direction);
+
+	DEVICE HOST glm::vec3 getOrigin() const;
+	DEVICE HOST glm::vec3 getDirection() const;
+	DEVICE HOST glm::vec3 getInvDirection() const;
 
 private:
 	glm::vec3 m_Origin;

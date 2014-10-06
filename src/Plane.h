@@ -44,9 +44,9 @@ public:
 	virtual Box getLocalBoundingBox();
 	virtual glm::vec3 getCentroid();
 	virtual const glm::mat4& transformation()               {return m_Transformation;}
-	virtual void setTransformation(glm::mat4 transformation){m_Transformation = transformation;}
-	virtual const Material& getMaterial()             {return m_Material;}
-	virtual void setMaterial(const Material& material){m_Material = material;}   
+	virtual void setTransformation(glm::mat4& transformation){m_Transformation = transformation;}
+	virtual  Material& getMaterial()             {return m_Material;}
+	virtual void setMaterial(Material& material){m_Material = material;}   
 
 private:
 	glm::vec3 m_PlanePoint;
