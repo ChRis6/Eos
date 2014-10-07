@@ -35,17 +35,22 @@ bool Scene::addSurface(Surface* surface){
 bool Scene::addTriangleMesh(TriangleMesh* mesh){
 	int i;
 	int numTriangleSurfaces;
+	int sceneNumObjects;
 
 	if(!mesh)
 		return false;
 
 	numTriangleSurfaces = mesh->getNumTriangles();
+	sceneNumObjects = this->getNumSurfaces();
 
 	for( i = 0 ; i < numTriangleSurfaces; i++){
 		Triangle* tri = mesh->getTriangle(i);
 		if(tri != NULL)
 			m_SurfaceObjects.push_back(tri);
 	}
+	mesh->setSceneStartIndex(sceneNumObjects);
+	mesh->setSceneEndIndex(this->getNumSurfaces() - sceneNumObjects);
+	
 	return true;
 }
 

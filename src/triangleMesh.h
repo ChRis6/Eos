@@ -43,7 +43,7 @@ public:
 	unsigned int getNumTriangles(){ return m_NumTriangles;}
 	Triangle* getTriangle(int index);
 	void setSceneStartIndex(int start){m_SceneIndexStart = start;}
-	void setSceneEndInedx(int end){m_SceneIndexEnd = end;}
+	void setSceneEndIndex(int end){m_SceneIndexEnd = end;}
 
 private:
 	bool RayTriangleIntersection(glm::vec3 v1, glm::vec3 v2, glm::vec3 v3, const Ray& ray, glm::vec3& barycetricCoords);
