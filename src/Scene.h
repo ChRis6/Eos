@@ -29,12 +29,14 @@
 #include "Ray.h"
 #include "Camera.h"
 #include "BVH.h"
+#include "triangleMesh.h"
 
 class Scene{
 
 public:
 
-	bool addSurface(Surface* surface);			
+	bool addSurface(Surface* surface);
+	bool addTriangleMesh(TriangleMesh* mesh);			
 	bool addLightSource(LightSource* light);   
 	int getNumSurfaces() const;
 	int getNumLightSources() const;

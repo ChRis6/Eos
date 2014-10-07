@@ -30,7 +30,25 @@ bool Scene::addSurface(Surface* surface){
 		return true;
 	}
 	return false;
-}			
+}
+
+bool Scene::addTriangleMesh(TriangleMesh* mesh){
+	int i;
+	int numTriangleSurfaces;
+
+	if(!mesh)
+		return false;
+
+	numTriangleSurfaces = mesh->getNumTriangles();
+
+	for( i = 0 ; i < numTriangleSurfaces; i++){
+		Triangle* tri = mesh->getTriangle(i);
+		if(tri != NULL)
+			m_SurfaceObjects.push_back(tri);
+	}
+	return true;
+}
+
 bool Scene::addLightSource(LightSource* light){
 	if( light != NULL){
 		m_LightSources.push_back(light);
