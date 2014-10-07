@@ -153,8 +153,9 @@ GLuint loadShader( const char* vertexShaderSrc, const  char* fragmentShaderSrc){
 
 int main(int argc, char **argv)
 {
-   printHelloGPU();
-
+   
+   
+   bool shouldRender = true;
    GLFWwindow* window;
    glfwSetErrorCallback(glfwErrorCallback);
 
@@ -358,10 +359,11 @@ int main(int argc, char **argv)
    sphereMaterial3.setTransparent(false);
    sphereMaterial3.setReflectionIntensity(refletionIntensity);
 
-   Material gridMaterial(0.2f, glm::vec4(0.01f, 0.01f, 0.01f, 0.0f), glm::vec4(1.0f), 80);
+   Material gridMaterial(0.2f, glm::vec4(0.75f, 0.75f, 0.69f, 0.0f), glm::vec4(1.0f), 80);
    gridMaterial.setTransparent(false);
-   LightSource* lightSource  = new LightSource(glm::vec4(0.0f, 0.0f, 0.0f, 1.0f), glm::vec4(1.0f));  // location , color
-   LightSource* lightSource1 = new LightSource(glm::vec4(0.0f, 50.0f, -50.0f, 1.0f), glm::vec4(1.0f));
+   LightSource* lightSource  = new LightSource(glm::vec4(0.0f, 20.0f, -20.0f, 1.0f), glm::vec4(1.0f));  // location , color
+   LightSource* lightSource1 = new LightSource(glm::vec4(10.0f, -20.0f, 40.0f, 1.0f), glm::vec4(1.0f));
+   LightSource* lightSource2 = new LightSource(glm::vec4(-30.0f, 0.0f, 0.0f, 1.0f), glm::vec4(1.0f));
 
    Sphere* sphere = new Sphere(glm::vec3(0.8f, 1.65f, 0.0f), 0.7f);
    sphere->setTransformation(M);
@@ -390,15 +392,18 @@ int main(int argc, char **argv)
    
 
 
-   /*
-   TriangleMesh* grid = new TriangleMesh();
-   glm::mat4 gridTransformation = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -1.0f, 0.0f));
-   grid->loadFromFile("triangle_grid.obj");
-   grid->setTransformation(gridTransformation);
-   grid->setMaterial(gridMaterial);
+   char* triangleMeshFileName = "monkey.obj";
+   TriangleMesh* mesh = new TriangleMesh();
+   glm::mat4 meshTransformation = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -1.0f, -5.0f));
+   
+   mesh->setTransformation(meshTransformation);
+   mesh->setMaterial(gridMaterial);
+   
+   mesh->loadFromFile(triangleMeshFileName);
+   scene.addTriangleMesh(mesh);
+   
+   std::cout << "Triangle Mesh (" << triangleMeshFileName << ") has " << mesh->getNumTriangles() << " Triangles." << std::endl;
 
-   scene.addSurface(grid);
-   */
    /*
    float diskRadiusSquared = 2.0f;
    glm::vec3 diskPlanePoint(0.0f, -1.0f, 0.0f);
@@ -416,6 +421,7 @@ int main(int argc, char **argv)
 
    scene.addLightSource(lightSource);
    scene.addLightSource(lightSource1);
+   scene.addLightSource(lightSource2);
 
    // flush changes
    scene.flush();
@@ -472,6 +478,11 @@ int main(int argc, char **argv)
          cameraPos -= rightDirection * speed * deltaTime;
       }
 
+      // Stop raytracing
+      if (glfwGetKey(window, GLFW_KEY_R ) == GLFW_PRESS){
+         shouldRender = !shouldRender;
+      }
+
 
       // update camera
       camera.setViewingDirection(viewDirection);
@@ -479,15 +490,16 @@ int main(int argc, char **argv)
       camera.setRightVector(rightDirection);
       camera.setPosition(cameraPos);
 
+
       /* Raytracing */
       scene.render(camera, imageBuffer);
-
+      
       // copy pixels to GPU buffer (async copy)
       glBufferSubData(GL_PIXEL_UNPACK_BUFFER, 0, sizeof(GLchar) * WINDOW_WIDTH * WINDOW_HEIGHT * 4, imageBuffer);
       
       // update texture data from the GL_PIXEL_UNPACK_BUFFER bounded pixel buffer object
       glTexSubImage2D(GL_TEXTURE_2D, 0, 0 , 0, WINDOW_WIDTH, WINDOW_HEIGHT, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
-
+      
 
       /* draw window sized quad */
       glDrawArrays( GL_TRIANGLES, 0, 6);
