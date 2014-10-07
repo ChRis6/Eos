@@ -25,6 +25,9 @@
 
 class Triangle: public Surface{
 
+public:
+	Triangle(glm::vec3 v1, glm::vec3 v2, glm::vec3 v3, glm::vec3 n1, glm::vec3 n2, glm::vec3 n3):
+		m_V1(v1),m_V2(v2),m_V3(v3),m_N1(n1),m_N2(n2),m_N3(n3){ m_Centroid = ( v1 + v2 + v3) / 3.0f;}
 
 public:
 	virtual bool hit(const Ray& ray, RayIntersection& intersection, float& distance);
@@ -48,6 +51,9 @@ private:
 	glm::vec3 m_N1;
 	glm::vec3 m_N2;
 	glm::vec3 m_N3;
+
+	// centroid
+	glm::vec3 m_Centroid;
 
 	Material* m_Material;
 	glm::mat4* m_LocalToWorldTransformation;

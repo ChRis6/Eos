@@ -21,6 +21,7 @@
  */
 
 #include "Triangle.h"
+#include <iostream>
 
 bool Triangle::hit(const Ray& ray, RayIntersection& intersection, float& distance){
 
@@ -40,7 +41,7 @@ bool Triangle::hit(const Ray& ray, RayIntersection& intersection, float& distanc
 		u = barCoords.y;
 		v = barCoords.z;
 		norm = glm::normalize(m_N1 * ( 1.0f - u - v) + (m_N2 * u) + (m_N3*v));
-
+		
 		intersection.setPoint(pos);
 		intersection.setNormal(norm);
 		intersection.setMaterial(this->getMaterial());
@@ -116,5 +117,5 @@ Box Triangle::getLocalBoundingBox(){
 	return triangleBox;
 }
 glm::vec3 Triangle::getCentroid(){
-	return glm::vec3(0.0f);
+	return m_Centroid;
 }
