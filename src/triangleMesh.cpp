@@ -45,33 +45,28 @@ template <class T> T MIN (const T& a, const T& b) {
 #endif
 
 TriangleMesh::TriangleMesh(){
-	m_Vertices    = 0;
-	m_Indices     = 0;
-	m_NumVertices = 0;
-	m_NumIndices  = 0;
-
-	m_BoxMin = glm::vec3(0.0f);
-	m_BoxMax = glm::vec3(0.0f);
+	m_Triangles    = 0;
+	m_NumTriangles = 0;
 	m_LocalToWorldTransformation = glm::mat4(1.0f);
-	m_Valid       = false;
+	m_SceneIndexStart = 0;
+	m_SceneIndexEnd   = 0;
+	m_Valid           = false;
 }
 
 TriangleMesh::~TriangleMesh(){
 	if(m_Valid){
-		delete m_Vertices;
-		delete m_Indices;
-		delete m_Normals;
+		delete m_Triangles;
 	}
 		
 }
 
-unsigned int TriangleMesh::getNumTriangles(){
-	return m_NumIndices / 3;
+Triangle* TriangleMesh::getTriangle(int index){
+	if( index < m_NumTriangles && m_Valid){
+		return m_Triangles[index];
+	}
+	return NULL;
 }
 
-unsigned int TriangleMesh::getNumVertices(){
-	return m_NumVertices;
-}
 
 Material& TriangleMesh::getMaterial(){
 	return m_Material;
@@ -87,6 +82,8 @@ bool TriangleMesh::loadFromFile(const char* filename){
 	float boxMinX,boxMinY,boxMinZ;
 	float boxMaxX,boxMaxY,boxMaxZ;
 
+	glm::vec3* Vertices;
+	glm::vec3* Normals;
 	const aiScene* scene = aiImportFile (filename, aiProcess_Triangulate | aiProcess_GenSmoothNormals | aiProcess_JoinIdenticalVertices); // make sure that aiFace::mNumIndices is always 3. 
 	if(!scene)
 		return false;
@@ -101,69 +98,58 @@ bool TriangleMesh::loadFromFile(const char* filename){
 	numFaces  = mesh->mNumFaces;
 
 	// allocate memory and get the vertices
-	m_Vertices    = new glm::vec3[numVertices];
-	m_Normals     = new glm::vec3[numVertices];
-	m_NumVertices = numVertices;
-
-
-	boxMinX = boxMinY = boxMinZ = 999999;
-	boxMaxX = boxMaxY = boxMaxZ = -9999999;
-
+	Vertices    = new glm::vec3[numVertices];
+	Normals     = new glm::vec3[numVertices];
+	
 
 	for( int i = 0 ; i < numVertices; i++){
 		const aiVector3D* pos = &(mesh->mVertices[i]);
 		glm::vec3 vertex(pos->x, pos->y, pos->z);
-		m_Vertices[i] = vertex;
-
-		// find bottom left box vertex
-		if( pos->x < boxMinX)
-			boxMinX = pos->x;
-
-		if( pos->y < boxMinY)
-			boxMinY = pos->y;
-
-		if( pos->z < boxMinZ)
-			boxMinZ = pos->z;
-
-		// find upper right box vertex
-		if( pos->x > boxMaxX)
-			boxMaxX = pos->x;
-
-		if( pos->y > boxMaxY)
-			boxMaxY = pos->y;
-
-		if( pos->z > boxMaxZ)
-			boxMaxZ = pos->z;
-
+		Vertices[i] = vertex;
 
 		// get vertex normal
 		const aiVector3D* norm = &(mesh->mNormals[i]);
 		glm::vec3 v_normal = glm::vec3( norm->x, norm->y, norm->z);
-		m_Normals[i] = v_normal; 
+		Normals[i] = v_normal; 
 
 	}
 
-	// set bounding box vertices
-	m_BoxMin = glm::vec3(boxMinX, boxMinY, boxMinZ);
-	m_BoxMax = glm::vec3(boxMaxX, boxMaxY, boxMaxZ);
+
 
 	// allocate memory for the indices
-	numIndices   = numFaces * 3;
-	m_NumIndices = numIndices;
-	m_Indices    = new unsigned int[numIndices];
+	//numIndices   = numFaces * 3;
+	//m_Indices    = new unsigned int[numIndices];
 
-	int k = 0;
-	for( int i = 0 ; i < numFaces; i++, k += 3){
+	m_Triangles = new Triangle*[numFaces];
+	m_NumTriangles = numFaces;
+
+	for( int i = 0 ; i < numFaces; i++){
 
 		const aiFace& face = mesh->mFaces[i];
-       
-        m_Indices[k]    = face.mIndices[0];
-        m_Indices[k+1]  = face.mIndices[1];
-        m_Indices[k+2]  = face.mIndices[2];
+       	
+       	int v1_index = face.mIndices[0];
+       	int v2_index = face.mIndices[1];
+       	int v3_index = face.mIndices[2];
+
+       	glm::vec3 v1 = Vertices[v1_index];
+       	glm::vec3 v2 = Vertices[v2_index];
+       	glm::vec3 v3 = Vertices[v3_index];
+
+       	glm::vec3 n1 = Normals[v1_index];
+       	glm::vec3 n2 = Normals[v2_index];
+       	glm::vec3 n3 = Normals[v3_index];
+
+       	Triangle* newTriangle = new Triangle(v1, v2, v3, n1, n2, n3);
+       	newTriangle->setTransformation(m_LocalToWorldTransformation);
+       	newTriangle->setMaterial(m_Material);
+
+       	m_Triangles[i] = newTriangle;
 	} 
 
 	aiReleaseImport(scene);
 	m_Valid = true;
+	delete Vertices;
+	delete Normals;
 	return true;
 }
 
@@ -210,81 +196,6 @@ bool TriangleMesh::RayTriangleIntersection(glm::vec3 v1, glm::vec3 v2, glm::vec3
 
 }
 
-bool TriangleMesh::hit(const Ray& ray, RayIntersection& intersection, float& distance){
-
-	if( this->m_Valid == false)
-		return false;
-
-
-	/* 
-	 * Find ray-triangle intersections for every triangle in the mesh
-	 * and fill 'intersection' as a result
-	 */
-
-	/*
-	 * u and v barycentric coords will be used later for texture mapping.Right now
-	 * they are used only for normals interpolation
-	 */
-
-	float u,v,t, min_t = 9999999;
-	bool collided,intersectionFound;
-	glm::vec3 norm(0.0f);
-	glm::vec3 pos(0.0f); 
-	glm::vec3 barCoords(0.0f);
-
-	unsigned int v0_index, v1_index, v2_index;
-	
-	intersectionFound = false;
-
-	// check first for ray-box intersection
-
-	if( (this->RayBoxIntersection(ray, this->getLocalBoundingBox())) == false){
-	//	std::cout << "BOX-RAY intersection NOT found..." << std::endl;
-		return false;
-	}
-	else{
-	//	std::cout << "BOX-RAY intersection Found" << std::endl;
-	}
-
-
-	// check for the rest of the mesh
-	int k = 0;
-	for ( unsigned int i = 0 ; i < m_NumIndices / 3; i++, k += 3){
-		v0_index = m_Indices[k];
-		v1_index = m_Indices[k+1];
-		v2_index = m_Indices[k+2];
-
-		glm::vec3 v0 = m_Vertices[v0_index];
-		glm::vec3 v1 = m_Vertices[v1_index];
-		glm::vec3 v2 = m_Vertices[v2_index];
-
-		collided = RayTriangleIntersection(v0, v1, v2, ray, barCoords);  // barCoords = (t_distance,u,v)
-		if(collided){
-			t = barCoords.x;
-			if( t < min_t && t > 0.0f ){
-				intersectionFound = true;
-				pos  = ray.getOrigin() + t * ray.getDirection();
-
-				// interpolate normals
-				u = barCoords.y;
-				v = barCoords.z;
-				norm = glm::normalize(v0 * ( 1.0f - u - v) + (v1 * u) + (v2*v));
-
-				min_t = t;				
-			}
-		}
-	}
-
-	intersection.setPoint(pos);
-	intersection.setNormal(norm);
-	intersection.setMaterial(m_Material);
-	distance = min_t;
-	return intersectionFound;
-}
-
-Box TriangleMesh::getLocalBoundingBox(){
-	return Box(m_BoxMin, m_BoxMax);
-}
 
 bool TriangleMesh::RayBoxIntersection(const Ray& ray, const Box& box){
 
@@ -330,7 +241,3 @@ void  TriangleMesh::setTransformation(glm::mat4& transformation){
 	m_LocalToWorldTransformation = transformation;
 }
 
-glm::vec3 TriangleMesh::getCentroid(){
-	// TODO
-	return glm::vec3(0.0f);
-}

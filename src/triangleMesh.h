@@ -24,46 +24,39 @@
 #define _TRIANGLEMESH_H
 
 #include <glm/glm.hpp>
-#include "surface.h"
+#include "Triangle.h"
 #include "Material.h"
 
-class TriangleMesh: public Surface{
+class TriangleMesh{
 
 public:
 	TriangleMesh();
 	~TriangleMesh();
-
-	// implement interface methods
-	virtual bool hit(const Ray& ray, RayIntersection& intersection, float& distance);
-	virtual Box getLocalBoundingBox();
-	virtual glm::vec3 getCentroid();
-	virtual const glm::mat4& transformation();
-	virtual void setTransformation(glm::mat4& transformation);
-	virtual Material& getMaterial();
-	virtual void setMaterial(const Material& material); 
 	   
 	bool loadFromFile(const char* filename);
 
-	unsigned int getNumTriangles();
-	unsigned int getNumVertices();
+	const glm::mat4& transformation();
+	void  setTransformation(glm::mat4& transformation);
+	Material& getMaterial();
+	void setMaterial(const Material& material);
+
+	unsigned int getNumTriangles(){ return m_NumTriangles;}
+	Triangle* getTriangle(int index);
+	void setSceneStartIndex(int start){m_SceneIndexStart = start;}
+	void setSceneEndInedx(int end){m_SceneIndexEnd = end;}
 
 private:
 	bool RayTriangleIntersection(glm::vec3 v1, glm::vec3 v2, glm::vec3 v3, const Ray& ray, glm::vec3& barycetricCoords);
 	bool RayBoxIntersection(const Ray& ray, const Box& box);
 private:
-	glm::vec3* m_Vertices;
-	glm::vec3* m_Normals;
-	unsigned int* m_Indices;
-	
-	unsigned int m_NumVertices;
-	unsigned int m_NumIndices;
 
-	glm::vec3 m_BoxMin;
-	glm::vec3 m_BoxMax;
-
+	Triangle** m_Triangles;
+	unsigned int m_NumTriangles;
 	glm::mat4 m_LocalToWorldTransformation;
-
 	Material m_Material;
+	
+	unsigned int m_SceneIndexStart;
+	unsigned int m_SceneIndexEnd;
 	bool m_Valid;
 
 	// need tangent vectors,textures,materials etc...
