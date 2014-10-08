@@ -166,8 +166,21 @@ int Box::getBiggestDimension() const{
 	biggest = 0;
 	if(diffY > diffX) 
 		biggest = 1; // Y
-	if(diffZ > diffY)
+	if(diffZ > diffY && diffZ > diffX)
 		biggest = 2; // Z
 
 	return biggest;
+}
+
+glm::vec3 Box::getBoxCentroid(){
+
+	float midX;
+	float midY;
+	float midZ;
+
+	midX = (m_MaxVertex.x - m_MinVertex.x) / 2.0f;
+	midY = (m_MaxVertex.y - m_MinVertex.y) / 2.0f;
+	midZ = (m_MaxVertex.z - m_MinVertex.z) / 2.0f;
+
+	return glm::vec3(midX, midY, midZ);
 }

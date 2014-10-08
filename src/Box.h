@@ -43,6 +43,7 @@ public:
 	glm::vec3 getMinVertex() const;
 	glm::vec3 getMaxVertex() const;
 	int getBiggestDimension() const;
+	glm::vec3 getBoxCentroid();
 
 	float computeVolume();
 	void expandToIncludeBox(const Box& newBox);

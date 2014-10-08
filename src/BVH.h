@@ -27,6 +27,7 @@
 #include "surface.h"
 #include "Ray.h"
 #include "RayIntersection.h"
+ 
 
 enum{
 	BVH_NODE,
@@ -58,7 +59,7 @@ private:
 	Box computeBoxWithSurfaces(Surface** surfaces, int numSurfaces);
 
 	void buildTopDown(BvhNode** tree, Surface** surfaces, int numSurfaces);
-	int topDownSplitIndex(Surface** surfaces, int numSurfaces);
+	int topDownSplitIndex(Surface** surfaces, int numSurfaces,Box parentBox);
 
 	Surface* intersectRecursive(const Ray& ray, BvhNode* node, float& minDistance, RayIntersection& intersection);
 	bool    intersectRayWithLocalSurface(const Ray& ray, Surface* surface, RayIntersection& intersection, float& distance);
