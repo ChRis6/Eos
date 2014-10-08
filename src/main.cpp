@@ -296,7 +296,7 @@ int main(int argc, char **argv)
    std::cout << "tan_FOVX = " << tan_fovx << " tan_FOVY = " << tan_fovy << std::endl;
    */
 
-   glm::mat4 M = glm::translate( glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -20.0f));
+   glm::mat4 M = glm::translate( glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -17.0f));
    //glm::mat4 M(1.0f);
   
    // transfer pixels to texture via pixel buffer object
@@ -309,7 +309,7 @@ int main(int argc, char **argv)
 
    Camera camera;
 
-   camera.setPosition(glm::vec3(0.0f, 0.0f,0.0f));
+   camera.setPosition(glm::vec3(0.0f, 0.0f,10.0f));
    camera.setViewingDirection(glm::vec3(0.0f,0.0f, -1.0f));
    camera.setRightVector(glm::vec3(1.0f, 0.0f, 0.0f));
    camera.setUpVector(glm::vec3(0.0f, 1.0f, 0.0f));
@@ -361,9 +361,9 @@ int main(int argc, char **argv)
 
    Material gridMaterial(0.2f, glm::vec4(0.75f, 0.75f, 0.69f, 0.0f), glm::vec4(1.0f), 80);
    gridMaterial.setTransparent(false);
-   LightSource* lightSource  = new LightSource(glm::vec4(0.0f, 20.0f, -20.0f, 1.0f), glm::vec4(1.0f));  // location , color
-   LightSource* lightSource1 = new LightSource(glm::vec4(10.0f, -20.0f, 40.0f, 1.0f), glm::vec4(1.0f));
-   LightSource* lightSource2 = new LightSource(glm::vec4(-30.0f, 0.0f, 0.0f, 1.0f), glm::vec4(1.0f));
+   LightSource* lightSource  = new LightSource(glm::vec4(0.0f, 0.0f, 40.0f, 1.0f), glm::vec4(1.0f));  // location , color
+   LightSource* lightSource1 = new LightSource(glm::vec4(-80.0f, -10.0f, 40.0f, 1.0f), glm::vec4(1.0f));
+   //LightSource* lightSource2 = new LightSource(glm::vec4(2000.0f, 0.0f, 40.0f, 1.0f), glm::vec4(1.0f));
 
    Sphere* sphere = new Sphere(glm::vec3(0.8f, 1.65f, 0.0f), 0.7f);
    sphere->setTransformation(M);
@@ -394,7 +394,7 @@ int main(int argc, char **argv)
 
    char* triangleMeshFileName = "monkey.obj";
    TriangleMesh* mesh = new TriangleMesh();
-   glm::mat4 meshTransformation = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -1.0f, -5.0f));
+   glm::mat4 meshTransformation = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -5.0f));
    
    mesh->setTransformation(meshTransformation);
    mesh->setMaterial(gridMaterial);
@@ -420,12 +420,13 @@ int main(int argc, char **argv)
 
 
    scene.addLightSource(lightSource);
-   scene.addLightSource(lightSource1);
-   scene.addLightSource(lightSource2);
+   //scene.addLightSource(lightSource1);
+   //scene.addLightSource(lightSource2);
 
    // flush changes
+   std::cout << "Constructring Scene.Building BVH..." << std::endl;
    scene.flush();
-
+   std::cout << "BVH construction completed.Scene Ready" << std::endl;
    while (glfwGetKey(window, GLFW_KEY_ESCAPE) != GLFW_PRESS && !glfwWindowShouldClose(window))
    {
       currTime = glfwGetTime();
