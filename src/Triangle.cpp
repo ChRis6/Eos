@@ -119,3 +119,7 @@ Box Triangle::getLocalBoundingBox(){
 glm::vec3 Triangle::getCentroid(){
 	return m_Centroid;
 }
+
+bool Triangle::isPointInside(glm::vec3& point){
+	return false;
+}

@@ -97,13 +97,13 @@ Box Sphere::getLocalBoundingBox(){
   float maxX,maxY,maxZ;
 
 
-  minX = m_Origin.x - m_RadiusSquared; 
-  minY = m_Origin.y - m_RadiusSquared; 
-  minZ = m_Origin.z - m_RadiusSquared; 
+  minX = m_Origin.x - m_RadiusSquared - 0.5f; 
+  minY = m_Origin.y - m_RadiusSquared - 0.5f;
+  minZ = m_Origin.z - m_RadiusSquared - 0.5f; 
 
-  maxX = m_Origin.x + m_RadiusSquared;
-  maxY = m_Origin.y + m_RadiusSquared;
-  maxZ = m_Origin.z + m_RadiusSquared;
+  maxX = m_Origin.x + m_RadiusSquared + 0.5f;
+  maxY = m_Origin.y + m_RadiusSquared + 0.5f;
+  maxZ = m_Origin.z + m_RadiusSquared + 0.5f;
 
   return Box(glm::vec3(minX, minY, minZ), glm::vec3(maxX, maxY, maxZ));
 }
@@ -118,4 +118,12 @@ const glm::mat4& Sphere::transformation(){
 
 void Sphere::setTransformation(glm::mat4& transformation){
   m_LocalToWorldTransformation = transformation;
+}
+
+bool Sphere::isPointInside(glm::vec3& point){
+  float distance = glm::length(point - m_Origin);
+  if( distance > m_RadiusSquared)
+    return false;
+
+  return true;
 }

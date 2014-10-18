@@ -21,6 +21,7 @@
  */
 
 #include "Scene.h"
+#include <stdio.h>
 #include <iostream>
  #include <omp.h>
 
@@ -124,7 +125,7 @@ void Scene::render(const Camera& camera, unsigned char* outputImage){
     up            = camera.getUpVector();
     rayOrigin     = camera.getPosition();
 
-    #pragma omp parallel for schedule(static,5)
+    #pragma omp parallel for schedule(dynamic,1)
     for( int y = 0 ; y < viewHeight; y++){
     	// how much 'up'
     	float bb = (y - norm_height) * inv_norm_height;
@@ -138,11 +139,13 @@ void Scene::render(const Camera& camera, unsigned char* outputImage){
     		Ray ray(rayOrigin,rayDirection);
     		// find color
     		glm::vec4 finalColor = this->rayTrace(ray, camera, this->getAmbientRefractiveIndex(), 0); // 0 depth
+    		finalColor = glm::clamp(finalColor, 0.0f, 1.0f);
     		// store color
     		outputImage[4 * (x + y * viewWidth)]      = floor(finalColor.x == 1.0 ? 255 : std::min(finalColor.x * 256.0, 255.0));
             outputImage[1 +  4 * (x + y * viewWidth)] = floor(finalColor.y == 1.0 ? 255 : std::min(finalColor.y * 256.0, 255.0));
             outputImage[2 +  4* (x + y * viewWidth)]  = floor(finalColor.z == 1.0 ? 255 : std::min(finalColor.z * 256.0, 255.0));
             outputImage[3 +  4* (x + y * viewWidth)]  = 0;
+            
     	}
     }
 }
@@ -190,6 +193,7 @@ glm::vec4 Scene::shadeIntersection(RayIntersection& intersection, const Ray& ray
 	RayIntersection dummyIntersection;
 	glm::vec4 reflectedColour(0.0f);
 	glm::vec4 refractedColour(0.0f);
+	glm::vec4 phongColour(0.0f);
 	float n1,n2;
 
 	numLights = this->getNumLightSources();
@@ -213,7 +217,7 @@ glm::vec4 Scene::shadeIntersection(RayIntersection& intersection, const Ray& ray
 		// is the point in shadow ?
 		if( inShadow == false) {
 			// point is not in shadow.Calculate phong
-			calculatedColour += this->calcPhong(camera, lightSource, intersection);
+			phongColour += this->calcPhong(camera, lightSource, intersection);
 		}
 
 	}
@@ -226,83 +230,65 @@ glm::vec4 Scene::shadeIntersection(RayIntersection& intersection, const Ray& ray
 
 		Ray reflectedRay(reflectedRayOrigin, reflectedRayDirection);
 
-		calculatedColour += intersection.getMaterial().getReflectiveIntensity() * intersection.getMaterial().getSpecularColor() * 
+		reflectedColour += intersection.getMaterial().getReflectiveIntensity() * intersection.getMaterial().getSpecularColor() * 
 		                   this->rayTrace( reflectedRay, camera, sourceRefactionIndex, depth + 1);
 	}
-
-	// is the surface transparent ? calculate refraction
+	// is the surface transparent ? 
 	if( intersection.getMaterial().isTransparent()){
 		
+		glm::vec3 zeroVector(0.0f);
+		float n1,n2;
 		glm::vec3 incident = glm::normalize(ray.getDirection());
-
 		float iDOTn = glm::dot(incident, intersection.getNormal());
 		float refractionRatio;
-		if( iDOTn < 0 ){
+		glm::vec4 tempReflectedColor(0.0f);
+		glm::vec4 tempRefractedColor(0.0f);
+
+		glm::vec3 newNormal = intersection.getNormal();
+
+		if( iDOTn < 0.0f ){
 			//Ray is outside of the material going in
 			n1 = this->getAmbientRefractiveIndex();
 			n2 = intersection.getMaterial().getRefractiveIndex();
-			refractionRatio = n1 / n2;
-
-			// find refraction ray
-			glm::vec3 refractedRayDirection = glm::normalize( glm::refract(incident, intersection.getNormal(), refractionRatio));
-			glm::vec3 refractedRayOrigin    = intersection.getPoint() + epsilon * refractedRayDirection;
-			Ray refractedRay(refractedRayOrigin, refractedRayDirection);
-
-			refractedColour += this->rayTrace(refractedRay, camera, intersection.getMaterial().getRefractiveIndex(), depth + 1);
-			//calculatedColour += this->rayTrace(refractedRay, camera, intersection.getMaterial().getRefractiveIndex(), depth + 1);
-			
-			// find reflection
-			/*
-			glm::vec3 reflectedRayDir  = glm::normalize(glm::reflect(incident, intersection.getNormal()));
-			glm::vec3 reflectedRayOrig = intersection.getPoint() + epsilon * reflectedRayDir;
-
-			Ray reflectedRay(reflectedRayOrig, reflectedRayDir);
-
-			glm::vec4 reflectionColour = this->rayTrace(reflectedRay, camera, intersection.getMaterial().getRefractiveIndex(), depth + 1); 
-			float k = this->fresnel(incident, intersection.getNormal(), n1, n2);
-			calculatedColour += k * reflectionColour + (1.0f - k ) * refractedColour;
-			std::cout << "k = " << k << std::endl;
-			*/
-			calculatedColour += refractedColour;
+			//std::cout << "Intersection normal unchanged" << std::endl;
 		}
 		else{
-			// ray is inside a primitive going out
+			// ray is in the material going out
 			n1 = sourceRefactionIndex;
-			/*
-			 * suppose the other side is the scene's ambient refractive index
-			 * We need find which surface owns the intersection point
-			 * and get the surface's material
-			 */
-			n2 = this->getAmbientRefractiveIndex(); 		
-			refractionRatio = n1 / n2;
-
-			// find refraction ray
-			glm::vec3 newNormal = zeroVector - intersection.getNormal();
-			glm::vec3 refractedRayDirection = glm::normalize( glm::refract(incident, newNormal, refractionRatio));
-			glm::vec3 refractedRayOrigin    = intersection.getPoint() + epsilon * refractedRayDirection;
-			Ray refractedRay(refractedRayOrigin, refractedRayDirection);
+			n2 = this->getAmbientRefractiveIndex();
 			
-			refractedColour += this->rayTrace(refractedRay, camera, this->getAmbientRefractiveIndex(), depth + 1);
-			//calculatedColour += this->rayTrace(refractedRay, camera, this->getAmbientRefractiveIndex(), depth + 1);
-
-			/*
-			// find reflection
-			glm::vec3 reflectedRayDir  = glm::normalize(glm::reflect(incident, newNormal));
-			glm::vec3 reflectedRayOrig = intersection.getPoint() + epsilon * reflectedRayDir;
-
-			Ray reflectedRay(reflectedRayOrig, reflectedRayDir);
-
-			glm::vec4 reflectionColour = this->rayTrace(reflectedRay, camera, this->getAmbientRefractiveIndex(), depth + 1); 
-			float k = this->fresnel(incident, newNormal, n1, n2);
-			calculatedColour += k * reflectionColour + (1.0f - k ) * refractedColour;
-			*/
-			calculatedColour += refractedColour;
+			// reverse normal
+			//std::cout << "Reversing Intersection normal" << std::endl;
+			newNormal = zeroVector - intersection.getNormal();
+			
 		}
+		//std::cout << " n1 = " << n1 << " n2 = " << n2 << std::endl;
+		
+		refractionRatio = n1 / n2;
+		float K = this->fresnel(incident, newNormal, n1, n2);
+		
+		glm::vec3 reflectedRayDirection = glm::normalize(glm::reflect(ray.getDirection(), newNormal));
+		glm::vec3 reflectedRayOrigin    = intersection.getPoint() + epsilon * newNormal;
 
-		//float k = this->slickApprox(ray.getDirection(), intersection.getNormal(), n1, n2);
-		//calculatedColour += k * reflectedColour + (1.0f - k ) * refractedColour;
+		Ray reflectedRay(reflectedRayOrigin, reflectedRayDirection);
+		tempReflectedColor += this->rayTrace( reflectedRay, camera, n2, depth + 1);
+
+
+		glm::vec3 refractedRayDirection = glm::refract(incident, newNormal, refractionRatio);
+		glm::vec3 refractedRayOrigin    = intersection.getPoint() + epsilon * refractedRayDirection;
+
+		//std::cout << "refracted dot normal" << glm::dot(refractedRayDirection,newNormal) << std::endl;
+
+		Ray refractedRay(refractedRayOrigin, refractedRayDirection);
+		tempRefractedColor += this->rayTrace( refractedRay, camera, n2, depth + 1);
+
+		// mix colors
+		//K = 0.0f;
+		refractedColour += K * tempReflectedColor + (1.0f - K) * tempRefractedColor;
 	}
 
+
+	calculatedColour += phongColour + reflectedColour + refractedColour;
 
 	// add ambient color
 	//calculatedColour += intersection.getMaterial().getAmbientIntensity() * intersection.getMaterial().getDiffuseColor();
@@ -420,10 +406,42 @@ float Scene::fresnel(const glm::vec3& incident, const glm::vec3& normal, float n
 
 	return ( rOrth * rOrth + rPar * rPar) / 2.0f; 
 }
+float Scene::slick(const glm::vec3& incident, const glm::vec3& normal, float n1, float n2){
+	float r0 = ( n1 - n2) / ( n1 + n2);
+	r0 *= r0;
+
+	float cosX = -glm::dot(normal,incident);
+	float cosI = cosX;
+	if( n1 > n2){
+		float n = n1 / n2;
+		float sinT2 = n * n * ( 1.0f - cosI * cosI);
+		if( sinT2 >= 1.0f) return 1.0f; // TIR
+		cosX = glm::sqrt(1.0f - sinT2);
+	} 
+	float x = 1.0f - cosX;
+	return r0 + ( 1.0f - r0) * x * x * x * x * x;
+}
 
 void Scene::flush(){
 	if(this->isUsingBvh() == true){
 		// build hierarchy
 		m_Bvh.buildHierarchy(&m_SurfaceObjects[0], this->getNumSurfaces());
 	}
+}
+
+glm::vec3 Scene::getReflectedRay(const glm::vec3& rayDir, const glm::vec3& normal){
+	float c = -glm::dot(rayDir, normal);
+	glm::vec3 reflectedDirection = rayDir + ( 2.0f * normal * c );
+	return reflectedDirection;
+}
+
+glm::vec3 Scene::getRefractedRay(const glm::vec3& rayDir, const glm::vec3& normal, float n1, float n2){
+	float c1 = -glm::dot(rayDir, normal);
+	float ratio = n1 / n2;
+	float sinT2 = ratio * ratio * (1.0f - c1 * c1);
+	if( sinT2 > 1.0f) return glm::vec3(0.0f);
+	float cosT = glm::sqrt(1.0f - sinT2);
+
+	glm::vec3 refractedDirection = ratio * rayDir + ( ratio * c1  - cosT ) * normal;
+	return refractedDirection;
 }

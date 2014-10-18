@@ -43,6 +43,7 @@ public:
 
 	virtual Material& getMaterial(){return m_Material;}
 	virtual void setMaterial(Material& material){m_Material = material;}
+	virtual bool isPointInside(glm::vec3& point);
 
 private:
 	bool quadSolve(float a, float b, float c, float& t);

@@ -36,7 +36,8 @@ public:
 	virtual const glm::mat4& transformation();
 	virtual void setTransformation(glm::mat4& transformation);
 	virtual Material& getMaterial();
-	virtual void setMaterial(Material& material); 
+	virtual void setMaterial(Material& material);
+	virtual bool isPointInside(glm::vec3& point); 
 
 private:
 	bool RayTriangleIntersection(glm::vec3 v1, glm::vec3 v2, glm::vec3 v3, const Ray& ray, glm::vec3& barycetricCoords);

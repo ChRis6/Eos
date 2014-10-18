@@ -64,6 +64,10 @@ private:
 	glm::vec4 findDiffuseColor(const LightSource& lightSource, RayIntersection& intersection);
 	glm::vec4 shadeIntersection(RayIntersection& intersection, const Ray& ray, const Camera& camera, float sourceRefactionIndex, int depth);
 	float fresnel(const glm::vec3& incident, const glm::vec3& normal, float n1, float n2);
+	float slick(const glm::vec3& incident, const glm::vec3& normal, float n1, float n2);
+
+	glm::vec3 getReflectedRay(const glm::vec3& rayDir, const glm::vec3& normal);
+	glm::vec3 getRefractedRay(const glm::vec3& rayDir, const glm::vec3& normal, float n1, float n2);
 
 private:
 	std::vector<Surface*> m_SurfaceObjects;
