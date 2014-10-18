@@ -9,6 +9,7 @@ find_package(CUDA REQUIRED)
 find_package(ASSIMP REQUIRED)
 include_directories(${GLEW_INLUDE_PATH})
 include_directories(${ASSIMP_INCLUDE_DIR})
+include_directories(glm)
 
 SET(CUDA_SEPARABLE_COMPILATION ON)
 set(BUILD_SHARED_LIBS OFF)
