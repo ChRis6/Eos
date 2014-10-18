@@ -29,11 +29,11 @@
 #include "Disk.h"
 #include "cudaWrapper.h"
 #include "getTime.h"
+#include "Texture.h"
 
 
-
-#define WINDOW_WIDTH   640  // in pixels
-#define WINDOW_HEIGHT  480  // in pixels
+#define WINDOW_WIDTH   1280  // in pixels
+#define WINDOW_HEIGHT  720  // in pixels
 #define FOV            70
 
 #ifndef EPSILON
@@ -185,6 +185,7 @@ int main(int argc, char **argv)
    
    bool renderOnce = true;
 
+
    GLuint vao;
    GLFWwindow* window;
    GLuint program;
@@ -321,7 +322,13 @@ int main(int argc, char **argv)
    float speed = 5.0f; 
    float mouseSpeed = 0.005f;
 
-   
+/*
+   Texture* earthTex = new Texture("earth.png");
+   if(!earthTex){
+      fprintf(stderr, "Texture not found\n" );
+      return -1;
+   }
+*/
 
 
    double currTime = 0.0;
@@ -335,37 +342,41 @@ int main(int argc, char **argv)
    scene.setAmbientRefractiveIndex(REFRACTIVE_INDEX_AIR);
    scene.useBvh(true);
 
+
    float refletionIntensity = 0.4f;
    Material sphereMaterial(0.075f, glm::vec4(0.0f, 0.0f, 1.0f, 0.0f), glm::vec4(1.0f), 40);
    sphereMaterial.setReflective(true);
    sphereMaterial.setReflectionIntensity(refletionIntensity);
    sphereMaterial.setTransparent(false);
    sphereMaterial.setRefractiveIndex(REFRACTIVE_INDEX_WATER);
-
+   
 
    Material sphereMaterial1(0.075f, glm::vec4(0.0f, 1.0f, 0.0f, 0.0f), glm::vec4(1.0f), 120);
    sphereMaterial1.setReflective(true);
    sphereMaterial1.setTransparent(false);
    sphereMaterial1.setReflectionIntensity(refletionIntensity);
    sphereMaterial1.setRefractiveIndex(REFRACTIVE_INDEX_WATER);
+ 
 
    Material sphereMaterial2(0.075f, glm::vec4(1.0f, 1.0f, 0.0f, 0.0f), glm::vec4(1.0f), 120);
    sphereMaterial2.setReflective(true);
    sphereMaterial2.setTransparent(false);
    sphereMaterial2.setReflectionIntensity(refletionIntensity);
+   
 
    Material sphereMaterial3(0.075f, glm::vec4(1.0f, 0.0f, 0.0f, 0.0f), glm::vec4(1.0f), 120);
    sphereMaterial3.setReflective(true);
    sphereMaterial3.setTransparent(false);
    sphereMaterial3.setReflectionIntensity(refletionIntensity);
    sphereMaterial3.setRefractiveIndex(REFRACTIVE_INDEX_WATER);
+   
 
    Material sphereMaterial4(0.075f, glm::vec4(0.5f, 0.5f, 0.5f, 1.0f), glm::vec4(1.0f), 120);
    sphereMaterial4.setReflective(true);
    sphereMaterial4.setTransparent(false);
    sphereMaterial4.setReflectionIntensity(refletionIntensity);
    sphereMaterial4.setRefractiveIndex(REFRACTIVE_INDEX_AMBER);
-
+   
 
    Material gridMaterial(0.1f, glm::vec4(0.45f, 0.45f, 0.45f, 0.0f), glm::vec4(1.0f), 80);
    gridMaterial.setTransparent(false);
@@ -381,25 +392,25 @@ int main(int argc, char **argv)
    Sphere* sphere = new Sphere(glm::vec3(0.8f, 1.65f, 0.0f), 0.7f);
    sphere->setTransformation(M);
    sphere->setMaterial(sphereMaterial);
-
+  
    scene.addSurface(sphere);
 
    Sphere* sphere1 = new Sphere(glm::vec3(0.8f, 0.0f, 0.0f), 0.7f);
    sphere1->setTransformation(M);
    sphere1->setMaterial(sphereMaterial1);
-
+   
    scene.addSurface(sphere1);
    
    Sphere* sphere2 = new Sphere(glm::vec3(-0.8f, 0.0f, 0.0f), 0.7f);
    sphere2->setTransformation(M);
    sphere2->setMaterial(sphereMaterial2);
-
+   
    scene.addSurface(sphere2);
 
    Sphere* sphere3 = new Sphere(glm::vec3(-0.8f, 1.65f, 0.0f), 0.7f);
    sphere3->setTransformation(M);
    sphere3->setMaterial(sphereMaterial3);
-
+   
    scene.addSurface(sphere3);
 
    Sphere* sphere4 = new Sphere(glm::vec3(0.0f, -10.0f, 7.0f), 4.5f);
@@ -410,7 +421,7 @@ int main(int argc, char **argv)
 
 
 
-   char* triangleMeshFileName = "head.obj";
+   char* triangleMeshFileName = "bunny.obj";
    TriangleMesh* mesh = new TriangleMesh();
    glm::mat4 meshTransformation = glm::translate(glm::mat4(1.0f), glm::vec3(5.0f, 0.0f, 0.0f));
    
@@ -540,11 +551,6 @@ int main(int argc, char **argv)
 
       /* draw window sized quad */
       glDrawArrays( GL_TRIANGLES, 0, 6);
-
-      // write to image file
-      //std::cout << "Writing to file" << std::endl;
-      
-      //std::cout << "Image file ready" << std::endl;
 
       glfwSwapBuffers(window);
       fps++;
