@@ -72,6 +72,9 @@ private:
 	int topDownSplitIndexSAH(Surface** surfaces, int numSurfaces, Box& parentBox, float& splitCost);	// returns best split index, sets splitCost - cost of split index returned
 	void createLeaf(BvhNode* newNode, Surface** surfaces, int numSurfaces);
 	bool intersectRayWithLeaf(const Ray& ray, BvhNode* leaf, RayIntersection& intersection, float& distance, int& leafSurfaceIndex);
+
+
+	void buildTopDownHybrid(BvhNode** tree, Surface** surfaces, int numSurfaces);
 private:
 	BvhNode* m_Root;
 };

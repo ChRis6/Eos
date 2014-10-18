@@ -24,7 +24,8 @@
 #include <cfloat>
 #include "BVH.h"
 
-#define SURFACES_PER_LEAF 1
+#define SAH_SURFACE_CEIL  400
+#define SURFACES_PER_LEAF 4
 #define COST_TRAVERSAL    1
 #define COST_INTERSECTION 2
 
@@ -78,7 +79,7 @@ void BVH::buildHierarchy(Surface** surfaces, int numSurfaces){
 	for( int i = 0 ; i < numSurfaces; i++)
 		tempSurfaces[i] = surfaces[i];
 
-	this->buildTopDown(&m_Root, tempSurfaces, numSurfaces);
+	this->buildTopDownHybrid(&m_Root, tempSurfaces, numSurfaces);
 	delete tempSurfaces;
 }
 
@@ -431,7 +432,7 @@ int BVH::topDownSplitIndexSAH(Surface** surfaces, int numSurfaces, Box& parentBo
 	parentSurfaceArea = parentBox.computeSurfaceArea();
 	for( dim = 0 ; dim < 3; dim++){
 
-		/*
+		
 		if( dim == 0)
 			std::sort(surfaces, surfaces + numSurfaces , by_X_compareSurfaces);
 		else if( dim == 1)
@@ -439,7 +440,6 @@ int BVH::topDownSplitIndexSAH(Surface** surfaces, int numSurfaces, Box& parentBo
 		else
 			std::sort(surfaces, surfaces + numSurfaces , by_Z_compareSurfaces);
 
-		*/
 
 		for(i = 0; i < numSurfaces-1; i++){
 			nl = i + 1;
@@ -466,4 +466,51 @@ int BVH::topDownSplitIndexSAH(Surface** surfaces, int numSurfaces, Box& parentBo
 
 	splitCost = minCost;
 	return minCostSplit;
+}
+
+void BVH::buildTopDownHybrid(BvhNode** tree, Surface** surfaces, int numSurfaces){
+
+	int splitIndex;
+	float costSplit;
+	BvhNode* node = new BvhNode;
+	*tree = node;
+
+	node->aabb = this->computeBoxWithSurfaces(surfaces, numSurfaces);
+	node->numSurfacesEncapulated = numSurfaces;
+
+	if( numSurfaces > SAH_SURFACE_CEIL ){
+
+		// is it a leaf ? Only one surface per leaf 
+		if( numSurfaces <= SURFACES_PER_LEAF ){
+			createLeaf(node, surfaces, numSurfaces);
+		}
+		else{
+			node->tracedObject = NULL;
+			node->tracedObjectArray = NULL;
+			node->type = BVH_NODE;
+			splitIndex = this->topDownSplitIndex(surfaces, numSurfaces, node->aabb);
+
+			// recursion
+			buildTopDownHybrid( &(node->leftChild), &surfaces[0], splitIndex);
+			buildTopDownHybrid( &(node->rightChild),&surfaces[splitIndex], numSurfaces - splitIndex);
+		}
+	}
+	else{
+		// use SAH
+
+		splitIndex = topDownSplitIndexSAH(surfaces, numSurfaces, node->aabb, costSplit);
+		if( costSplit > node->numSurfacesEncapulated * COST_INTERSECTION){
+			// create leaf.It's cheaper to intersect all surfaces than to make a split
+			createLeaf(node, surfaces, numSurfaces);
+		}
+		else{
+			node->type = BVH_NODE;
+			node->tracedObject = NULL;
+			node->tracedObjectArray = NULL;
+
+			// recursion
+			buildTopDownHybrid(&(node->leftChild), &surfaces[0], splitIndex);
+			buildTopDownHybrid(&(node->rightChild),&surfaces[splitIndex], numSurfaces - splitIndex);
+		}
+	}
 }
