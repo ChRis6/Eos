@@ -46,6 +46,8 @@ bool Sphere::hit(const Ray& ray, RayIntersection& intersection, float& distance)
 
     if(collision){
     	// set intersection point and normal
+
+    
     	intersection.setPoint(ray.getOrigin() + t * ray.getDirection());
     	intersection.setNormal(glm::normalize(intersection.getPoint() - m_Origin));
       intersection.setMaterial(m_Material);

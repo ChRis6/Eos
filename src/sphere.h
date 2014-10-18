@@ -26,6 +26,7 @@
 #include <glm/glm.hpp>
 #include "surface.h"
 #include "Material.h"
+#include "Texture.h"
 
 class Sphere: public Surface{
 
@@ -34,6 +35,7 @@ public:
 	Sphere(glm::vec3 origin, float radiusSquared): m_Origin(origin), m_RadiusSquared(radiusSquared){ m_LocalToWorldTransformation = glm::mat4(1.0f);}
 	Sphere(glm::vec3 origin, float radiusSquared, Material material): m_Origin(origin), m_RadiusSquared(radiusSquared), m_Material(material)
 	      { m_LocalToWorldTransformation = glm::mat4(1.0f);}
+	
 
 	virtual Box getLocalBoundingBox();
 	virtual glm::vec3 getCentroid();
@@ -55,6 +57,7 @@ private:
 
 	glm::mat4 m_LocalToWorldTransformation;
 	Material  m_Material;
+	
 };
 
 
