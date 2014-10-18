@@ -41,6 +41,7 @@ typedef struct bvhNode_t{
 	struct bvhNode_t *rightChild;
 	struct bvhNode_t *leftChild;
 	Surface* tracedObject;
+	Surface** tracedObjectArray;
 }BvhNode;
 
 /*
@@ -51,9 +52,10 @@ class BVH{
 public:
 	BVH():m_Root(0){}
 
-	void buildHierarchy(Surface** surfaces, int numSurfaces);
-	BvhNode* getRoot() const { return m_Root;}
-	Surface* intersectRay(const Ray& ray, RayIntersection& intersectionFound);
+	void buildHierarchy(Surface** surfaces, int numSurfaces);					// builds BVH tree
+	BvhNode* getRoot() const { return m_Root;}									// return Root of tree
+	Surface* intersectRay(const Ray& ray, RayIntersection& intersectionFound);	// Return Intesected Surface with Ray
+	Surface* pointInsideSurface(glm::vec3& point);								// return surface that has point
 
 private:
 	Box computeBoxWithSurfaces(Surface** surfaces, int numSurfaces);
@@ -62,7 +64,14 @@ private:
 	int topDownSplitIndex(Surface** surfaces, int numSurfaces,Box parentBox);
 
 	Surface* intersectRecursive(const Ray& ray, BvhNode* node, float& minDistance, RayIntersection& intersection);
+	Surface* isPointInsideSurfaceRecursive(BvhNode* node, glm::vec3& point);
 	bool    intersectRayWithLocalSurface(const Ray& ray, Surface* surface, RayIntersection& intersection, float& distance);
+
+	// SAH
+	void buildTopDownSAH(BvhNode** tree, Surface** surfaces, int numSurfaces);
+	int topDownSplitIndexSAH(Surface** surfaces, int numSurfaces, Box& parentBox, float& splitCost);	// returns best split index, sets splitCost - cost of split index returned
+	void createLeaf(BvhNode* newNode, Surface** surfaces, int numSurfaces);
+	bool intersectRayWithLeaf(const Ray& ray, BvhNode* leaf, RayIntersection& intersection, float& distance, int& leafSurfaceIndex);
 private:
 	BvhNode* m_Root;
 };

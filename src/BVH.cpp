@@ -21,7 +21,13 @@
  */
 #include <iostream>
 #include <algorithm>
+#include <cfloat>
 #include "BVH.h"
+
+#define SURFACES_PER_LEAF 1
+#define COST_TRAVERSAL    1
+#define COST_INTERSECTION 2
+
 
 bool by_X_compareSurfaces(Surface* a, Surface* b){
 	
@@ -86,15 +92,19 @@ void BVH::buildTopDown(BvhNode** tree, Surface** surfaces, int numSurfaces){
 	node->numSurfacesEncapulated = numSurfaces;
 
 	// is it a leaf ? Only one surface per leaf 
-	if( numSurfaces <= 1 ){
+	if( numSurfaces <= SURFACES_PER_LEAF ){
+		/*
 		node->type = BVH_LEAF;
 		node->leftChild = NULL;
 		node->rightChild = NULL;
 		node->tracedObject = surfaces[0]; 	// get the first surface
+		*/
+		createLeaf(node, surfaces, numSurfaces);
 	}
 	else{
 
 		node->tracedObject = NULL;
+		node->tracedObjectArray = NULL;
 		node->type = BVH_NODE;
 		int splitIndex = this->topDownSplitIndex(surfaces, numSurfaces, node->aabb);
 
@@ -125,12 +135,18 @@ int BVH::topDownSplitIndex(Surface** surfaces, int numSurfaces, Box parentBox){
 
 	int split = 0;
 	int biggestIndex;
-	int biggestDimension;
 	int i;
 	float midAxisCoord;
+	Box centroidsBox;
+
+	for( i = 0 ; i < numSurfaces; i++){
+		glm::vec4 surfaceCentroidWorldCoords = surfaces[i]->transformation() * glm::vec4(surfaces[i]->getCentroid(), 1.0f);
+		glm::vec3 surfaceCentroid = glm::vec3(surfaceCentroidWorldCoords.x, surfaceCentroidWorldCoords.y, surfaceCentroidWorldCoords.z);
+		centroidsBox.expandToIncludeVertex(surfaceCentroid);
+	}
 	
-	glm::vec3 boxCentroid = parentBox.getBoxCentroid();
-	biggestDimension = parentBox.getBiggestDimension();
+
+	biggestIndex = centroidsBox.getBiggestDimension();
 
 	/*
 	biggestIndex = 0;
@@ -140,7 +156,9 @@ int BVH::topDownSplitIndex(Surface** surfaces, int numSurfaces, Box parentBox){
 		biggestIndex = 2;
 	*/
 
-	midAxisCoord = boxCentroid[biggestIndex];
+	glm::vec3 boxMinVertex = centroidsBox.getMinVertex();
+	glm::vec3 boxMaxVertex = centroidsBox.getMaxVertex();
+	midAxisCoord = (boxMaxVertex[biggestIndex] + boxMinVertex[biggestIndex] ) * 0.5f;
 
 	// sort surfaces along axis ( in world coords)
 	if( biggestIndex == 0 )
@@ -158,7 +176,7 @@ int BVH::topDownSplitIndex(Surface** surfaces, int numSurfaces, Box parentBox){
 		//std::cout << "X = " << surfaceCentroid.x << std::endl;
 
 		if( surfaceCentroid[biggestIndex] > midAxisCoord  ){
-			//std::cout << "x = " << surfaceCentroid[biggestIndex] << "MID = " << midAxisCoord << std::endl;
+			
 			break;
 		}
 	}
@@ -167,7 +185,7 @@ int BVH::topDownSplitIndex(Surface** surfaces, int numSurfaces, Box parentBox){
 	if( split == 0 || split == numSurfaces){ // bad split ?
 		split = numSurfaces / 2;
 	}
-	//std::cout << "Split found:" << split << std::endl;
+	
 	return split;
 }
 
@@ -183,6 +201,7 @@ Surface* BVH::intersectRecursive(const Ray& ray, BvhNode* node, float& minDistan
 	
 	bool rayIntersectsBox = false;
 	float distance = 999999.0f;
+	int minSurfaceIndex;
 
 	if( node->aabb.intersectWithRay(ray, distance) == true)
 		rayIntersectsBox = true;
@@ -191,9 +210,9 @@ Surface* BVH::intersectRecursive(const Ray& ray, BvhNode* node, float& minDistan
 		// is it a leaf ?
 		if( node->type == BVH_LEAF){
 			RayIntersection dummyIntersection;
-			if( this->intersectRayWithLocalSurface( ray, node->tracedObject, dummyIntersection, minDistance)){
+			if( this->intersectRayWithLeaf( ray, node, dummyIntersection, minDistance, minSurfaceIndex)){
 				intersection = dummyIntersection;
-				return node->tracedObject;
+				return node->tracedObjectArray[minSurfaceIndex];
 			}
 			return NULL;
 		}
@@ -255,7 +274,7 @@ bool BVH::intersectRayWithLocalSurface(const Ray& ray, Surface* surface, RayInte
 		intersectionNormalWorldCoords = glm::transpose(glm::inverse(M)) * glm::vec4(possibleIntersection.getNormal(), 0.0f);
 
 		intersection.setPoint(glm::vec3(intersectionPointWorldCoords));
-		intersection.setNormal(glm::vec3(intersectionNormalWorldCoords));
+		intersection.setNormal(glm::normalize(glm::vec3(intersectionNormalWorldCoords)));
 		intersection.setMaterial(surface->getMaterial());
 		distance = distanceFromOrigin;
 		return true;
@@ -263,4 +282,188 @@ bool BVH::intersectRayWithLocalSurface(const Ray& ray, Surface* surface, RayInte
 
 	return false;
 
+}
+
+Surface* BVH::pointInsideSurface(glm::vec3& point){
+	return this->isPointInsideSurfaceRecursive(this->getRoot(), point);
+}
+
+Surface* BVH::isPointInsideSurfaceRecursive(BvhNode* node, glm::vec3& point){
+
+	Surface* leftChildSurface  = NULL;
+	Surface* rightChildSurface = NULL; 
+
+	// is point inside the current bounding box ?
+	if( node->aabb.isPointInBox(point) == false )
+		return NULL;
+
+	// point is in box
+
+	// is it a leaf ?
+	if( node->type == BVH_LEAF){
+		if( node->tracedObject->isPointInside(point) )
+			return node->tracedObject;
+		else
+			return NULL;
+	}
+	else{
+		// this isnt a surface.Traverse BVH
+		leftChildSurface  = this->isPointInsideSurfaceRecursive(node->leftChild, point);
+		if( leftChildSurface)
+			return leftChildSurface; 
+
+		rightChildSurface = this->isPointInsideSurfaceRecursive(node->rightChild, point);
+
+		if( rightChildSurface )
+			return rightChildSurface;
+
+		return NULL;
+	}
+}
+
+void BVH::createLeaf(BvhNode* newNode, Surface** surfaces, int numSurfaces){
+
+
+	Surface** leafSurfaces = new Surface*[numSurfaces];
+	for(int i = 0 ; i < numSurfaces; i++)
+		leafSurfaces[i] = surfaces[i];
+	
+	newNode->type = BVH_LEAF;
+	newNode->numSurfacesEncapulated = numSurfaces;
+	newNode->tracedObjectArray = leafSurfaces;
+	newNode->leftChild = NULL;
+	newNode->rightChild = NULL;
+}
+
+bool BVH::intersectRayWithLeaf(const Ray& ray, BvhNode* leaf, RayIntersection& intersection, float& distance, int& leafSurfaceIndex){
+
+	int i;
+	bool surfaceIntersectionFound = false;
+	float distanceFromOrigin = 9999999.0f;
+	float minDistanceFound = 99999999.0f;
+
+	RayIntersection possibleIntersection;
+	glm::vec4 intersectionPointWorldCoords;
+	glm::vec4 intersectionNormalWorldCoords;
+
+	int numSurfaces = leaf->numSurfacesEncapulated;
+	Surface** surfaces = leaf->tracedObjectArray;
+
+	for( i = 0 ; i < numSurfaces; i++){
+		
+		Surface* surface = surfaces[i];
+
+		// Transform ray to local coordinates
+		const glm::mat4& M = surface->transformation();
+		glm::vec3 localRayOrigin    = glm::vec3(glm::inverse(M) * glm::vec4(ray.getOrigin(), 1.0f));
+		glm::vec3 localRayDirection = glm::vec3(glm::inverse(M) * glm::vec4(ray.getDirection(), 0.0f)); 
+		Ray localRay(localRayOrigin, localRayDirection);
+
+		
+		if(surface->hit(localRay, possibleIntersection, distanceFromOrigin)){
+			
+			surfaceIntersectionFound  = true;
+
+			if( distanceFromOrigin < minDistanceFound ){
+				//update distance
+				minDistanceFound = distanceFromOrigin;
+			
+				intersectionPointWorldCoords  = M * glm::vec4( possibleIntersection.getPoint(), 1.0f);
+				intersectionNormalWorldCoords = glm::transpose(glm::inverse(M)) * glm::vec4(possibleIntersection.getNormal(), 0.0f);
+				
+				distance = minDistanceFound;
+				leafSurfaceIndex = i;
+			}
+
+		}
+	}
+	if(surfaceIntersectionFound){
+		intersection.setPoint(glm::vec3(intersectionPointWorldCoords));
+		intersection.setNormal(glm::normalize(glm::vec3(intersectionNormalWorldCoords)));
+		intersection.setMaterial(surfaces[leafSurfaceIndex]->getMaterial());
+	}	
+	return surfaceIntersectionFound;
+}
+
+void BVH::buildTopDownSAH(BvhNode** tree, Surface** surfaces, int numSurfaces){
+
+	int splitIndex;
+	float costSplit;
+	BvhNode* node = new BvhNode;
+	*tree = node;
+
+	node->aabb = this->computeBoxWithSurfaces(surfaces, numSurfaces);
+	node->numSurfacesEncapulated = numSurfaces;
+
+	std::cout << "Computing Split" << std::endl;
+	splitIndex = topDownSplitIndexSAH(surfaces, numSurfaces, node->aabb, costSplit);
+	std::cout << "Split Index Found: " << splitIndex << " With Cost :" << costSplit << std::endl;
+
+	if( costSplit > node->numSurfacesEncapulated * COST_INTERSECTION){
+		// create leaf.It's cheaper to intersect all surfaces than to make a split
+		createLeaf(node, surfaces, numSurfaces);
+	}
+	else{
+
+		node->type = BVH_NODE;
+		node->tracedObject = NULL;
+		node->tracedObjectArray = NULL;
+
+		// recursion
+		buildTopDownSAH(&(node->leftChild), &surfaces[0], splitIndex);
+		buildTopDownSAH(&(node->rightChild),&surfaces[splitIndex], numSurfaces - splitIndex);
+	}
+}
+
+int BVH::topDownSplitIndexSAH(Surface** surfaces, int numSurfaces, Box& parentBox, float& splitCost){
+
+	float computedCost;
+	float parentSurfaceArea;
+	float minCost = FLT_MAX;
+	int minCostSplit = 1;
+	int dim;
+	int nl,nr;	// left count children,right count children
+	int i;
+	Box leftChildBox;
+	Box rightChildBox;
+	float leftChildSurfaceArea,rightChildSurfaceArea;
+
+	parentSurfaceArea = parentBox.computeSurfaceArea();
+	for( dim = 0 ; dim < 3; dim++){
+
+		/*
+		if( dim == 0)
+			std::sort(surfaces, surfaces + numSurfaces , by_X_compareSurfaces);
+		else if( dim == 1)
+			std::sort(surfaces, surfaces + numSurfaces , by_Y_compareSurfaces);
+		else
+			std::sort(surfaces, surfaces + numSurfaces , by_Z_compareSurfaces);
+
+		*/
+
+		for(i = 0; i < numSurfaces-1; i++){
+			nl = i + 1;
+			nr = numSurfaces - nl;
+
+			leftChildBox  = this->computeBoxWithSurfaces(surfaces, nl);
+			rightChildBox = this->computeBoxWithSurfaces(surfaces + nl, nr);
+
+			leftChildSurfaceArea  = leftChildBox.computeSurfaceArea();
+			rightChildSurfaceArea = rightChildBox.computeSurfaceArea();
+
+			// SAH: C = CT + nl*CI* (S(Bl) / S(Bp)) + nr* CI * (S(Br) / S(Bp))  
+			computedCost = COST_TRAVERSAL + nl * COST_INTERSECTION * leftChildSurfaceArea / parentSurfaceArea + nr * COST_INTERSECTION * rightChildSurfaceArea / parentSurfaceArea;
+			if(computedCost < minCost){
+				minCost = computedCost;
+				minCostSplit = nl;
+			}
+
+		}
+	}
+
+	if( minCostSplit == 1)
+		splitCost = FLT_MIN;	// create leaf 
+
+	splitCost = minCost;
+	return minCostSplit;
 }

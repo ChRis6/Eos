@@ -142,6 +142,14 @@ float Box::computeVolume(){
 
 	return width * height * length; 
 }
+float Box::computeSurfaceArea(){
+
+	float width  = m_MaxVertex.x - m_MinVertex.x;
+	float height = m_MaxVertex.y - m_MinVertex.y;
+	float length = m_MaxVertex.z - m_MinVertex.z;
+
+	return 2.0f * (width * length + height * length + height * width); 
+}
 
 void Box::expandToIncludeVertex(const glm::vec3& vertex){
 
@@ -183,4 +191,13 @@ glm::vec3 Box::getBoxCentroid(){
 	midZ = (m_MaxVertex.z - m_MinVertex.z) / 2.0f;
 
 	return glm::vec3(midX, midY, midZ);
+}
+bool Box::isPointInBox(glm::vec3& point){
+
+	bool x = (point.x < m_MaxVertex.x) && (point.x > m_MinVertex.x);
+	bool y = (point.y < m_MaxVertex.y) && (point.y > m_MinVertex.y);
+	bool z = (point.z < m_MaxVertex.z) && (point.z > m_MinVertex.z);
+	if(x && y && z)
+		return true;
+	return false;
 }

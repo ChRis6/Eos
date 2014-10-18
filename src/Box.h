@@ -46,10 +46,12 @@ public:
 	glm::vec3 getBoxCentroid();
 
 	float computeVolume();
+	float computeSurfaceArea();
 	void expandToIncludeBox(const Box& newBox);
 	void expandToIncludeVertex(const glm::vec3& vertex);
 	bool intersectWithRay(const Ray& ray, float& distance);
 	void transformBoundingBox(const glm::mat4& transformation);
+	bool isPointInBox(glm::vec3& point);
 
 private:
 	glm::vec3 m_MinVertex;
