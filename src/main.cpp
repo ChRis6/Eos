@@ -28,6 +28,9 @@
 #include "Plane.h"
 #include "Disk.h"
 #include "cudaWrapper.h"
+#include "getTime.h"
+
+
 
 #define WINDOW_WIDTH   640  // in pixels
 #define WINDOW_HEIGHT  480  // in pixels
@@ -36,6 +39,31 @@
 #ifndef EPSILON
 #define EPSILON        1e-3
 #endif
+
+void write_ppm(int width, int height, unsigned char* image){
+  
+  
+  int x, y;
+  char* imagechar = (char*) image;
+  FILE *fp = fopen("raytracedScene.ppm", "wb"); 
+  fprintf(fp, "P6\n%d %d\n255\n", width, height);
+  unsigned char color[3];
+
+  for (y = height; y > 0; --y)
+  {
+    for (x = 0; x < width; ++x)
+    {
+      color[0] = imagechar[0 + 4 * (x + y * width)] ;  
+      color[1] = imagechar[1 + 4 * (x + y * width)];  
+      color[2] = imagechar[2 + 4 * (x + y * width)];
+      fwrite(color, 1, 3, fp);
+   }
+  }
+
+
+  fclose(fp);
+
+}
 
 void glfwErrorCallback(int error, const char *description)
 {
@@ -155,8 +183,15 @@ int main(int argc, char **argv)
 {
    
    
-   bool shouldRender = true;
+   bool renderOnce = true;
+
+   GLuint vao;
    GLFWwindow* window;
+   GLuint program;
+   GLuint vbo;
+   GLuint pbo;
+   GLuint texture;
+
    glfwSetErrorCallback(glfwErrorCallback);
 
    if(!glfwInit())
@@ -165,10 +200,16 @@ int main(int argc, char **argv)
       return -1;
    }
 
+
+   unsigned char* imageBuffer = new unsigned char[ WINDOW_WIDTH * WINDOW_HEIGHT * 4];
+   memset(imageBuffer, 0, sizeof(unsigned char) * 4 * WINDOW_WIDTH * WINDOW_HEIGHT);
+
+   if(!renderOnce){
    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
+   
    window = glfwCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "Eos Renderer", NULL, NULL);
    if(!window)
    {
@@ -197,13 +238,11 @@ int main(int argc, char **argv)
 
 
    std::cout << "Creating Vertex Array...\n";
-   GLuint vao;
+   
    glGenVertexArrays(1, &vao);
    glBindVertexArray(vao);
 
    // set up shaders
-   GLuint program;
-
    std::string vertexShaderSource = readShaderFromFile("shaders/simple.vs");
    std::string fragmentShaderSource = readShaderFromFile("shaders/simple.fs");
 
@@ -224,51 +263,21 @@ int main(int argc, char **argv)
                       1.0f, -1.0f, 0.0f // bottom-right 
                    };
 
-   GLuint vbo;
+   
    glGenBuffers(1, &vbo);
 
    glBindBuffer(GL_ARRAY_BUFFER, vbo);
    glBufferData(GL_ARRAY_BUFFER, sizeof(quad), quad, GL_STATIC_DRAW);   // copy to device memory
 
-   unsigned char* imageBuffer = new unsigned char[ WINDOW_WIDTH * WINDOW_HEIGHT * 4];
-   memset(imageBuffer, 0, sizeof(unsigned char) * 4 * WINDOW_WIDTH * WINDOW_HEIGHT);
 
-   GLuint pbo;
+   
    glGenBuffers(1, &pbo);
    glBindBuffer(GL_PIXEL_UNPACK_BUFFER, pbo);
    glBufferData(GL_PIXEL_UNPACK_BUFFER, sizeof(GLchar) * WINDOW_WIDTH * WINDOW_HEIGHT * 4, imageBuffer, GL_DYNAMIC_DRAW);
 
-   /*
-   int texx, texy, n;
-   int force_channels = 4;
-   unsigned char* image_data = stbi_load (argv[1], &texx, &texy, &n, force_channels);
-   if( !image_data ){
-      std::cout<< "Image no found\n";
-      glfwTerminate(); 
-   }
-
-   int width_in_bytes = texx * 4;
-   unsigned char *top = NULL;
-   unsigned char *bottom = NULL;
-   unsigned char temp = 0;
-   int half_height = texy / 2;
-
-   for (int row = 0; row < half_height; row++) {
-      top = image_data + row * width_in_bytes;
-      bottom = image_data + (texy - row - 1) * width_in_bytes;
-      for (int col = 0; col < width_in_bytes; col++) {
-         temp = *top;
-         *top = *bottom;
-         *bottom = temp;
-         top++;
-         bottom++;
-      }
-   }
-
- */
 
    // generate texture
-   GLuint texture;
+   
    glGenTextures(1, &texture);
    glActiveTexture(GL_TEXTURE0);
    glBindTexture(GL_TEXTURE_2D, texture);
@@ -279,26 +288,6 @@ int main(int argc, char **argv)
    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, NULL);
 
 
-
-   glm::vec4 sphereOrigin(0.0, 0.0, 0.0, 1.0);
-   glm::vec4 sphereColor( 0.6f , 0.6f , 0.6f, 0.0);
-
-   glm::vec4 lightPosition( 120.0f, 0.0f , 0.0f, 1.0f);
-   glm::vec4 lightColor( 1.0, 1.0, 1.0, 0.0);
-  
-  /* 
-   float fovx_rad = FOV * M_PI / (float) 180.0;
-   float fovy_rad =  FOV * M_PI / (float)180.0;
-
-   float tan_fovx = tan( fovx_rad / (float) 2);
-   float tan_fovy = tan( fovy_rad / (float) 2);
-   std::cout << "FOVX = " << fovx_rad << " FOVY = " << fovy_rad << std::endl;
-   std::cout << "tan_FOVX = " << tan_fovx << " tan_FOVY = " << tan_fovy << std::endl;
-   */
-
-   glm::mat4 M = glm::translate( glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -17.0f));
-   //glm::mat4 M(1.0f);
-  
    // transfer pixels to texture via pixel buffer object
    glTexImage2D( GL_TEXTURE_2D, 0, GL_RGBA, WINDOW_WIDTH , WINDOW_HEIGHT, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
    // filtering
@@ -306,10 +295,19 @@ int main(int argc, char **argv)
    glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
    glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
    glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+  
+   glfwSetCursorPos(window, WINDOW_WIDTH/2.0, WINDOW_HEIGHT/2.0);
+   }
+
+   
+
+   glm::mat4 M = glm::translate( glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -0.9f));
+   
+  
 
    Camera camera;
 
-   camera.setPosition(glm::vec3(0.0f, 0.0f,10.0f));
+   camera.setPosition(glm::vec3(2.0f, 0.0f,5.0f));
    camera.setViewingDirection(glm::vec3(0.0f,0.0f, -1.0f));
    camera.setRightVector(glm::vec3(1.0f, 0.0f, 0.0f));
    camera.setUpVector(glm::vec3(0.0f, 1.0f, 0.0f));
@@ -318,12 +316,12 @@ int main(int argc, char **argv)
    camera.setHeight(WINDOW_HEIGHT);
 
    float horizontalAngle = 0.0f;
-   float verticalAngle = 0.0f;
+   float verticalAngle = -45.0f;
    const float maxAbsoluteVerticalAngle = 90.0f - 0.001f;
    float speed = 5.0f; 
    float mouseSpeed = 0.005f;
 
-   glfwSetCursorPos(window, WINDOW_WIDTH/2.0, WINDOW_HEIGHT/2.0);
+   
 
 
    double currTime = 0.0;
@@ -338,31 +336,46 @@ int main(int argc, char **argv)
    scene.useBvh(true);
 
    float refletionIntensity = 0.4f;
-   Material sphereMaterial(0.2f, glm::vec4(0.0f, 0.0f, 1.0f, 0.0f), glm::vec4(1.0f), 40);
+   Material sphereMaterial(0.075f, glm::vec4(0.0f, 0.0f, 1.0f, 0.0f), glm::vec4(1.0f), 40);
    sphereMaterial.setReflective(true);
    sphereMaterial.setReflectionIntensity(refletionIntensity);
    sphereMaterial.setTransparent(false);
+   sphereMaterial.setRefractiveIndex(REFRACTIVE_INDEX_WATER);
 
-   Material sphereMaterial1(0.2f, glm::vec4(0.0f, 1.0f, 0.0f, 0.0f), glm::vec4(1.0f), 120);
+
+   Material sphereMaterial1(0.075f, glm::vec4(0.0f, 1.0f, 0.0f, 0.0f), glm::vec4(1.0f), 120);
    sphereMaterial1.setReflective(true);
    sphereMaterial1.setTransparent(false);
    sphereMaterial1.setReflectionIntensity(refletionIntensity);
-   sphereMaterial1.setRefractiveIndex(REFRACTIVE_INDEX_CROWN_GLASS_PURE);
+   sphereMaterial1.setRefractiveIndex(REFRACTIVE_INDEX_WATER);
 
-   Material sphereMaterial2(0.2f, glm::vec4(1.0f, 0.0f, 1.0f, 0.0f), glm::vec4(1.0f), 120);
+   Material sphereMaterial2(0.075f, glm::vec4(1.0f, 1.0f, 0.0f, 0.0f), glm::vec4(1.0f), 120);
    sphereMaterial2.setReflective(true);
    sphereMaterial2.setTransparent(false);
    sphereMaterial2.setReflectionIntensity(refletionIntensity);
 
-   Material sphereMaterial3(0.2f, glm::vec4(1.0f, 0.0f, 0.0f, 0.0f), glm::vec4(1.0f), 120);
+   Material sphereMaterial3(0.075f, glm::vec4(1.0f, 0.0f, 0.0f, 0.0f), glm::vec4(1.0f), 120);
    sphereMaterial3.setReflective(true);
    sphereMaterial3.setTransparent(false);
    sphereMaterial3.setReflectionIntensity(refletionIntensity);
+   sphereMaterial3.setRefractiveIndex(REFRACTIVE_INDEX_WATER);
 
-   Material gridMaterial(0.2f, glm::vec4(0.75f, 0.75f, 0.69f, 0.0f), glm::vec4(1.0f), 80);
+   Material sphereMaterial4(0.075f, glm::vec4(0.5f, 0.5f, 0.5f, 1.0f), glm::vec4(1.0f), 120);
+   sphereMaterial4.setReflective(true);
+   sphereMaterial4.setTransparent(false);
+   sphereMaterial4.setReflectionIntensity(refletionIntensity);
+   sphereMaterial4.setRefractiveIndex(REFRACTIVE_INDEX_AMBER);
+
+
+   Material gridMaterial(0.1f, glm::vec4(0.45f, 0.45f, 0.45f, 0.0f), glm::vec4(1.0f), 80);
    gridMaterial.setTransparent(false);
-   LightSource* lightSource  = new LightSource(glm::vec4(0.0f, 0.0f, 40.0f, 1.0f), glm::vec4(1.0f));  // location , color
-   LightSource* lightSource1 = new LightSource(glm::vec4(-80.0f, -10.0f, 40.0f, 1.0f), glm::vec4(1.0f));
+   gridMaterial.setReflective(true);
+   gridMaterial.setReflectionIntensity(refletionIntensity);
+   gridMaterial.setTransparent(false);
+   gridMaterial.setRefractiveIndex(REFRACTIVE_INDEX_WATER);
+
+   LightSource* lightSource  = new LightSource(glm::vec4(-10.0f, -10.0f, 10.0f, 1.0f), glm::vec4(1.0f));  // location , color
+   LightSource* lightSource1 = new LightSource(glm::vec4(0.0f, 10.0f, 10.0f, 1.0f), glm::vec4(1.0f));
    //LightSource* lightSource2 = new LightSource(glm::vec4(2000.0f, 0.0f, 40.0f, 1.0f), glm::vec4(1.0f));
 
    Sphere* sphere = new Sphere(glm::vec3(0.8f, 1.65f, 0.0f), 0.7f);
@@ -389,12 +402,17 @@ int main(int argc, char **argv)
 
    scene.addSurface(sphere3);
 
-   
+   Sphere* sphere4 = new Sphere(glm::vec3(0.0f, -10.0f, 7.0f), 4.5f);
+   sphere4->setTransformation(M);
+   sphere4->setMaterial(sphereMaterial4);
+
+   //scene.addSurface(sphere4);
 
 
-   char* triangleMeshFileName = "monkey.obj";
+
+   char* triangleMeshFileName = "head.obj";
    TriangleMesh* mesh = new TriangleMesh();
-   glm::mat4 meshTransformation = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -5.0f));
+   glm::mat4 meshTransformation = glm::translate(glm::mat4(1.0f), glm::vec3(5.0f, 0.0f, 0.0f));
    
    mesh->setTransformation(meshTransformation);
    mesh->setMaterial(gridMaterial);
@@ -420,13 +438,34 @@ int main(int argc, char **argv)
 
 
    scene.addLightSource(lightSource);
-   //scene.addLightSource(lightSource1);
+   scene.addLightSource(lightSource1);
    //scene.addLightSource(lightSource2);
 
    // flush changes
    std::cout << "Constructring Scene.Building BVH..." << std::endl;
    scene.flush();
    std::cout << "BVH construction completed.Scene Ready" << std::endl;
+   
+   if(renderOnce){
+      std::cout << "Rendering Once to PPM file..." << std::endl;
+      double start,end,diff;
+      double msecs;
+      int hours,minutes,seconds;
+      start = getRealTime();
+      scene.render(camera, imageBuffer);
+      end = getRealTime();
+
+      diff = end - start;
+
+      minutes = diff / 60;
+      seconds = ((int)diff) % 60;
+      msecs = diff * 1000;
+
+      write_ppm(WINDOW_WIDTH, WINDOW_HEIGHT, imageBuffer);
+      std::cout << "Rendering Once: Completed in " << minutes << "minutes, " << seconds << "sec " << std::endl;
+      std::cout << "That's About " << msecs << "ms" << std::endl;
+   }
+   else{
    while (glfwGetKey(window, GLFW_KEY_ESCAPE) != GLFW_PRESS && !glfwWindowShouldClose(window))
    {
       currTime = glfwGetTime();
@@ -479,10 +518,6 @@ int main(int argc, char **argv)
          cameraPos -= rightDirection * speed * deltaTime;
       }
 
-      // Stop raytracing
-      if (glfwGetKey(window, GLFW_KEY_R ) == GLFW_PRESS){
-         shouldRender = !shouldRender;
-      }
 
 
       // update camera
@@ -495,6 +530,7 @@ int main(int argc, char **argv)
       /* Raytracing */
       scene.render(camera, imageBuffer);
       
+
       // copy pixels to GPU buffer (async copy)
       glBufferSubData(GL_PIXEL_UNPACK_BUFFER, 0, sizeof(GLchar) * WINDOW_WIDTH * WINDOW_HEIGHT * 4, imageBuffer);
       
@@ -505,6 +541,10 @@ int main(int argc, char **argv)
       /* draw window sized quad */
       glDrawArrays( GL_TRIANGLES, 0, 6);
 
+      // write to image file
+      //std::cout << "Writing to file" << std::endl;
+      
+      //std::cout << "Image file ready" << std::endl;
 
       glfwSwapBuffers(window);
       fps++;
@@ -521,7 +561,9 @@ int main(int argc, char **argv)
 
    }
 
+
    glDeleteProgram(program);
+   }
    glfwTerminate();
    return 0;
 }
