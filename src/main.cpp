@@ -31,6 +31,9 @@
 #include "getTime.h"
 #include "Texture.h"
 
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include "stb_image_write.h"
+
 
 #define WINDOW_WIDTH   1280  // in pixels
 #define WINDOW_HEIGHT  720  // in pixels
@@ -453,12 +456,26 @@ int main(int argc, char **argv)
    //scene.addLightSource(lightSource2);
 
    // flush changes
+   double bvh_start,bvh_end,bvh_diff;
+   double bvh_msecs;
+   int bvh_hours,bvh_minutes,bvh_seconds;
+
    std::cout << "Constructring Scene.Building BVH..." << std::endl;
+   bvh_start = getRealTime();
    scene.flush();
-   std::cout << "BVH construction completed.Scene Ready" << std::endl;
+   
+   bvh_end = getRealTime();
+
+   bvh_diff = bvh_end - bvh_start;
+
+   bvh_minutes = bvh_diff / 60;
+   bvh_seconds = ((int)bvh_diff) % 60;
+   bvh_msecs = bvh_diff * 1000;
+
+   std::cout << "BVH construction completed.Scene Ready in " << bvh_minutes << " minutes and " << bvh_seconds << " seconds" << std::endl;
    
    if(renderOnce){
-      std::cout << "Rendering Once to PPM file..." << std::endl;
+      std::cout << "Rendering Once to Image file..." << std::endl;
       double start,end,diff;
       double msecs;
       int hours,minutes,seconds;
@@ -472,7 +489,11 @@ int main(int argc, char **argv)
       seconds = ((int)diff) % 60;
       msecs = diff * 1000;
 
-      write_ppm(WINDOW_WIDTH, WINDOW_HEIGHT, imageBuffer);
+      //write_ppm(WINDOW_WIDTH, WINDOW_HEIGHT, imageBuffer);
+
+      // make image (0,0) top left corner
+      // Start at the end of the image buffer and use negative stride
+      stbi_write_png("rayTracedImage.png", WINDOW_WIDTH, WINDOW_HEIGHT, 4, imageBuffer + WINDOW_WIDTH * WINDOW_HEIGHT * 4, -WINDOW_WIDTH*4);
       std::cout << "Rendering Once: Completed in " << minutes << "minutes, " << seconds << "sec " << std::endl;
       std::cout << "That's About " << msecs << "ms" << std::endl;
    }
