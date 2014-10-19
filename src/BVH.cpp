@@ -24,7 +24,7 @@
 #include <cfloat>
 #include "BVH.h"
 
-#define SAH_SURFACE_CEIL  400
+#define SAH_SURFACE_CEIL  800
 #define SURFACES_PER_LEAF 4
 #define COST_TRAVERSAL    1
 #define COST_INTERSECTION 2
@@ -396,10 +396,8 @@ void BVH::buildTopDownSAH(BvhNode** tree, Surface** surfaces, int numSurfaces){
 	node->aabb = this->computeBoxWithSurfaces(surfaces, numSurfaces);
 	node->numSurfacesEncapulated = numSurfaces;
 
-	std::cout << "Computing Split" << std::endl;
 	splitIndex = topDownSplitIndexSAH(surfaces, numSurfaces, node->aabb, costSplit);
-	std::cout << "Split Index Found: " << splitIndex << " With Cost :" << costSplit << std::endl;
-
+	
 	if( costSplit > node->numSurfacesEncapulated * COST_INTERSECTION){
 		// create leaf.It's cheaper to intersect all surfaces than to make a split
 		createLeaf(node, surfaces, numSurfaces);
