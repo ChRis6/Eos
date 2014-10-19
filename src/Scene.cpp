@@ -23,7 +23,7 @@
 #include "Scene.h"
 #include <stdio.h>
 #include <iostream>
- #include <omp.h>
+#include <omp.h>
 
 bool Scene::addSurface(Surface* surface){
 	if( surface != NULL){
@@ -144,7 +144,7 @@ void Scene::render(const Camera& camera, unsigned char* outputImage){
     		outputImage[4 * (x + y * viewWidth)]      = floor(finalColor.x == 1.0 ? 255 : std::min(finalColor.x * 256.0, 255.0));
             outputImage[1 +  4 * (x + y * viewWidth)] = floor(finalColor.y == 1.0 ? 255 : std::min(finalColor.y * 256.0, 255.0));
             outputImage[2 +  4* (x + y * viewWidth)]  = floor(finalColor.z == 1.0 ? 255 : std::min(finalColor.z * 256.0, 255.0));
-            outputImage[3 +  4* (x + y * viewWidth)]  = 0;
+            outputImage[3 +  4* (x + y * viewWidth)]  = 255;
             
     	}
     }
