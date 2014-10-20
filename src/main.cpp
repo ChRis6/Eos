@@ -35,8 +35,8 @@
 #include "stb_image_write.h"
 
 
-#define WINDOW_WIDTH   1280  // in pixels
-#define WINDOW_HEIGHT  720  // in pixels
+#define WINDOW_WIDTH   640  // in pixels
+#define WINDOW_HEIGHT  480  // in pixels
 #define FOV            70
 
 #ifndef EPSILON
@@ -383,7 +383,7 @@ int main(int argc, char **argv)
 
    Material gridMaterial(0.1f, glm::vec4(0.45f, 0.45f, 0.45f, 0.0f), glm::vec4(1.0f), 80);
    gridMaterial.setTransparent(false);
-   gridMaterial.setReflective(true);
+   gridMaterial.setReflective(false);
    gridMaterial.setReflectionIntensity(refletionIntensity);
    gridMaterial.setTransparent(false);
    gridMaterial.setRefractiveIndex(REFRACTIVE_INDEX_WATER);
@@ -396,25 +396,25 @@ int main(int argc, char **argv)
    sphere->setTransformation(M);
    sphere->setMaterial(sphereMaterial);
   
-   scene.addSurface(sphere);
+   //scene.addSurface(sphere);
 
    Sphere* sphere1 = new Sphere(glm::vec3(0.8f, 0.0f, 0.0f), 0.7f);
    sphere1->setTransformation(M);
    sphere1->setMaterial(sphereMaterial1);
    
-   scene.addSurface(sphere1);
+   //scene.addSurface(sphere1);
    
    Sphere* sphere2 = new Sphere(glm::vec3(-0.8f, 0.0f, 0.0f), 0.7f);
    sphere2->setTransformation(M);
    sphere2->setMaterial(sphereMaterial2);
    
-   scene.addSurface(sphere2);
+   //scene.addSurface(sphere2);
 
    Sphere* sphere3 = new Sphere(glm::vec3(-0.8f, 1.65f, 0.0f), 0.7f);
    sphere3->setTransformation(M);
    sphere3->setMaterial(sphereMaterial3);
    
-   scene.addSurface(sphere3);
+   //scene.addSurface(sphere3);
 
    Sphere* sphere4 = new Sphere(glm::vec3(0.0f, -10.0f, 7.0f), 4.5f);
    sphere4->setTransformation(M);
@@ -424,9 +424,9 @@ int main(int argc, char **argv)
 
 
 
-   char* triangleMeshFileName = "bunny.obj";
+   char* triangleMeshFileName = "fairy_forest.obj";
    TriangleMesh* mesh = new TriangleMesh();
-   glm::mat4 meshTransformation = glm::translate(glm::mat4(1.0f), glm::vec3(5.0f, 0.0f, 0.0f));
+   glm::mat4 meshTransformation = glm::translate(glm::mat4(1.0f), glm::vec3(2.0f, -1.0f, 3.5f));
    
    mesh->setTransformation(meshTransformation);
    mesh->setMaterial(gridMaterial);
