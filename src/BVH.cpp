@@ -24,7 +24,7 @@
 #include <cfloat>
 #include "BVH.h"
 
-#define SAH_SURFACE_CEIL  800
+#define SAH_SURFACE_CEIL  1000
 #define SURFACES_PER_LEAF 4
 #define COST_TRAVERSAL    1
 #define COST_INTERSECTION 2
