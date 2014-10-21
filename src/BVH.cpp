@@ -24,7 +24,7 @@
 #include <cfloat>
 #include "BVH.h"
 
-#define SAH_SURFACE_CEIL  1000
+#define SAH_SURFACE_CEIL  500
 #define SURFACES_PER_LEAF 4
 #define COST_TRAVERSAL    1
 #define COST_INTERSECTION 2
@@ -356,8 +356,8 @@ bool BVH::intersectRayWithLeaf(const Ray& ray, BvhNode* leaf, RayIntersection& i
 
 		// Transform ray to local coordinates
 		const glm::mat4& M = surface->transformation();
-		glm::vec3 localRayOrigin    = glm::vec3(glm::inverse(M) * glm::vec4(ray.getOrigin(), 1.0f));
-		glm::vec3 localRayDirection = glm::vec3(glm::inverse(M) * glm::vec4(ray.getDirection(), 0.0f)); 
+		glm::vec3 localRayOrigin    = glm::vec3(surface->getInverseTransformation() * glm::vec4(ray.getOrigin(), 1.0f));
+		glm::vec3 localRayDirection = glm::vec3(surface->getInverseTransformation() * glm::vec4(ray.getDirection(), 0.0f)); 
 		Ray localRay(localRayOrigin, localRayDirection);
 
 		
@@ -370,7 +370,7 @@ bool BVH::intersectRayWithLeaf(const Ray& ray, BvhNode* leaf, RayIntersection& i
 				minDistanceFound = distanceFromOrigin;
 			
 				intersectionPointWorldCoords  = M * glm::vec4( possibleIntersection.getPoint(), 1.0f);
-				intersectionNormalWorldCoords = glm::transpose(glm::inverse(M)) * glm::vec4(possibleIntersection.getNormal(), 0.0f);
+				intersectionNormalWorldCoords = surface->getInverseTransposeTransformation() * glm::vec4(possibleIntersection.getNormal(), 0.0f);
 				
 				distance = minDistanceFound;
 				leafSurfaceIndex = i;
