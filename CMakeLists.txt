@@ -2,6 +2,11 @@ cmake_minimum_required(VERSION 2.8)
 project(Eos)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules/")
+
+file(COPY shaders DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
+file(COPY objmodels DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
+
+add_definitions(-DPROJECT_DIR=${PROJECT_DIR_STRING})
 subdirs(glfw-3.0.4 src)
 
 
