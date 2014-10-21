@@ -35,9 +35,14 @@ public:
 	virtual glm::vec3 getCentroid();
 	virtual const glm::mat4& transformation();
 	virtual void setTransformation(glm::mat4& transformation);
+	virtual const glm::mat4& getInverseTransformation();
+	virtual const glm::mat4& getInverseTransposeTransformation();
 	virtual Material& getMaterial();
 	virtual void setMaterial(Material& material);
 	virtual bool isPointInside(glm::vec3& point); 
+
+	void setInverseTransformation(glm::mat4& inverse);
+	void setInverseTransposeTransformation(glm::mat4& inverseTranspose);
 
 private:
 	bool RayTriangleIntersection(glm::vec3 v1, glm::vec3 v2, glm::vec3 v3, const Ray& ray, glm::vec3& barycetricCoords);
@@ -58,4 +63,6 @@ private:
 
 	Material* m_Material;
 	glm::mat4* m_LocalToWorldTransformation;
+	glm::mat4* m_Inverse;
+  	glm::mat4* m_InverseTranspose;
 };

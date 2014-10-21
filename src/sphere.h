@@ -42,7 +42,8 @@ public:
 	virtual const glm::mat4& transformation();
 	virtual bool hit(const Ray& ray, RayIntersection& intersection, float& distance);
 	virtual void setTransformation(glm::mat4& transformation); 
-
+	virtual const glm::mat4& getInverseTransformation();
+	virtual const glm::mat4& getInverseTransposeTransformation();
 	virtual Material& getMaterial(){return m_Material;}
 	virtual void setMaterial(Material& material){m_Material = material;}
 	virtual bool isPointInside(glm::vec3& point);
@@ -56,6 +57,8 @@ private:
 	float     m_RadiusSquared;
 
 	glm::mat4 m_LocalToWorldTransformation;
+	glm::mat4 m_Inverse;
+	glm::mat4 m_InverseTranspose;
 	Material  m_Material;
 	
 };

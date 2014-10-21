@@ -140,7 +140,11 @@ bool TriangleMesh::loadFromFile(const char* filename){
        	glm::vec3 n3 = Normals[v3_index];
 
        	Triangle* newTriangle = new Triangle(v1, v2, v3, n1, n2, n3);
+       	
        	newTriangle->setTransformation(m_LocalToWorldTransformation);
+       	newTriangle->setInverseTransformation(m_Inverse);
+       	newTriangle->setInverseTransposeTransformation(m_InverseTranspose);
+
        	newTriangle->setMaterial(m_Material);
 
        	m_Triangles[i] = newTriangle;
@@ -239,5 +243,7 @@ const glm::mat4& TriangleMesh::transformation(){
 }
 void  TriangleMesh::setTransformation(glm::mat4& transformation){
 	m_LocalToWorldTransformation = transformation;
+	 m_Inverse = glm::inverse(transformation);
+  	m_InverseTranspose = glm::transpose(m_Inverse);
 }
 

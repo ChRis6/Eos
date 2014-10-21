@@ -35,6 +35,8 @@ public:
 	virtual Box getLocalBoundingBox() = 0;
 	virtual glm::vec3 getCentroid() = 0;
 	virtual const glm::mat4& transformation() = 0;
+	virtual const glm::mat4& getInverseTransformation() = 0;
+	virtual const glm::mat4& getInverseTransposeTransformation() = 0;
 	virtual void setTransformation(glm::mat4& transformation) = 0;
 	virtual Material& getMaterial() = 0;
 	virtual void setMaterial(Material& material) = 0;

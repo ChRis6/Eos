@@ -53,6 +53,9 @@ private:
 	Triangle** m_Triangles;
 	unsigned int m_NumTriangles;
 	glm::mat4 m_LocalToWorldTransformation;
+	glm::mat4 m_Inverse;
+	glm::mat4 m_InverseTranspose;
+
 	Material m_Material;
 	
 	unsigned int m_SceneIndexStart;

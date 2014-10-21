@@ -100,6 +100,22 @@ void Triangle::setTransformation(glm::mat4& transformation){
 	m_LocalToWorldTransformation = &transformation;
 }
 
+void Triangle::setInverseTransformation(glm::mat4& inverse){
+	m_Inverse = &inverse;
+}
+
+void Triangle::setInverseTransposeTransformation(glm::mat4& inverseTranspose){
+	m_InverseTranspose = &inverseTranspose;
+}
+
+const glm::mat4& Triangle::getInverseTransformation(){
+	return *m_Inverse;
+}
+
+const glm::mat4& Triangle::getInverseTransposeTransformation(){
+	return *m_InverseTranspose;
+}
+
 Material& Triangle::getMaterial(){
 	return *m_Material;
 }

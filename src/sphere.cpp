@@ -120,6 +120,16 @@ const glm::mat4& Sphere::transformation(){
 
 void Sphere::setTransformation(glm::mat4& transformation){
   m_LocalToWorldTransformation = transformation;
+  m_Inverse = glm::inverse(transformation);
+  m_InverseTranspose = glm::transpose(m_Inverse);
+}
+
+const glm::mat4& Sphere::getInverseTransformation(){
+  return m_Inverse;
+}
+
+const glm::mat4& Sphere::getInverseTransposeTransformation(){
+  return m_InverseTranspose;
 }
 
 bool Sphere::isPointInside(glm::vec3& point){
