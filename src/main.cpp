@@ -35,8 +35,8 @@
 #include "stb_image_write.h"
 
 
-#define WINDOW_WIDTH   640  // in pixels
-#define WINDOW_HEIGHT  480  // in pixels
+#define WINDOW_WIDTH   1280  // in pixels
+#define WINDOW_HEIGHT  720  // in pixels
 #define FOV            70
 
 #ifndef EPSILON
@@ -188,7 +188,6 @@ int main(int argc, char **argv)
    
    bool renderOnce = true;
 
-
    GLuint vao;
    GLFWwindow* window;
    GLuint program;
@@ -196,14 +195,15 @@ int main(int argc, char **argv)
    GLuint pbo;
    GLuint texture;
 
-   glfwSetErrorCallback(glfwErrorCallback);
+   if(!renderOnce){
+   		glfwSetErrorCallback(glfwErrorCallback);
 
-   if(!glfwInit())
-   {
-      std::cerr << "Failed to initialize GLFW...\n";
-      return -1;
-   }
-
+   		if(!glfwInit())
+   		{
+      		std::cerr << "Failed to initialize GLFW...\n";
+      		return -1;
+   		}
+	}
 
    unsigned char* imageBuffer = new unsigned char[ WINDOW_WIDTH * WINDOW_HEIGHT * 4];
    memset(imageBuffer, 0, sizeof(unsigned char) * 4 * WINDOW_WIDTH * WINDOW_HEIGHT);
@@ -396,37 +396,37 @@ int main(int argc, char **argv)
    sphere->setTransformation(M);
    sphere->setMaterial(sphereMaterial);
   
-   //scene.addSurface(sphere);
+   scene.addSurface(sphere);
 
    Sphere* sphere1 = new Sphere(glm::vec3(0.8f, 0.0f, 0.0f), 0.7f);
    sphere1->setTransformation(M);
    sphere1->setMaterial(sphereMaterial1);
    
-   //scene.addSurface(sphere1);
+   scene.addSurface(sphere1);
    
    Sphere* sphere2 = new Sphere(glm::vec3(-0.8f, 0.0f, 0.0f), 0.7f);
    sphere2->setTransformation(M);
    sphere2->setMaterial(sphereMaterial2);
    
-   //scene.addSurface(sphere2);
+   scene.addSurface(sphere2);
 
    Sphere* sphere3 = new Sphere(glm::vec3(-0.8f, 1.65f, 0.0f), 0.7f);
    sphere3->setTransformation(M);
    sphere3->setMaterial(sphereMaterial3);
    
-   //scene.addSurface(sphere3);
+   scene.addSurface(sphere3);
 
    Sphere* sphere4 = new Sphere(glm::vec3(0.0f, -10.0f, 7.0f), 4.5f);
    sphere4->setTransformation(M);
    sphere4->setMaterial(sphereMaterial4);
 
-   //scene.addSurface(sphere4);
+   scene.addSurface(sphere4);
 
 
 
-   char* triangleMeshFileName = "fairy_forest.obj";
+   char* triangleMeshFileName = "objmodels/bunny.obj";
    TriangleMesh* mesh = new TriangleMesh();
-   glm::mat4 meshTransformation = glm::translate(glm::mat4(1.0f), glm::vec3(2.0f, -1.0f, 3.5f));
+   glm::mat4 meshTransformation = glm::translate(glm::mat4(1.0f), glm::vec3(4.5f, 0.0f, -1.0f));
    
    mesh->setTransformation(meshTransformation);
    mesh->setMaterial(gridMaterial);
