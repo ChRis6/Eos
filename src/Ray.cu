@@ -28,7 +28,11 @@ DEVICE HOST void Ray::setOrigin(const glm::vec3& origin){
 
 DEVICE HOST void Ray::setDirection(const glm::vec3& direction) {
 	m_Direction = direction;
-	m_InvDirection = glm::vec3( 1.0f/ direction.x, 1.0f/direction.y, 1.0/direction.z); 
+	m_InvDirection = glm::vec3( 1.0f/ direction.x, 1.0f/direction.y, 1.0/direction.z);
+
+	m_sign[0] = m_InvDirection.x < 0.0f;
+	m_sign[1] = m_InvDirection.y < 0.0f;
+	m_sign[2] = m_InvDirection.z < 0.0f;
 }
 
 DEVICE HOST const glm::vec3& Ray::getOrigin() const{

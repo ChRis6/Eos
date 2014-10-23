@@ -34,6 +34,9 @@ public:
 	DEVICE HOST Ray(const glm::vec3& origin, const glm::vec3& direction): m_Origin(origin), m_Direction(direction)
 	{
 		m_InvDirection = glm::vec3( 1.0 / direction.x, 1.0/ direction.y, 1.0/direction.z);
+		m_sign[0] = m_InvDirection.x < 0.0f;
+		m_sign[1] = m_InvDirection.y < 0.0f;
+		m_sign[2] = m_InvDirection.z < 0.0f;
 	}
 
 	DEVICE HOST void setOrigin(const glm::vec3& origin);
@@ -47,6 +50,9 @@ private:
 	glm::vec3 m_Origin;
 	glm::vec3 m_Direction;
 	glm::vec3 m_InvDirection;
+public:
+
+	int m_sign[3];				// sign for evey dimension
 };
 
 #endif
