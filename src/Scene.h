@@ -31,8 +31,11 @@
 #include "BVH.h"
 #include "triangleMesh.h"
 
-#define SCENE_AA_16   4
-#define SCENE_AA_4    2
+#define SCENE_AA_32   32
+#define SCENE_AA_16   16
+#define SCENE_AA_8    8
+#define SCENE_AA_4    4
+#define SCENE_AA_2    2
 #define SCENE_AA_1    1
 
 class Scene{

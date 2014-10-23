@@ -26,6 +26,8 @@
 #include <iostream>
 #include <omp.h>
 
+#define PRINT_PROGRESS
+
 bool Scene::addSurface(Surface* surface){
 	if( surface != NULL){
 		m_SurfaceObjects.push_back(surface);
@@ -104,7 +106,7 @@ void Scene::render(const Camera& camera, unsigned char* outputImage){
 	glm::vec3 rayOrigin;	
 	//float tan_fovx;
 	//float tan_fovy;
-
+	int progress = 0;
 	/*
 	 * for every pixel on the window
 	 *     calculate primary ray
@@ -127,7 +129,10 @@ void Scene::render(const Camera& camera, unsigned char* outputImage){
     rayOrigin     = camera.getPosition();
 
     int aaSamples = this->getAASamples();
-    #pragma omp parallel for schedule(dynamic,1)
+    float ksi = rand() / RAND_MAX;
+
+
+    #pragma omp parallel for schedule(dynamic,2) shared(progress)
     for( int y = 0 ; y < viewHeight; y++){
     	Ray ray;
     	for( int x = 0 ; x < viewWidth; x++){
@@ -136,7 +141,7 @@ void Scene::render(const Camera& camera, unsigned char* outputImage){
 
     		for( int q = 0 ; q < aaSamples ; q++){
     			for( int p = 0; p < aaSamples; p++){
-    				float ksi = rand() / RAND_MAX;
+    				
     				// how much 'up'
     				float bb = (y + (( q + ksi ) / (float) aaSamples) - norm_height) * inv_norm_height;
     				
@@ -154,7 +159,7 @@ void Scene::render(const Camera& camera, unsigned char* outputImage){
     		}
 
     		finalColor = finalColor / (float) (aaSamples * aaSamples);
-    		finalColor = glm::clamp(finalColor, 0.0f, 1.0f);
+    		//finalColor = glm::clamp(finalColor, 0.0f, 1.0f);
     		// store color
     		outputImage[4 * (x + y * viewWidth)]      = floor(finalColor.x == 1.0 ? 255 : std::min(finalColor.x * 256.0, 255.0));
             outputImage[1 +  4 * (x + y * viewWidth)] = floor(finalColor.y == 1.0 ? 255 : std::min(finalColor.y * 256.0, 255.0));
@@ -162,7 +167,22 @@ void Scene::render(const Camera& camera, unsigned char* outputImage){
             outputImage[3 +  4* (x + y * viewWidth)]  = 255;
             
     	}
+    	#ifdef PRINT_PROGRESS
+    		#pragma omp atomic
+    		progress++;
+
+    		#pragma omp critical 
+    		{
+    			if( omp_get_thread_num() == 0 ){
+    				//std::cout << "\rRendering Progress: " << (int)(( progress / (float) viewHeight ) * 100) << "% "<< std::endl;
+    				printf("\rRendering Progress:%d%%", (int)(( progress / (float) viewHeight ) * 100));
+    				//printf("\r" );
+    				fflush(stdout);
+    			}
+    		}
+    	#endif
     }
+    printf("\n");
 }
 
 glm::vec4 Scene::rayTrace(const Ray& ray, const Camera& camera, float sourceRefactionIndex, int depth){
