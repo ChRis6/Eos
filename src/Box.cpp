@@ -24,12 +24,14 @@
 #include "Box.h"
 
 
-void Box::setMinVertex(glm::vec3 min){
+void Box::setMinVertex(const glm::vec3& min){
 	m_MinVertex = min;
+	m_Bounds[0] = min;
 }
 
-void Box::setMaxVertex(glm::vec3 max){
+void Box::setMaxVertex(const glm::vec3& max){
 	m_MaxVertex = max;
+	m_Bounds[1] = max;
 }
 
 const glm::vec3& Box::getMinVertex() const{
@@ -51,6 +53,9 @@ void Box::expandToIncludeBox(const Box& newBox){
 	m_MaxVertex.x = glm::max(m_MaxVertex.x, newBoxMaxVertex.x);
 	m_MaxVertex.y = glm::max(m_MaxVertex.y, newBoxMaxVertex.y);
 	m_MaxVertex.z = glm::max(m_MaxVertex.z, newBoxMaxVertex.z);
+
+	m_Bounds[0] = m_MinVertex;
+	m_Bounds[1] = m_MaxVertex;
 }
 
 bool Box::intersectWithRay(const Ray& ray, float& distance){
@@ -107,7 +112,10 @@ void Box::transformBoundingBox(const glm::mat4& transformation){
 	newMinX = newMinY = newMinZ = 99999999.0f;
 	newMaxX = newMaxY = newMaxZ = -999999999.0f;
 
+	glm::vec4 newMin;
+	glm::vec4 newMax;
 	// find new min
+	/*
 	newMinX = glm::min(newMinX, transformedMin.x);
 	newMinY = glm::min(newMinY, transformedMin.y);
 	newMinZ = glm::min(newMinZ, transformedMin.z);
@@ -132,6 +140,15 @@ void Box::transformBoundingBox(const glm::mat4& transformation){
 	m_MaxVertex.x = newMaxX;
 	m_MaxVertex.y = newMaxY;
 	m_MaxVertex.z = newMaxZ;
+
+	*/
+	newMin = glm::min(transformedMin, transformedMax);
+	newMax = glm::max(transformedMax, transformedMin);
+
+	m_MaxVertex = glm::vec3(newMax);
+	m_MinVertex = glm::vec3(newMin); 
+	m_Bounds[0] = m_MinVertex;
+	m_Bounds[1] = m_MaxVertex;
 }
 
 float Box::computeVolume(){
@@ -160,6 +177,9 @@ void Box::expandToIncludeVertex(const glm::vec3& vertex){
 	m_MaxVertex.x = glm::max(m_MaxVertex.x, vertex.x);
 	m_MaxVertex.y = glm::max(m_MaxVertex.y, vertex.y);
 	m_MaxVertex.z = glm::max(m_MaxVertex.z, vertex.z);
+
+	m_Bounds[0] = m_MinVertex;
+	m_Bounds[1] = m_MaxVertex;
 }
 
 int Box::getBiggestDimension() const{
@@ -200,4 +220,36 @@ bool Box::isPointInBox(glm::vec3& point){
 	if(x && y && z)
 		return true;
 	return false;
+}
+
+bool Box::intersectWithRayOptimized(const Ray& ray, float t0, float t1){
+
+	float tmin,tmax,tymin,tymax,tzmin,tzmax;
+	const glm::vec3& rayOrigin = ray.getOrigin();
+	const glm::vec3& rayInvDirection = ray.getInvDirection();
+
+	tmin = ( m_Bounds[ray.m_sign[0]].x - rayOrigin.x ) * rayInvDirection.x;
+	tmax = ( m_Bounds[1 - ray.m_sign[0]].x - rayOrigin.x) * rayInvDirection.x;
+
+	tymin = ( m_Bounds[ray.m_sign[1]].y - rayOrigin.y ) * rayInvDirection.y;
+	tymax = ( m_Bounds[1 - ray.m_sign[1]].y - rayOrigin.y) * rayInvDirection.y;
+
+	if( (tmin > tymax) || (tymin > tmax) )
+		return false;
+	if( tymin > tmin )
+		tmin = tymin;
+	if( tymax < tmax)
+		tmax = tymax;
+
+	tzmin = ( m_Bounds[ray.m_sign[2]].z - rayOrigin.z) * rayInvDirection.z ;
+	tzmax = ( m_Bounds[1- ray.m_sign[2]].z - rayOrigin.z) * rayInvDirection.z;
+
+	if( (tmin > tzmax) || (tzmin > tmax))
+		return false;
+	if( tzmin > tmin)
+		tmin = tzmin;
+	if( tzmax < tmax)
+		tmax = tzmax;
+
+	return ( (tmin < t1) && (tmax > t0)); 
 }
