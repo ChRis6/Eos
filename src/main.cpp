@@ -8,6 +8,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <time.h>
 
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
@@ -34,8 +35,8 @@
 #include "stb_image_write.h"
 
 
-#define WINDOW_WIDTH   1280  // in pixels
-#define WINDOW_HEIGHT  720  // in pixels
+#define WINDOW_WIDTH   640  // in pixels
+#define WINDOW_HEIGHT  480 // in pixels
 #define FOV            70
 
 #ifndef EPSILON
@@ -185,7 +186,8 @@ int main(int argc, char **argv)
 {
    
    
-   bool renderOnce = true;
+   bool renderOnce = false;
+   srand((int) time(NULL));
 
 
    GLuint vao;
@@ -344,6 +346,7 @@ int main(int argc, char **argv)
    scene.setMaxTracedDepth(5);
    scene.setAmbientRefractiveIndex(REFRACTIVE_INDEX_AIR);
    scene.useBvh(true);
+   scene.setAASamples(SCENE_AA_1);
 
 
    float refletionIntensity = 0.4f;
@@ -389,7 +392,7 @@ int main(int argc, char **argv)
    gridMaterial.setRefractiveIndex(REFRACTIVE_INDEX_WATER);
 
    LightSource* lightSource  = new LightSource(glm::vec4(-10.0f, -10.0f, 10.0f, 1.0f), glm::vec4(1.0f));  // location , color
-   LightSource* lightSource1 = new LightSource(glm::vec4(0.0f, 10.0f, 10.0f, 1.0f), glm::vec4(1.0f));
+   LightSource* lightSource1 = new LightSource(glm::vec4(0.0f, 30.0f, 20.0f, 1.0f), glm::vec4(1.0f));
    //LightSource* lightSource2 = new LightSource(glm::vec4(2000.0f, 0.0f, 40.0f, 1.0f), glm::vec4(1.0f));
 
    Sphere* sphere = new Sphere(glm::vec3(0.8f, 1.65f, 0.0f), 0.7f);
@@ -416,7 +419,7 @@ int main(int argc, char **argv)
    
    scene.addSurface(sphere3);
 
-   Sphere* sphere4 = new Sphere(glm::vec3(0.0f, -10.0f, 7.0f), 4.5f);
+   Sphere* sphere4 = new Sphere(glm::vec3(0.0f, 0.0f, 4.0f), 1.5f);
    sphere4->setTransformation(M);
    sphere4->setMaterial(sphereMaterial4);
 
@@ -424,7 +427,7 @@ int main(int argc, char **argv)
 
 
 
-   char* triangleMeshFileName = "objmodels/bunny.obj";
+   char* triangleMeshFileName = "objmodels/monkey.obj";
    TriangleMesh* mesh = new TriangleMesh();
    glm::mat4 meshTransformation = glm::translate(glm::mat4(1.0f), glm::vec3(4.5f, 0.0f, -1.0f));
    
@@ -434,7 +437,20 @@ int main(int argc, char **argv)
    mesh->loadFromFile(triangleMeshFileName);
    scene.addTriangleMesh(mesh);
    
+
    std::cout << "Triangle Mesh (" << triangleMeshFileName << ") has " << mesh->getNumTriangles() << " Triangles." << std::endl;
+
+   char* triangleMeshGridFileName = "objmodels/grid.obj";
+   TriangleMesh* meshGrid = new TriangleMesh();
+   glm::mat4 meshGridTransformation = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -1.0f, 0.0f));
+   
+   meshGrid->setTransformation(meshGridTransformation);
+   meshGrid->setMaterial(gridMaterial);
+   
+   meshGrid->loadFromFile(triangleMeshGridFileName);
+   scene.addTriangleMesh(meshGrid);
+
+
 
    /*
    float diskRadiusSquared = 2.0f;
@@ -451,7 +467,7 @@ int main(int argc, char **argv)
    //scene.addSurface(disk);
 
 
-   scene.addLightSource(lightSource);
+   //scene.addLightSource(lightSource);
    scene.addLightSource(lightSource1);
    //scene.addLightSource(lightSource2);
 
@@ -493,7 +509,7 @@ int main(int argc, char **argv)
 
       // make image (0,0) top left corner
       // Start at the end of the image buffer and use negative stride
-      stbi_write_png("rayTracedImage.png", WINDOW_WIDTH, WINDOW_HEIGHT, 4, imageBuffer + WINDOW_WIDTH * WINDOW_HEIGHT * 4, -WINDOW_WIDTH*4);
+      stbi_write_png("rayTracedImageAA.png", WINDOW_WIDTH, WINDOW_HEIGHT, 4, imageBuffer + WINDOW_WIDTH * WINDOW_HEIGHT * 4, -WINDOW_WIDTH*4);
       std::cout << "Rendering Once: Completed in " << minutes << "minutes, " << seconds << "sec " << std::endl;
       std::cout << "That's About " << msecs << "ms" << std::endl;
    }
