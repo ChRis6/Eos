@@ -31,6 +31,10 @@
 #include "BVH.h"
 #include "triangleMesh.h"
 
+#define SCENE_AA_16   4
+#define SCENE_AA_4    2
+#define SCENE_AA_1    1
+
 class Scene{
 
 public:
@@ -41,6 +45,8 @@ public:
 	int getNumSurfaces() const;
 	int getNumLightSources() const;
 	float getAmbientRefractiveIndex() const;
+	void setAASamples(int samples){ m_AASamples = samples; }
+	int getAASamples(){ return m_AASamples; }
 
 	void setAmbientRefractiveIndex(float refractiveIndex);
 
@@ -60,6 +66,7 @@ private:
 	glm::vec4 rayTrace(const Ray& ray, const Camera& camera, float sourceRefactionIndex, int depth);
 	bool findMinDistanceIntersectionLinear(const Ray& ray, RayIntersection& intersection);
 	bool findMinDistanceIntersectionBVH(const Ray& ray, RayIntersection& intersection);
+	bool shadowRayVisibilityBVH(const Ray& ray);
 	glm::vec4 calcPhong( const Camera& camera, const LightSource& lightSource, RayIntersection& intersection);
 	glm::vec4 findDiffuseColor(const LightSource& lightSource, RayIntersection& intersection);
 	glm::vec4 shadeIntersection(RayIntersection& intersection, const Ray& ray, const Camera& camera, float sourceRefactionIndex, int depth);
@@ -78,6 +85,8 @@ private:
 	// bounding volume hierarchy
 	BVH m_Bvh;
 	bool m_UsingBvh;
+
+	int m_AASamples;
 };
 
 #endif

@@ -22,6 +22,7 @@
 
 #include "Scene.h"
 #include <stdio.h>
+#include <stdlib.h>
 #include <iostream>
 #include <omp.h>
 
@@ -125,23 +126,34 @@ void Scene::render(const Camera& camera, unsigned char* outputImage){
     up            = camera.getUpVector();
     rayOrigin     = camera.getPosition();
 
-    //#pragma omp parallel for schedule(dynamic,1)
+    int aaSamples = this->getAASamples();
+    #pragma omp parallel for schedule(dynamic,1)
     for( int y = 0 ; y < viewHeight; y++){
-    	// how much 'up'
-    	float bb = (y - norm_height) * inv_norm_height;
     	Ray ray;
     	for( int x = 0 ; x < viewWidth; x++){
     		
-    		// how much 'right'
-    		float aa = ( x - norm_width) * inv_norm_width;
-			glm::vec3 rayDirection = (aa * right ) + ( bb * up ) + viewDirection;
-    		rayDirection = glm::normalize(rayDirection);
-    		
-    		ray.setOrigin(rayOrigin);
-    		ray.setDirection(rayDirection);
+    		glm::vec4 finalColor(0.0f);
 
-    		// find color
-    		glm::vec4 finalColor = this->rayTrace(ray, camera, this->getAmbientRefractiveIndex(), 0); // 0 depth
+    		for( int q = 0 ; q < aaSamples ; q++){
+    			for( int p = 0; p < aaSamples; p++){
+    				float ksi = rand() / RAND_MAX;
+    				// how much 'up'
+    				float bb = (y + (( q + ksi ) / (float) aaSamples) - norm_height) * inv_norm_height;
+    				
+    				// how much 'right'
+    				float aa = ( x + (( p + ksi ) / (float) aaSamples)- norm_width) * inv_norm_width;
+
+					glm::vec3 rayDirection = (aa * right ) + ( bb * up ) + viewDirection;
+    				rayDirection = glm::normalize(rayDirection);
+    		
+    				ray.setOrigin(rayOrigin);
+    				ray.setDirection(rayDirection);
+    				// find color
+    				finalColor += this->rayTrace(ray, camera, this->getAmbientRefractiveIndex(), 0); // 0 depth
+    			}
+    		}
+
+    		finalColor = finalColor / (float) (aaSamples * aaSamples);
     		finalColor = glm::clamp(finalColor, 0.0f, 1.0f);
     		// store color
     		outputImage[4 * (x + y * viewWidth)]      = floor(finalColor.x == 1.0 ? 255 : std::min(finalColor.x * 256.0, 255.0));
@@ -217,7 +229,7 @@ glm::vec4 Scene::shadeIntersection(RayIntersection& intersection, const Ray& ray
 		
 		bool inShadow = false;
 		if( this->isUsingBvh())
-			inShadow = this->findMinDistanceIntersectionBVH(tempRay, dummyIntersection);
+			inShadow = this->shadowRayVisibilityBVH(tempRay);
 		else
 			inShadow = this->findMinDistanceIntersectionLinear(tempRay, dummyIntersection);
 
@@ -355,9 +367,13 @@ bool Scene::findMinDistanceIntersectionBVH(const Ray& ray, RayIntersection& inte
 		return true;
 	return false;
 	*/
-	return this->m_Bvh.intersectRay(ray, intersection);
+	return this->m_Bvh.intersectRay(ray, intersection, true);
 }
 
+bool Scene::shadowRayVisibilityBVH(const Ray& ray){
+	RayIntersection dummyIntersection;
+	return this->m_Bvh.intersectRay(ray, dummyIntersection, false);
+}
 bool Scene::findMinDistanceIntersectionLinear(const Ray& ray, RayIntersection& intersection){
 
 	bool intersectionFound;
