@@ -40,8 +40,8 @@ public:
 	void setMinVertex(glm::vec3 min);
 	void setMaxVertex(glm::vec3 max);
 
-	glm::vec3 getMinVertex() const;
-	glm::vec3 getMaxVertex() const;
+	const glm::vec3& getMinVertex() const;
+	const glm::vec3& getMaxVertex() const;
 	int getBiggestDimension() const;
 	glm::vec3 getBoxCentroid();
 

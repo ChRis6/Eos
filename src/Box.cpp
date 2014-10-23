@@ -32,17 +32,17 @@ void Box::setMaxVertex(glm::vec3 max){
 	m_MaxVertex = max;
 }
 
-glm::vec3 Box::getMinVertex() const{
+const glm::vec3& Box::getMinVertex() const{
 	return m_MinVertex;
 }
 
-glm::vec3 Box::getMaxVertex() const{
+const glm::vec3& Box::getMaxVertex() const{
 	return m_MaxVertex;
 }
 
 void Box::expandToIncludeBox(const Box& newBox){
-	glm::vec3 newBoxMinVertex = newBox.getMinVertex();
-	glm::vec3 newBoxMaxVertex = newBox.getMaxVertex();
+	const glm::vec3& newBoxMinVertex = newBox.getMinVertex();
+	const glm::vec3& newBoxMaxVertex = newBox.getMaxVertex();
 
 	m_MinVertex.x = glm::min(m_MinVertex.x, newBoxMinVertex.x);
 	m_MinVertex.y = glm::min(m_MinVertex.y, newBoxMinVertex.y);
@@ -57,8 +57,8 @@ bool Box::intersectWithRay(const Ray& ray, float& distance){
 
 
 	// lb is the corner of AABB with minimal coordinates - left bottom, rt is maximal corner
-	glm::vec3 lb = this->getMinVertex();
-	glm::vec3 rt = this->getMaxVertex();
+	const glm::vec3& lb = this->getMinVertex();
+	const glm::vec3& rt = this->getMaxVertex();
 
 	glm::vec3 rayOrigin = ray.getOrigin();
 	glm::vec3 rayInvDirection = ray.getInvDirection();
