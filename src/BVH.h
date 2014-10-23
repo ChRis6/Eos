@@ -52,10 +52,10 @@ class BVH{
 public:
 	BVH():m_Root(0){}
 
-	void buildHierarchy(Surface** surfaces, int numSurfaces);					// builds BVH tree
-	BvhNode* getRoot() const { return m_Root;}									// return Root of tree
-	bool intersectRay(const Ray& ray, RayIntersection& intersectionFound);	// Return Intesected Surface with Ray
-	Surface* pointInsideSurface(glm::vec3& point);								// return surface that has point
+	void buildHierarchy(Surface** surfaces, int numSurfaces);								// builds BVH tree
+	BvhNode* getRoot() const { return m_Root;}												// return Root of tree
+	bool intersectRay(const Ray& ray, RayIntersection& intersectionFound, bool nearest);	// Return Intesected Surface with Ray.Get closest hit when nearest = true
+	Surface* pointInsideSurface(glm::vec3& point);											// return surface that has point
 
 private:
 	Box computeBoxWithSurfaces(Surface** surfaces, int numSurfaces);
@@ -63,7 +63,8 @@ private:
 	void buildTopDown(BvhNode** tree, Surface** surfaces, int numSurfaces);
 	int topDownSplitIndex(Surface** surfaces, int numSurfaces,Box parentBox);
 
-	Surface* intersectRecursive(const Ray& ray, BvhNode* node, float& minDistance, RayIntersection& intersection);
+	Surface* intersectRecursiveNearestHit(const Ray& ray, BvhNode* node, float& minDistance, RayIntersection& intersection);
+	bool 	 intersectRayVisibilityTest(const Ray& ray, BvhNode* node);
 	Surface* isPointInsideSurfaceRecursive(BvhNode* node, glm::vec3& point);
 	bool    intersectRayWithLocalSurface(const Ray& ray, Surface* surface, RayIntersection& intersection, float& distance);
 

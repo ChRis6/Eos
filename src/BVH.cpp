@@ -25,10 +25,10 @@
 #include <cfloat>
 #include "BVH.h"
 
-#define SAH_SURFACE_CEIL  1000
-#define SURFACES_PER_LEAF 4
-#define COST_TRAVERSAL    1
-#define COST_INTERSECTION 3
+#define SAH_SURFACE_CEIL  800
+#define SURFACES_PER_LEAF 10
+#define COST_TRAVERSAL    5
+#define COST_INTERSECTION 10
 
 
 bool by_X_compareSurfaces(Surface* a, Surface* b){
@@ -191,12 +191,16 @@ int BVH::topDownSplitIndex(Surface** surfaces, int numSurfaces, Box parentBox){
 	return split;
 }
 
-bool BVH::intersectRay(const Ray& ray, RayIntersection& intersectionFound){
+bool BVH::intersectRay(const Ray& ray, RayIntersection& intersectionFound, bool nearest){
 	
 	
 	Surface* intersectedSurface = NULL;
 	float distance;
-	intersectedSurface = this->intersectRecursive(ray, this->getRoot(), distance, intersectionFound);
+	if(nearest)
+		intersectedSurface = this->intersectRecursiveNearestHit(ray, this->getRoot(), distance, intersectionFound);
+	else
+		return this->intersectRayVisibilityTest(ray, this->getRoot());
+	
 	if( intersectedSurface)
 		return true;
 	return false;
@@ -204,13 +208,13 @@ bool BVH::intersectRay(const Ray& ray, RayIntersection& intersectionFound){
 	//return this->intersectStack(ray, this->getRoot(), intersectionFound);
 }
 
-Surface* BVH::intersectRecursive(const Ray& ray, BvhNode* node, float& minDistance, RayIntersection& intersection){
+Surface* BVH::intersectRecursiveNearestHit(const Ray& ray, BvhNode* node, float& minDistance, RayIntersection& intersection){
 	
 	bool rayIntersectsBox = false;
 	float distance = 999999.0f;
 	int minSurfaceIndex;
 
-	if( node->aabb.intersectWithRay(ray, distance) == true)
+	if( node->aabb.intersectWithRayOptimized(ray, 0.0001f, 999999.0f) == true)
 		rayIntersectsBox = true;
 
 	if(rayIntersectsBox){
@@ -230,8 +234,8 @@ Surface* BVH::intersectRecursive(const Ray& ray, BvhNode* node, float& minDistan
 		RayIntersection leftChildeIntersection;
 		RayIntersection rightChildIntersection;
 
-		Surface* leftChildSurface  = this->intersectRecursive(ray, node->leftChild, leftChildDistance, leftChildeIntersection);
-		Surface* rightChildSurface = this->intersectRecursive(ray, node->rightChild, rightChildDistance, rightChildIntersection);
+		Surface* leftChildSurface  = this->intersectRecursiveNearestHit(ray, node->leftChild, leftChildDistance, leftChildeIntersection);
+		Surface* rightChildSurface = this->intersectRecursiveNearestHit(ray, node->rightChild, rightChildDistance, rightChildIntersection);
 
 
 		if( leftChildSurface != NULL && leftChildDistance < rightChildDistance ){
@@ -252,6 +256,39 @@ Surface* BVH::intersectRecursive(const Ray& ray, BvhNode* node, float& minDistan
 		return NULL;
 	}
 
+}
+
+bool BVH::intersectRayVisibilityTest(const Ray& ray, BvhNode* node){
+
+	bool intersectsCurrent;
+	bool intersectsLeftChild;
+	bool intersectsRightChild;
+	bool leftChildSurfaceIntersected = false;
+	bool rightChildSurfaceIntersected = false;
+
+	intersectsCurrent = node->aabb.intersectWithRayOptimized(ray, 0.0001f, 999999.0f);
+	if( intersectsCurrent){
+		if( node->type == BVH_LEAF ){
+			RayIntersection dummyIntersection;
+			float minDistance;
+			int minSurfaceIndex;
+			return this->intersectRayWithLeaf( ray, node, dummyIntersection, minDistance, minSurfaceIndex);				
+		}
+
+		leftChildSurfaceIntersected = this->intersectRayVisibilityTest(ray, node->leftChild);
+		if( leftChildSurfaceIntersected)
+			return true;
+
+		rightChildSurfaceIntersected = this->intersectRayVisibilityTest(ray, node->rightChild);
+		if( rightChildSurfaceIntersected)
+			return true;
+
+		// none of the children are intersected
+		return false;
+	}
+	else{
+		return false;
+	}
 }
 /*
  * Returns True when ray actually intersects surface 
@@ -506,9 +543,7 @@ void BVH::buildTopDownHybrid(BvhNode** tree, Surface** surfaces, int numSurfaces
 	else{
 		// use SAH
 
-		splitIndex = topDownSplitIndexSAH(surfaces, numSurfaces, node->aabb, costSplit);
-		if( costSplit > node->numSurfacesEncapulated * COST_INTERSECTION){
-			// create leaf.It's cheaper to intersect all surfaces than to make a split
+		if( numSurfaces <= SURFACES_PER_LEAF){		
 			createLeaf(node, surfaces, numSurfaces);
 		}
 		else{
@@ -516,6 +551,7 @@ void BVH::buildTopDownHybrid(BvhNode** tree, Surface** surfaces, int numSurfaces
 			node->tracedObject = NULL;
 			node->tracedObjectArray = NULL;
 
+			splitIndex = topDownSplitIndexSAH(surfaces, numSurfaces, node->aabb, costSplit);
 			// recursion
 			buildTopDownHybrid(&(node->leftChild), &surfaces[0], splitIndex);
 			buildTopDownHybrid(&(node->rightChild),&surfaces[splitIndex], numSurfaces - splitIndex);
