@@ -29,8 +29,8 @@ public:
 	LightSource():m_Position(0.0f), m_LightColor(1.0f){}
 	LightSource(const glm::vec4& position, const glm::vec4& lightColor):m_Position(position), m_LightColor(lightColor){}
 
-	glm::vec4 getPosition()   const {return m_Position;}
-	glm::vec4 getLightColor() const {return m_LightColor;}
+	const glm::vec4& getPosition()   const {return m_Position;}
+	const glm::vec4& getLightColor() const {return m_LightColor;}
 
 private:
 	glm::vec4 m_Position;
