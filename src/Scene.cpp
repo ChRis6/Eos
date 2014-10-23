@@ -125,10 +125,11 @@ void Scene::render(const Camera& camera, unsigned char* outputImage){
     up            = camera.getUpVector();
     rayOrigin     = camera.getPosition();
 
-    #pragma omp parallel for schedule(dynamic,1)
+    //#pragma omp parallel for schedule(dynamic,1)
     for( int y = 0 ; y < viewHeight; y++){
     	// how much 'up'
     	float bb = (y - norm_height) * inv_norm_height;
+    	Ray ray;
     	for( int x = 0 ; x < viewWidth; x++){
     		
     		// how much 'right'
@@ -136,7 +137,9 @@ void Scene::render(const Camera& camera, unsigned char* outputImage){
 			glm::vec3 rayDirection = (aa * right ) + ( bb * up ) + viewDirection;
     		rayDirection = glm::normalize(rayDirection);
     		
-    		Ray ray(rayOrigin,rayDirection);
+    		ray.setOrigin(rayOrigin);
+    		ray.setDirection(rayDirection);
+
     		// find color
     		glm::vec4 finalColor = this->rayTrace(ray, camera, this->getAmbientRefractiveIndex(), 0); // 0 depth
     		finalColor = glm::clamp(finalColor, 0.0f, 1.0f);
@@ -196,6 +199,8 @@ glm::vec4 Scene::shadeIntersection(RayIntersection& intersection, const Ray& ray
 	glm::vec4 phongColour(0.0f);
 	float n1,n2;
 
+	Ray tempRay;	// use one ray for shadows - reflections
+
 	numLights = this->getNumLightSources();
 	for( int i = 0 ; i < numLights; i++){
 		// light source i
@@ -206,13 +211,15 @@ glm::vec4 Scene::shadeIntersection(RayIntersection& intersection, const Ray& ray
 		glm::vec3 shadowRayDirection = glm::normalize(glm::vec3(lightSource.getPosition()) - intersection.getPoint()); // lightPos - intersection point
 		glm::vec3 shadowRayOrigin    = intersection.getPoint() + epsilon * shadowRayDirection;
 
-		Ray shadowRay(shadowRayOrigin, shadowRayDirection);  
+		//Ray shadowRay(shadowRayOrigin, shadowRayDirection);
+		tempRay.setOrigin(shadowRayOrigin);
+		tempRay.setDirection(shadowRayDirection);  
 		
 		bool inShadow = false;
 		if( this->isUsingBvh())
-			inShadow = this->findMinDistanceIntersectionBVH(shadowRay, dummyIntersection);
+			inShadow = this->findMinDistanceIntersectionBVH(tempRay, dummyIntersection);
 		else
-			inShadow = this->findMinDistanceIntersectionLinear(shadowRay, dummyIntersection);
+			inShadow = this->findMinDistanceIntersectionLinear(tempRay, dummyIntersection);
 
 		// is the point in shadow ?
 		if( inShadow == false) {
@@ -228,10 +235,11 @@ glm::vec4 Scene::shadeIntersection(RayIntersection& intersection, const Ray& ray
 		glm::vec3 reflectedRayDirection = glm::normalize(glm::reflect(ray.getDirection(), intersection.getNormal()));
 		glm::vec3 reflectedRayOrigin    = intersection.getPoint() + epsilon * reflectedRayDirection;
 
-		Ray reflectedRay(reflectedRayOrigin, reflectedRayDirection);
-
+		
+		tempRay.setOrigin(reflectedRayOrigin);
+		tempRay.setDirection(reflectedRayDirection);
 		reflectedColour += intersection.getMaterial().getReflectiveIntensity() * intersection.getMaterial().getSpecularColor() * 
-		                   this->rayTrace( reflectedRay, camera, sourceRefactionIndex, depth + 1);
+		                   this->rayTrace( tempRay, camera, sourceRefactionIndex, depth + 1);
 	}
 	// is the surface transparent ? 
 	if( intersection.getMaterial().isTransparent()){
@@ -341,12 +349,13 @@ glm::vec4 Scene::calcPhong( const Camera& camera, const LightSource& lightSource
 	return diffuseColor + specularColor;
 }
 bool Scene::findMinDistanceIntersectionBVH(const Ray& ray, RayIntersection& intersection){
-
+	/*
 	Surface* intersectedSurface = this->m_Bvh.intersectRay(ray, intersection);
 	if( intersectedSurface != NULL)
 		return true;
 	return false;
-
+	*/
+	return this->m_Bvh.intersectRay(ray, intersection);
 }
 
 bool Scene::findMinDistanceIntersectionLinear(const Ray& ray, RayIntersection& intersection){

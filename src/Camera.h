@@ -45,10 +45,10 @@ public:
 	void setWidth(int width);
 	void setHeight(int height);
 
-	glm::vec3 getPosition() const;
-	glm::vec3 getViewingDirection() const;
-	glm::vec3 getRightVector() const;
-	glm::vec3 getUpVector() const;
+	const glm::vec3& getPosition() const;
+	const glm::vec3& getViewingDirection() const;
+	const glm::vec3& getRightVector() const;
+	const glm::vec3& getUpVector() const;
 	float getFov() const;
 	float getTanFov() const;
 	float getWidth() const;

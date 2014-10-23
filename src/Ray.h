@@ -29,17 +29,19 @@
 class Ray{
 
 public:
-	DEVICE HOST Ray(glm::vec3 origin, glm::vec3 direction): m_Origin(origin), m_Direction(direction)
+	DEVICE HOST Ray():m_Origin(0.0f),m_Direction(0.0f),m_InvDirection(0.0f){}
+
+	DEVICE HOST Ray(const glm::vec3& origin, const glm::vec3& direction): m_Origin(origin), m_Direction(direction)
 	{
 		m_InvDirection = glm::vec3( 1.0 / direction.x, 1.0/ direction.y, 1.0/direction.z);
 	}
 
-	DEVICE HOST void setOrigin(glm::vec3 origin);
-	DEVICE HOST void setDirection(glm::vec3 direction);
+	DEVICE HOST void setOrigin(const glm::vec3& origin);
+	DEVICE HOST void setDirection(const glm::vec3& direction);
 
-	DEVICE HOST glm::vec3 getOrigin() const;
-	DEVICE HOST glm::vec3 getDirection() const;
-	DEVICE HOST glm::vec3 getInvDirection() const;
+	DEVICE HOST const glm::vec3& getOrigin() const;
+	DEVICE HOST const glm::vec3& getDirection() const;
+	DEVICE HOST const glm::vec3& getInvDirection() const;
 
 private:
 	glm::vec3 m_Origin;

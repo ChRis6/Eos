@@ -32,7 +32,7 @@ class Surface{
 
 public:
 	virtual bool hit(const Ray& ray, RayIntersection& intersection, float& distance) = 0;
-	virtual Box getLocalBoundingBox() = 0;
+	virtual const Box& getLocalBoundingBox() = 0;
 	virtual glm::vec3 getCentroid() = 0;
 	virtual const glm::mat4& transformation() = 0;
 	virtual const glm::mat4& getInverseTransformation() = 0;

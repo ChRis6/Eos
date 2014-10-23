@@ -32,12 +32,42 @@ class Sphere: public Surface{
 
 public:
 	Sphere(): m_Origin(0.0), m_RadiusSquared(1), m_LocalToWorldTransformation(1.0f){}
-	Sphere(glm::vec3 origin, float radiusSquared): m_Origin(origin), m_RadiusSquared(radiusSquared){ m_LocalToWorldTransformation = glm::mat4(1.0f);}
+	Sphere(glm::vec3 origin, float radiusSquared): m_Origin(origin), m_RadiusSquared(radiusSquared){
+		m_LocalToWorldTransformation = glm::mat4(1.0f);
+		float minX,minY,minZ;
+  		float maxX,maxY,maxZ;
+
+
+  		minX = m_Origin.x - m_RadiusSquared - 0.5f; 
+  		minY = m_Origin.y - m_RadiusSquared - 0.5f;
+  		minZ = m_Origin.z - m_RadiusSquared - 0.5f; 
+
+  		maxX = m_Origin.x + m_RadiusSquared + 0.5f;
+  		maxY = m_Origin.y + m_RadiusSquared + 0.5f;
+  		maxZ = m_Origin.z + m_RadiusSquared + 0.5f;
+
+  		m_BoundingBox = Box( glm::vec3(minX, minY, minZ), glm::vec3(maxX, maxY, maxZ));
+	}
 	Sphere(glm::vec3 origin, float radiusSquared, Material material): m_Origin(origin), m_RadiusSquared(radiusSquared), m_Material(material)
-	      { m_LocalToWorldTransformation = glm::mat4(1.0f);}
+		{
+	      	m_LocalToWorldTransformation = glm::mat4(1.0f);
+	      	float minX,minY,minZ;
+  			float maxX,maxY,maxZ;
+
+
+  			minX = m_Origin.x - m_RadiusSquared - 0.5f; 
+  			minY = m_Origin.y - m_RadiusSquared - 0.5f;
+  			minZ = m_Origin.z - m_RadiusSquared - 0.5f; 
+
+  			maxX = m_Origin.x + m_RadiusSquared + 0.5f;
+  			maxY = m_Origin.y + m_RadiusSquared + 0.5f;
+  			maxZ = m_Origin.z + m_RadiusSquared + 0.5f;
+
+  			m_BoundingBox = Box( glm::vec3(minX, minY, minZ), glm::vec3(maxX, maxY, maxZ));
+	    }
 	
 
-	virtual Box getLocalBoundingBox();
+	virtual const Box& getLocalBoundingBox();
 	virtual glm::vec3 getCentroid();
 	virtual const glm::mat4& transformation();
 	virtual bool hit(const Ray& ray, RayIntersection& intersection, float& distance);
@@ -60,6 +90,7 @@ private:
 	glm::mat4 m_Inverse;
 	glm::mat4 m_InverseTranspose;
 	Material  m_Material;
+	Box m_BoundingBox;
 	
 };
 

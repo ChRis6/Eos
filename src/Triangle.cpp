@@ -51,7 +51,7 @@ bool Triangle::hit(const Ray& ray, RayIntersection& intersection, float& distanc
 	return false;
 }
 
-bool Triangle::RayTriangleIntersection(glm::vec3 v1, glm::vec3 v2, glm::vec3 v3, const Ray& ray, glm::vec3& barycetricCoords){
+bool Triangle::RayTriangleIntersection(const glm::vec3& v1, const glm::vec3& v2, const glm::vec3& v3, const Ray& ray, glm::vec3& barycetricCoords){
 
    glm::vec3 e1, e2;  //Edge1, Edge2
    glm::vec3 P, Q, T;
@@ -124,13 +124,15 @@ void Triangle::setMaterial(Material& material){
 	m_Material = &material;
 }
 
-Box Triangle::getLocalBoundingBox(){
+const Box& Triangle::getLocalBoundingBox(){
+	/*
 	Box triangleBox;
 
 	triangleBox.expandToIncludeVertex(m_V1);
 	triangleBox.expandToIncludeVertex(m_V2);
 	triangleBox.expandToIncludeVertex(m_V3);
-	return triangleBox;
+	*/
+	return m_BoundingBox;
 }
 glm::vec3 Triangle::getCentroid(){
 	return m_Centroid;

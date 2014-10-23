@@ -47,16 +47,16 @@ void Camera::setHeight(int height){
 }
 
 
-glm::vec3 Camera::getPosition() const{
+const glm::vec3& Camera::getPosition() const{
 	return m_Position;
 }
-glm::vec3 Camera::getViewingDirection() const{
+const glm::vec3& Camera::getViewingDirection() const{
 	return m_ViewingDirection;
 }
-glm::vec3 Camera::getRightVector() const{
+const glm::vec3& Camera::getRightVector() const{
 	return m_RightVector;
 }
-glm::vec3 Camera::getUpVector() const{
+const glm::vec3& Camera::getUpVector() const{
 	return m_UpVector;
 }
 float Camera::getFov() const{

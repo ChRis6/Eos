@@ -25,8 +25,7 @@
 #include "Scene.h"
 #include "LightSource.h"
 #include "Material.h"
-#include "Plane.h"
-#include "Disk.h"
+
 #include "cudaWrapper.h"
 #include "getTime.h"
 #include "Texture.h"
@@ -187,6 +186,7 @@ int main(int argc, char **argv)
    
    
    bool renderOnce = true;
+
 
    GLuint vao;
    GLFWwindow* window;
@@ -420,7 +420,7 @@ int main(int argc, char **argv)
    sphere4->setTransformation(M);
    sphere4->setMaterial(sphereMaterial4);
 
-   scene.addSurface(sphere4);
+   //scene.addSurface(sphere4);
 
 
 

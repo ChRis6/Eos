@@ -22,23 +22,23 @@
 
  #include "RayIntersection.h"
 
- glm::vec3 RayIntersection::getPoint()const{
+ const glm::vec3& RayIntersection::getPoint()const{
  	return m_Point;
  }
 
- glm::vec3 RayIntersection::getNormal() const{
+ const glm::vec3& RayIntersection::getNormal() const{
  	return m_Normal;
  }
 
-void RayIntersection::setPoint(glm::vec3 point) {
+void RayIntersection::setPoint(const glm::vec3& point) {
 	m_Point = point;
 }
-void RayIntersection::setNormal(glm::vec3 normal){
+void RayIntersection::setNormal(const glm::vec3& normal){
 	m_Normal = normal;
 }
-void RayIntersection::setMaterial(Material& material){
+void RayIntersection::setMaterial(const Material& material){
 	m_Material = material;
 }
-Material& RayIntersection::getMaterial(){
+const Material& RayIntersection::getMaterial(){
 	return m_Material;
 }

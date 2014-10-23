@@ -35,13 +35,13 @@ public:
 	RayIntersection(const glm::vec3& point, const glm::vec3& normal, const Material& material ): m_Point(point), m_Normal(normal), m_Material(material)
 	{}
 
-	void setPoint(glm::vec3 point);
-	void setNormal(glm::vec3 normal);
-	void setMaterial(Material& material);
+	void setPoint(const glm::vec3& point);
+	void setNormal(const glm::vec3& normal);
+	void setMaterial(const Material& material);
 
-	glm::vec3 getPoint() const;
-	glm::vec3 getNormal() const;
-	Material& getMaterial();
+	const glm::vec3& getPoint() const;
+	const glm::vec3& getNormal() const;
+	const Material& getMaterial();
 
 private:
 	glm::vec3 m_Point;

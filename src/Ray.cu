@@ -22,23 +22,23 @@
 
 #include "Ray.h"
 
-DEVICE HOST void Ray::setOrigin(glm::vec3 origin){
+DEVICE HOST void Ray::setOrigin(const glm::vec3& origin){
 	m_Origin = origin;
 }
 
-DEVICE HOST void Ray::setDirection(glm::vec3 direction) {
+DEVICE HOST void Ray::setDirection(const glm::vec3& direction) {
 	m_Direction = direction;
 	m_InvDirection = glm::vec3( 1.0f/ direction.x, 1.0f/direction.y, 1.0/direction.z); 
 }
 
-DEVICE HOST glm::vec3 Ray::getOrigin() const{
+DEVICE HOST const glm::vec3& Ray::getOrigin() const{
 	return m_Origin;
 }
 
-DEVICE HOST glm::vec3 Ray::getDirection() const{
+DEVICE HOST const glm::vec3& Ray::getDirection() const{
 	return m_Direction;
 }
 
-DEVICE HOST glm::vec3 Ray::getInvDirection() const{
+DEVICE HOST const glm::vec3& Ray::getInvDirection() const{
 	return m_InvDirection;
 }
