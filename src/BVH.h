@@ -54,7 +54,7 @@ public:
 
 	void buildHierarchy(Surface** surfaces, int numSurfaces);					// builds BVH tree
 	BvhNode* getRoot() const { return m_Root;}									// return Root of tree
-	Surface* intersectRay(const Ray& ray, RayIntersection& intersectionFound);	// Return Intesected Surface with Ray
+	bool intersectRay(const Ray& ray, RayIntersection& intersectionFound);	// Return Intesected Surface with Ray
 	Surface* pointInsideSurface(glm::vec3& point);								// return surface that has point
 
 private:
@@ -75,6 +75,8 @@ private:
 
 
 	void buildTopDownHybrid(BvhNode** tree, Surface** surfaces, int numSurfaces);
+
+	bool intersectStack(const Ray& ray, BvhNode* root, RayIntersection& intersection);
 private:
 	BvhNode* m_Root;
 };

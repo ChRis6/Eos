@@ -21,13 +21,14 @@
  */
 #include <iostream>
 #include <algorithm>
+ #include <stack>
 #include <cfloat>
 #include "BVH.h"
 
-#define SAH_SURFACE_CEIL  500
+#define SAH_SURFACE_CEIL  1000
 #define SURFACES_PER_LEAF 4
 #define COST_TRAVERSAL    1
-#define COST_INTERSECTION 2
+#define COST_INTERSECTION 3
 
 
 bool by_X_compareSurfaces(Surface* a, Surface* b){
@@ -190,12 +191,17 @@ int BVH::topDownSplitIndex(Surface** surfaces, int numSurfaces, Box parentBox){
 	return split;
 }
 
-Surface* BVH::intersectRay(const Ray& ray, RayIntersection& intersectionFound){
+bool BVH::intersectRay(const Ray& ray, RayIntersection& intersectionFound){
+	
 	
 	Surface* intersectedSurface = NULL;
 	float distance;
 	intersectedSurface = this->intersectRecursive(ray, this->getRoot(), distance, intersectionFound);
-	return intersectedSurface;
+	if( intersectedSurface)
+		return true;
+	return false;
+	
+	//return this->intersectStack(ray, this->getRoot(), intersectionFound);
 }
 
 Surface* BVH::intersectRecursive(const Ray& ray, BvhNode* node, float& minDistance, RayIntersection& intersection){
@@ -346,9 +352,11 @@ bool BVH::intersectRayWithLeaf(const Ray& ray, BvhNode* leaf, RayIntersection& i
 	RayIntersection possibleIntersection;
 	glm::vec4 intersectionPointWorldCoords;
 	glm::vec4 intersectionNormalWorldCoords;
+	Ray localRay;
 
 	int numSurfaces = leaf->numSurfacesEncapulated;
 	Surface** surfaces = leaf->tracedObjectArray;
+
 
 	for( i = 0 ; i < numSurfaces; i++){
 		
@@ -358,7 +366,8 @@ bool BVH::intersectRayWithLeaf(const Ray& ray, BvhNode* leaf, RayIntersection& i
 		const glm::mat4& M = surface->transformation();
 		glm::vec3 localRayOrigin    = glm::vec3(surface->getInverseTransformation() * glm::vec4(ray.getOrigin(), 1.0f));
 		glm::vec3 localRayDirection = glm::vec3(surface->getInverseTransformation() * glm::vec4(ray.getDirection(), 0.0f)); 
-		Ray localRay(localRayOrigin, localRayDirection);
+		localRay.setOrigin(localRayOrigin);
+		localRay.setDirection(localRayDirection);
 
 		
 		if(surface->hit(localRay, possibleIntersection, distanceFromOrigin)){
@@ -455,14 +464,15 @@ int BVH::topDownSplitIndexSAH(Surface** surfaces, int numSurfaces, Box& parentBo
 				minCost = computedCost;
 				minCostSplit = nl;
 			}
-
 		}
 	}
-
-	if( minCostSplit == 1)
-		splitCost = FLT_MIN;	// create leaf 
+ 
 
 	splitCost = minCost;
+
+	if( minCostSplit == 1)
+		splitCost = FLT_MAX;	// create leaf
+
 	return minCostSplit;
 }
 
@@ -511,4 +521,92 @@ void BVH::buildTopDownHybrid(BvhNode** tree, Surface** surfaces, int numSurfaces
 			buildTopDownHybrid(&(node->rightChild),&surfaces[splitIndex], numSurfaces - splitIndex);
 		}
 	}
+}
+
+/*
+ * WIP
+ * DONT USE
+ */
+bool BVH::intersectStack(const Ray& ray, BvhNode* root, RayIntersection& intersection){
+	
+	std::stack<BvhNode*> nodeStack;
+	float closeIntersectionDistance = 99999999.0f;
+	bool surfaceHitFound = false;
+	bool tempSurfaceHit = false;
+	float tempDistance;
+	float leftChildDistance;
+	float rightChildDistance;
+	float popDistance;
+	int leafSurfaceIndex;
+	RayIntersection tempIntersection;
+	BvhNode* currentNode;
+	BvhNode* popdNode;
+	bool leftChildHit;
+	bool rightChildHit;
+
+	if( root->aabb.intersectWithRay(ray, tempDistance) == false)
+		return false;
+
+	currentNode = root;
+	while(1){
+		if(currentNode->type == BVH_NODE){
+			leftChildHit = currentNode->leftChild->aabb.intersectWithRay(ray, leftChildDistance);
+			rightChildHit = currentNode->rightChild->aabb.intersectWithRay(ray, rightChildDistance);
+
+			if(leftChildHit && rightChildHit){
+				if( leftChildDistance < rightChildDistance){	// left is closest,push right
+					nodeStack.push(currentNode->rightChild);
+					continue;
+				}
+				else{ 
+					nodeStack.push(currentNode->leftChild);
+					continue;
+				}
+			}
+			else if( leftChildHit  )
+				currentNode = currentNode->leftChild;
+			else if(rightChildHit )
+				currentNode = currentNode->rightChild;
+
+		}
+		else{
+			//leaf
+			tempSurfaceHit =  this->intersectRayWithLeaf(ray, currentNode, tempIntersection, tempDistance, leafSurfaceIndex);
+			if(  tempSurfaceHit ){
+				surfaceHitFound = true;
+				// update close hit
+				if( tempDistance < closeIntersectionDistance ){
+					closeIntersectionDistance = tempDistance;
+					intersection = tempIntersection;
+				}
+			}
+		}
+
+		currentNode == NULL;
+		// pop stack
+		while( nodeStack.empty() == false){
+			popdNode = nodeStack.top();
+			nodeStack.pop();
+
+			// intersect with box
+			if( popdNode->aabb.intersectWithRay(ray, tempDistance)){
+				
+				if( surfaceHitFound ){
+					if(tempDistance < closeIntersectionDistance){
+						currentNode = popdNode;
+						break;
+					}
+				}
+				else{
+					currentNode = popdNode;
+				}
+			}
+		}
+
+		if( currentNode == NULL )
+			return surfaceHitFound;
+
+	}
+
+
 }
