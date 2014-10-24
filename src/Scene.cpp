@@ -213,7 +213,7 @@ glm::vec4 Scene::rayTrace(const Ray& ray, const Camera& camera, float sourceRefa
 	}
 	else{
 		// return background color
-		return glm::vec4(0.2f);
+		return glm::vec4(0.1f);
 	}
 
 	return glm::vec4(1.0f);
@@ -291,7 +291,6 @@ glm::vec4 Scene::shadeIntersection(RayIntersection& intersection, const Ray& ray
 			//Ray is outside of the material going in
 			n1 = this->getAmbientRefractiveIndex();
 			n2 = intersection.getMaterial().getRefractiveIndex();
-			//std::cout << "Intersection normal unchanged" << std::endl;
 		}
 		else{
 			// ray is in the material going out
@@ -299,11 +298,9 @@ glm::vec4 Scene::shadeIntersection(RayIntersection& intersection, const Ray& ray
 			n2 = this->getAmbientRefractiveIndex();
 			
 			// reverse normal
-			//std::cout << "Reversing Intersection normal" << std::endl;
 			newNormal = zeroVector - intersection.getNormal();
 			
 		}
-		//std::cout << " n1 = " << n1 << " n2 = " << n2 << std::endl;
 		
 		refractionRatio = n1 / n2;
 		float K = this->fresnel(incident, newNormal, n1, n2);
