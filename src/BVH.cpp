@@ -191,7 +191,7 @@ int BVH::topDownSplitIndex(Surface** surfaces, int numSurfaces, Box parentBox){
 	return split;
 }
 
-bool BVH::intersectRay(const Ray& ray, RayIntersection& intersectionFound, bool nearest){
+bool BVH::intersectRay(const Ray& ray, RayIntersection& intersectionFound, bool nearest) const{
 	
 	
 	Surface* intersectedSurface = NULL;
@@ -208,7 +208,7 @@ bool BVH::intersectRay(const Ray& ray, RayIntersection& intersectionFound, bool 
 	//return this->intersectStack(ray, this->getRoot(), intersectionFound);
 }
 
-Surface* BVH::intersectRecursiveNearestHit(const Ray& ray, BvhNode* node, float& minDistance, RayIntersection& intersection){
+Surface* BVH::intersectRecursiveNearestHit(const Ray& ray, BvhNode* node, float& minDistance, RayIntersection& intersection) const{
 	
 	bool rayIntersectsBox = false;
 	float distance = 999999.0f;
@@ -258,7 +258,7 @@ Surface* BVH::intersectRecursiveNearestHit(const Ray& ray, BvhNode* node, float&
 
 }
 
-bool BVH::intersectRayVisibilityTest(const Ray& ray, BvhNode* node){
+bool BVH::intersectRayVisibilityTest(const Ray& ray, BvhNode* node) const{
 
 	bool intersectsCurrent;
 	bool intersectsLeftChild;
@@ -379,7 +379,7 @@ void BVH::createLeaf(BvhNode* newNode, Surface** surfaces, int numSurfaces){
 	newNode->rightChild = NULL;
 }
 
-bool BVH::intersectRayWithLeaf(const Ray& ray, BvhNode* leaf, RayIntersection& intersection, float& distance, int& leafSurfaceIndex){
+bool BVH::intersectRayWithLeaf(const Ray& ray, BvhNode* leaf, RayIntersection& intersection, float& distance, int& leafSurfaceIndex) const{
 
 	int i;
 	bool surfaceIntersectionFound = false;

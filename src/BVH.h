@@ -54,7 +54,7 @@ public:
 
 	void buildHierarchy(Surface** surfaces, int numSurfaces);								// builds BVH tree
 	BvhNode* getRoot() const { return m_Root;}												// return Root of tree
-	bool intersectRay(const Ray& ray, RayIntersection& intersectionFound, bool nearest);	// Return Intesected Surface with Ray.Get closest hit when nearest = true
+	bool intersectRay(const Ray& ray, RayIntersection& intersectionFound, bool nearest) const;	// Return Intesected Surface with Ray.Get closest hit when nearest = true
 	Surface* pointInsideSurface(glm::vec3& point);											// return surface that has point
 
 private:
@@ -63,8 +63,8 @@ private:
 	void buildTopDown(BvhNode** tree, Surface** surfaces, int numSurfaces);
 	int topDownSplitIndex(Surface** surfaces, int numSurfaces,Box parentBox);
 
-	Surface* intersectRecursiveNearestHit(const Ray& ray, BvhNode* node, float& minDistance, RayIntersection& intersection);
-	bool 	 intersectRayVisibilityTest(const Ray& ray, BvhNode* node);
+	Surface* intersectRecursiveNearestHit(const Ray& ray, BvhNode* node, float& minDistance, RayIntersection& intersection) const;
+	bool 	 intersectRayVisibilityTest(const Ray& ray, BvhNode* node) const;
 	Surface* isPointInsideSurfaceRecursive(BvhNode* node, glm::vec3& point);
 	bool    intersectRayWithLocalSurface(const Ray& ray, Surface* surface, RayIntersection& intersection, float& distance);
 
@@ -72,7 +72,7 @@ private:
 	void buildTopDownSAH(BvhNode** tree, Surface** surfaces, int numSurfaces);
 	int topDownSplitIndexSAH(Surface** surfaces, int numSurfaces, Box& parentBox, float& splitCost);	// returns best split index, sets splitCost - cost of split index returned
 	void createLeaf(BvhNode* newNode, Surface** surfaces, int numSurfaces);
-	bool intersectRayWithLeaf(const Ray& ray, BvhNode* leaf, RayIntersection& intersection, float& distance, int& leafSurfaceIndex);
+	bool intersectRayWithLeaf(const Ray& ray, BvhNode* leaf, RayIntersection& intersection, float& distance, int& leafSurfaceIndex) const;
 
 
 	void buildTopDownHybrid(BvhNode** tree, Surface** surfaces, int numSurfaces);

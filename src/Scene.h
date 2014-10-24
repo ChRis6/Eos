@@ -51,6 +51,16 @@ public:
 	void setAASamples(int samples){ m_AASamples = samples; }
 	int getAASamples(){ return m_AASamples; }
 
+
+
+
+	bool findMinDistanceIntersectionLinear(const Ray& ray, RayIntersection& intersection) const;
+	bool findMinDistanceIntersectionBVH(const Ray& ray, RayIntersection& intersection) const;
+	bool shadowRayVisibilityBVH(const Ray& ray) const;
+
+
+
+
 	void setAmbientRefractiveIndex(float refractiveIndex);
 
 	const Surface* getSurface( unsigned int id) const;
@@ -67,9 +77,6 @@ public:
 
 private:
 	glm::vec4 rayTrace(const Ray& ray, const Camera& camera, float sourceRefactionIndex, int depth);
-	bool findMinDistanceIntersectionLinear(const Ray& ray, RayIntersection& intersection);
-	bool findMinDistanceIntersectionBVH(const Ray& ray, RayIntersection& intersection);
-	bool shadowRayVisibilityBVH(const Ray& ray);
 	glm::vec4 calcPhong( const Camera& camera, const LightSource& lightSource, RayIntersection& intersection);
 	glm::vec4 findDiffuseColor(const LightSource& lightSource, const glm::vec4& intersectionToLight, const RayIntersection& intersection);
 	glm::vec4 shadeIntersection(RayIntersection& intersection, const Ray& ray, const Camera& camera, float sourceRefactionIndex, int depth);

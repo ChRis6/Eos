@@ -377,7 +377,7 @@ glm::vec4 Scene::calcPhong( const Camera& camera, const LightSource& lightSource
 
 	return diffuseColor + specularColor;
 }
-bool Scene::findMinDistanceIntersectionBVH(const Ray& ray, RayIntersection& intersection){
+bool Scene::findMinDistanceIntersectionBVH(const Ray& ray, RayIntersection& intersection) const{
 	/*
 	Surface* intersectedSurface = this->m_Bvh.intersectRay(ray, intersection);
 	if( intersectedSurface != NULL)
@@ -387,11 +387,11 @@ bool Scene::findMinDistanceIntersectionBVH(const Ray& ray, RayIntersection& inte
 	return this->m_Bvh.intersectRay(ray, intersection, true);
 }
 
-bool Scene::shadowRayVisibilityBVH(const Ray& ray){
+bool Scene::shadowRayVisibilityBVH(const Ray& ray) const{
 	RayIntersection dummyIntersection;
 	return this->m_Bvh.intersectRay(ray, dummyIntersection, false);
 }
-bool Scene::findMinDistanceIntersectionLinear(const Ray& ray, RayIntersection& intersection){
+bool Scene::findMinDistanceIntersectionLinear(const Ray& ray, RayIntersection& intersection) const{
 
 	bool intersectionFound;
 	int numSurfaces;

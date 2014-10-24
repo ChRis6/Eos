@@ -18,6 +18,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 
 #include "stb_image.h"
+#include "RayTracer.h"
 #include "Ray.h"
 #include "sphere.h"
 #include "RayIntersection.h"
@@ -186,7 +187,7 @@ int main(int argc, char **argv)
 {
    
    
-   bool renderOnce = false;
+   bool renderOnce = true;
 
    srand((int) time(NULL));
 
@@ -349,6 +350,8 @@ int main(int argc, char **argv)
    scene.useBvh(true);
    scene.setAASamples(SCENE_AA_1);
 
+   RayTracer rayTracer;
+   rayTracer.setAASamples(RAYTRACER_NO_AA);
 
    float refletionIntensity = 0.4f;
    Material sphereMaterial(0.075f, glm::vec4(0.0f, 0.0f, 1.0f, 0.0f), glm::vec4(1.0f), 40);
@@ -385,9 +388,9 @@ int main(int argc, char **argv)
    sphereMaterial4.setRefractiveIndex(REFRACTIVE_INDEX_AMBER);
    
 
-   Material gridMaterial(0.1f, glm::vec4(0.45f, 0.45f, 0.45f, 0.0f), glm::vec4(0.0f), 140);
+   Material gridMaterial(0.1f, glm::vec4(0.5f, 0.5f, 0.5f, 0.0f), glm::vec4(0.0f), 140);
    gridMaterial.setTransparent(false);
-   gridMaterial.setReflective(true);
+   gridMaterial.setReflective(false);
    gridMaterial.setReflectionIntensity(refletionIntensity);
    gridMaterial.setRefractiveIndex(REFRACTIVE_INDEX_WATER);
 
@@ -397,14 +400,14 @@ int main(int argc, char **argv)
    gridMaterialLeft.setReflectionIntensity(1.0f); // mirror
    gridMaterialLeft.setRefractiveIndex(REFRACTIVE_INDEX_WATER);
 
-   Material triangleMeshMaterial(0.1f, glm::vec4(0.45f, 0.45f, 0.45f, 0.0f), glm::vec4(1.0f), 120);
+   Material triangleMeshMaterial(0.1f, glm::vec4(1.0f, 1.0f, 1.0f, 0.0f), glm::vec4(1.0f), 120);
    triangleMeshMaterial.setTransparent(false);
    triangleMeshMaterial.setReflective(false);
    triangleMeshMaterial.setReflectionIntensity(refletionIntensity);
    triangleMeshMaterial.setRefractiveIndex(REFRACTIVE_INDEX_WATER);
 
-   LightSource* lightSource  = new LightSource(glm::vec4(-10.0f, 30.0f, -20.0f, 1.0f), glm::vec4(1.0f));  // location , color
-   LightSource* lightSource1 = new LightSource(glm::vec4(20.0f, 30.0f, 20.0f, 1.0f), glm::vec4(1.0f));
+   LightSource* lightSource  = new LightSource(glm::vec4(0.0f, 10.0f, -10.0f, 1.0f), glm::vec4(1.0f));  // location , color
+   LightSource* lightSource1 = new LightSource(glm::vec4(10.0f, 10.0f, 10.0f, 1.0f), glm::vec4(1.0f));
    //LightSource* lightSource2 = new LightSource(glm::vec4(2000.0f, 0.0f, 40.0f, 1.0f), glm::vec4(1.0f));
 
    Sphere* sphere = new Sphere(glm::vec3(0.8f, 1.65f, 0.0f), 0.7f);
@@ -464,7 +467,10 @@ int main(int argc, char **argv)
    scene.addTriangleMesh(meshGrid);
 
 
-     char* triangleMeshGrid1FileName = "objmodels/grid_back.obj";
+
+
+
+   char* triangleMeshGrid1FileName = "objmodels/grid_back.obj";
    TriangleMesh* meshGrid1 = new TriangleMesh();
    glm::mat4 meshGrid1Transformation = glm::translate(glm::mat4(1.0f), glm::vec3(0.5f, 5.7f, 0.0f));
    
@@ -519,7 +525,8 @@ int main(int argc, char **argv)
       double msecs;
       int hours,minutes,seconds;
       start = getRealTime();
-      scene.render(camera, imageBuffer);
+      //scene.render(camera, imageBuffer);
+      rayTracer.render(scene, camera, imageBuffer);
       end = getRealTime();
 
       diff = end - start;
@@ -599,8 +606,8 @@ int main(int argc, char **argv)
 
 
       /* Raytracing */
-      scene.render(camera, imageBuffer);
-      
+      //scene.render(camera, imageBuffer);
+      rayTracer.render(scene, camera, imageBuffer);
 
       // copy pixels to GPU buffer (async copy)
       glBufferSubData(GL_PIXEL_UNPACK_BUFFER, 0, sizeof(GLchar) * WINDOW_WIDTH * WINDOW_HEIGHT * 4, imageBuffer);
