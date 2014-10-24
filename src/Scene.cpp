@@ -26,7 +26,7 @@
 #include <iostream>
 #include <omp.h>
 
-#define PRINT_PROGRESS
+//#define PRINT_PROGRESS
 
 bool Scene::addSurface(Surface* surface){
 	if( surface != NULL){
@@ -140,12 +140,12 @@ void Scene::render(const Camera& camera, unsigned char* outputImage){
     		glm::vec4 finalColor(0.0f);
 
     		for( int q = 0 ; q < aaSamples ; q++){
+    			// how much 'up'
+    			float bb = (y + (( q + ksi ) / (float) aaSamples) - norm_height) * inv_norm_height;    			
+    			
     			for( int p = 0; p < aaSamples; p++){
     				
-    				// how much 'up'
-    				float bb = (y + (( q + ksi ) / (float) aaSamples) - norm_height) * inv_norm_height;
-    				
-    				// how much 'right'
+    				    				// how much 'right'
     				float aa = ( x + (( p + ksi ) / (float) aaSamples)- norm_width) * inv_norm_width;
 
 					glm::vec3 rayDirection = (aa * right ) + ( bb * up ) + viewDirection;
@@ -174,15 +174,15 @@ void Scene::render(const Camera& camera, unsigned char* outputImage){
     		#pragma omp critical 
     		{
     			if( omp_get_thread_num() == 0 ){
-    				//std::cout << "\rRendering Progress: " << (int)(( progress / (float) viewHeight ) * 100) << "% "<< std::endl;
     				printf("\rRendering Progress:%d%%", (int)(( progress / (float) viewHeight ) * 100));
-    				//printf("\r" );
     				fflush(stdout);
     			}
     		}
     	#endif
     }
-    printf("\n");
+    #ifdef PRINT_PROGRESS
+    	printf("\n");
+    #endif
 }
 
 glm::vec4 Scene::rayTrace(const Ray& ray, const Camera& camera, float sourceRefactionIndex, int depth){
@@ -213,7 +213,7 @@ glm::vec4 Scene::rayTrace(const Ray& ray, const Camera& camera, float sourceRefa
 	}
 	else{
 		// return background color
-		return glm::vec4(0.0f);
+		return glm::vec4(0.2f);
 	}
 
 	return glm::vec4(1.0f);
@@ -230,7 +230,7 @@ glm::vec4 Scene::shadeIntersection(RayIntersection& intersection, const Ray& ray
 	glm::vec4 refractedColour(0.0f);
 	glm::vec4 phongColour(0.0f);
 	float n1,n2;
-
+	
 	Ray tempRay;	// use one ray for shadows - reflections
 
 	numLights = this->getNumLightSources();
@@ -263,15 +263,16 @@ glm::vec4 Scene::shadeIntersection(RayIntersection& intersection, const Ray& ray
 
 	// calculate reflections for the surface
 	if( intersection.getMaterial().isReflective()){
-
+		
 		glm::vec3 reflectedRayDirection = glm::normalize(glm::reflect(ray.getDirection(), intersection.getNormal()));
 		glm::vec3 reflectedRayOrigin    = intersection.getPoint() + epsilon * reflectedRayDirection;
 
 		
 		tempRay.setOrigin(reflectedRayOrigin);
 		tempRay.setDirection(reflectedRayDirection);
-		reflectedColour += intersection.getMaterial().getReflectiveIntensity() * intersection.getMaterial().getSpecularColor() * 
+		reflectedColour += intersection.getMaterial().getReflectiveIntensity() * 
 		                   this->rayTrace( tempRay, camera, sourceRefactionIndex, depth + 1);
+		
 	}
 	// is the surface transparent ? 
 	if( intersection.getMaterial().isTransparent()){
@@ -336,21 +337,18 @@ glm::vec4 Scene::shadeIntersection(RayIntersection& intersection, const Ray& ray
 
 }
 
-glm::vec4 Scene::findDiffuseColor(const LightSource& lightSource, RayIntersection& intersection){
+glm::vec4 Scene::findDiffuseColor(const LightSource& lightSource, const glm::vec4& intersectionToLight, const RayIntersection& intersection){
 
 	glm::vec4 diffuseColor;
-	glm::vec4 intersectionToLight;
 	const Material& material = intersection.getMaterial();
 
 
-	intersectionToLight = glm::normalize(lightSource.getPosition() - glm::vec4(intersection.getPoint(), 1.0f));
 	float dot = glm::dot(intersectionToLight, glm::vec4(intersection.getNormal(), 0.0f));
-	if( dot > 0.0f){
-		return glm::vec4( dot * material.getDiffuseColor() * lightSource.getLightColor());
-	}
-
+	dot = glm::max(0.0f, dot);
+	return glm::vec4( dot * material.getDiffuseColor() * lightSource.getLightColor());
+	
 	// normal is pointing the other way.No color contribution for this light source
-	return glm::vec4(0.0f);
+	//return glm::vec4(0.0f);
 }
 
 glm::vec4 Scene::calcPhong( const Camera& camera, const LightSource& lightSource, RayIntersection& intersection){
@@ -361,16 +359,18 @@ glm::vec4 Scene::calcPhong( const Camera& camera, const LightSource& lightSource
 	glm::vec4 intersectionToLight;
 	glm::vec4 reflectedVector;
 	glm::vec4 viewVector;
-
+	
 	glm::vec4 intersectionPointInWorld  = glm::vec4(intersection.getPoint() , 1.0f);
 	glm::vec4 intersectionNormalInWorld = glm::vec4(intersection.getNormal(), 0.0f);
 
-	diffuseColor = this->findDiffuseColor(lightSource, intersection);
-
-	// add specular reflection
+	
+	// specular reflection
 	intersectionToLight = glm::normalize(lightSource.getPosition() - intersectionPointInWorld);
 	viewVector          = glm::normalize(glm::vec4(camera.getPosition(),1.0f) - intersectionPointInWorld);
 	reflectedVector     = glm::normalize((2.0f * glm::dot(intersectionNormalInWorld, intersectionToLight) * intersectionNormalInWorld) - intersectionToLight);
+	
+	// find diffuse first
+	diffuseColor = this->findDiffuseColor(lightSource, intersectionToLight, intersection);
 
 	float dot = glm::dot( viewVector, reflectedVector);
 	if( dot > 0.0f){

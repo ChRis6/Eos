@@ -41,7 +41,7 @@ public:
 
 	const glm::vec3& getPoint() const;
 	const glm::vec3& getNormal() const;
-	const Material& getMaterial();
+	const Material& getMaterial() const;
 
 private:
 	glm::vec3 m_Point;

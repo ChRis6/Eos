@@ -187,6 +187,7 @@ int main(int argc, char **argv)
    
    
    bool renderOnce = false;
+
    srand((int) time(NULL));
 
 
@@ -384,15 +385,26 @@ int main(int argc, char **argv)
    sphereMaterial4.setRefractiveIndex(REFRACTIVE_INDEX_AMBER);
    
 
-   Material gridMaterial(0.1f, glm::vec4(0.45f, 0.45f, 0.45f, 0.0f), glm::vec4(1.0f), 80);
+   Material gridMaterial(0.1f, glm::vec4(0.45f, 0.45f, 0.45f, 0.0f), glm::vec4(0.0f), 140);
    gridMaterial.setTransparent(false);
-   gridMaterial.setReflective(false);
+   gridMaterial.setReflective(true);
    gridMaterial.setReflectionIntensity(refletionIntensity);
-   gridMaterial.setTransparent(false);
    gridMaterial.setRefractiveIndex(REFRACTIVE_INDEX_WATER);
 
-   LightSource* lightSource  = new LightSource(glm::vec4(-10.0f, -10.0f, 10.0f, 1.0f), glm::vec4(1.0f));  // location , color
-   LightSource* lightSource1 = new LightSource(glm::vec4(0.0f, 30.0f, 20.0f, 1.0f), glm::vec4(1.0f));
+   Material gridMaterialLeft(0.1f, glm::vec4(0.0f, 0.0f, 0.0f, 0.0f), glm::vec4(0.0f, 0.0f, 0.0f, 0.0f), 140);
+   gridMaterialLeft.setTransparent(false);
+   gridMaterialLeft.setReflective(true);
+   gridMaterialLeft.setReflectionIntensity(1.0f); // mirror
+   gridMaterialLeft.setRefractiveIndex(REFRACTIVE_INDEX_WATER);
+
+   Material triangleMeshMaterial(0.1f, glm::vec4(0.45f, 0.45f, 0.45f, 0.0f), glm::vec4(1.0f), 120);
+   triangleMeshMaterial.setTransparent(false);
+   triangleMeshMaterial.setReflective(false);
+   triangleMeshMaterial.setReflectionIntensity(refletionIntensity);
+   triangleMeshMaterial.setRefractiveIndex(REFRACTIVE_INDEX_WATER);
+
+   LightSource* lightSource  = new LightSource(glm::vec4(-10.0f, 30.0f, -20.0f, 1.0f), glm::vec4(1.0f));  // location , color
+   LightSource* lightSource1 = new LightSource(glm::vec4(20.0f, 30.0f, 20.0f, 1.0f), glm::vec4(1.0f));
    //LightSource* lightSource2 = new LightSource(glm::vec4(2000.0f, 0.0f, 40.0f, 1.0f), glm::vec4(1.0f));
 
    Sphere* sphere = new Sphere(glm::vec3(0.8f, 1.65f, 0.0f), 0.7f);
@@ -419,7 +431,7 @@ int main(int argc, char **argv)
    
    scene.addSurface(sphere3);
 
-   Sphere* sphere4 = new Sphere(glm::vec3(0.0f, 0.0f, 4.0f), 1.5f);
+   Sphere* sphere4 = new Sphere(glm::vec3(0.0f, 0.0f, 5.0f), 1.5f);
    sphere4->setTransformation(M);
    sphere4->setMaterial(sphereMaterial4);
 
@@ -429,10 +441,10 @@ int main(int argc, char **argv)
 
    char* triangleMeshFileName = "objmodels/monkey.obj";
    TriangleMesh* mesh = new TriangleMesh();
-   glm::mat4 meshTransformation = glm::translate(glm::mat4(1.0f), glm::vec3(4.5f, 0.0f, -1.0f));
+   glm::mat4 meshTransformation = glm::translate(glm::mat4(1.0f), glm::vec3(5.0f, 0.0f, -1.0f));
    
    mesh->setTransformation(meshTransformation);
-   mesh->setMaterial(gridMaterial);
+   mesh->setMaterial(triangleMeshMaterial);
    
    mesh->loadFromFile(triangleMeshFileName);
    scene.addTriangleMesh(mesh);
@@ -440,9 +452,10 @@ int main(int argc, char **argv)
 
    std::cout << "Triangle Mesh (" << triangleMeshFileName << ") has " << mesh->getNumTriangles() << " Triangles." << std::endl;
 
+
    char* triangleMeshGridFileName = "objmodels/grid.obj";
    TriangleMesh* meshGrid = new TriangleMesh();
-   glm::mat4 meshGridTransformation = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -1.0f, 0.0f));
+   glm::mat4 meshGridTransformation = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -1.5f, 0.0f));
    
    meshGrid->setTransformation(meshGridTransformation);
    meshGrid->setMaterial(gridMaterial);
@@ -450,6 +463,16 @@ int main(int argc, char **argv)
    meshGrid->loadFromFile(triangleMeshGridFileName);
    scene.addTriangleMesh(meshGrid);
 
+
+     char* triangleMeshGrid1FileName = "objmodels/grid_back.obj";
+   TriangleMesh* meshGrid1 = new TriangleMesh();
+   glm::mat4 meshGrid1Transformation = glm::translate(glm::mat4(1.0f), glm::vec3(0.5f, 5.7f, 0.0f));
+   
+   meshGrid1->setTransformation(meshGrid1Transformation);
+   meshGrid1->setMaterial(gridMaterialLeft);
+   
+   meshGrid1->loadFromFile(triangleMeshGrid1FileName);
+   scene.addTriangleMesh(meshGrid1);
 
 
    /*
@@ -467,7 +490,7 @@ int main(int argc, char **argv)
    //scene.addSurface(disk);
 
 
-   //scene.addLightSource(lightSource);
+   scene.addLightSource(lightSource);
    scene.addLightSource(lightSource1);
    //scene.addLightSource(lightSource2);
 
