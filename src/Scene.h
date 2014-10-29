@@ -76,13 +76,14 @@ public:
 	void flush();
 
 private:
+	/*
 	glm::vec4 rayTrace(const Ray& ray, const Camera& camera, float sourceRefactionIndex, int depth);
 	glm::vec4 calcPhong( const Camera& camera, const LightSource& lightSource, RayIntersection& intersection);
 	glm::vec4 findDiffuseColor(const LightSource& lightSource, const glm::vec4& intersectionToLight, const RayIntersection& intersection);
 	glm::vec4 shadeIntersection(RayIntersection& intersection, const Ray& ray, const Camera& camera, float sourceRefactionIndex, int depth);
 	float fresnel(const glm::vec3& incident, const glm::vec3& normal, float n1, float n2);
 	float slick(const glm::vec3& incident, const glm::vec3& normal, float n1, float n2);
-
+*/
 	glm::vec3 getReflectedRay(const glm::vec3& rayDir, const glm::vec3& normal);
 	glm::vec3 getRefractedRay(const glm::vec3& rayDir, const glm::vec3& normal, float n1, float n2);
 
