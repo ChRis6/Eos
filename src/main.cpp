@@ -36,8 +36,8 @@
 #include "stb_image_write.h"
 
 
-#define WINDOW_WIDTH   640  // in pixels
-#define WINDOW_HEIGHT  480 // in pixels
+#define WINDOW_WIDTH   1280  // in pixels
+#define WINDOW_HEIGHT  720 // in pixels
 #define FOV            70
 
 #ifndef EPSILON
@@ -351,7 +351,7 @@ int main(int argc, char **argv)
    scene.setAASamples(SCENE_AA_1);
 
    RayTracer rayTracer;
-   rayTracer.setAASamples(RAYTRACER_NO_AA);
+   rayTracer.setAASamples(RAYTRACER_AA_SAMPLES_2);
 
    float refletionIntensity = 0.4f;
    Material sphereMaterial(0.075f, glm::vec4(0.0f, 0.0f, 1.0f, 0.0f), glm::vec4(1.0f), 40);
@@ -442,7 +442,7 @@ int main(int argc, char **argv)
 
 
 
-   char* triangleMeshFileName = "objmodels/monkey.obj";
+   char* triangleMeshFileName = "objmodels/bunny.obj";
    TriangleMesh* mesh = new TriangleMesh();
    glm::mat4 meshTransformation = glm::translate(glm::mat4(1.0f), glm::vec3(5.0f, 0.0f, -1.0f));
    
@@ -464,7 +464,7 @@ int main(int argc, char **argv)
    meshGrid->setMaterial(gridMaterial);
    
    meshGrid->loadFromFile(triangleMeshGridFileName);
-   scene.addTriangleMesh(meshGrid);
+   //scene.addTriangleMesh(meshGrid);
 
 
 
@@ -478,7 +478,7 @@ int main(int argc, char **argv)
    meshGrid1->setMaterial(gridMaterialLeft);
    
    meshGrid1->loadFromFile(triangleMeshGrid1FileName);
-   scene.addTriangleMesh(meshGrid1);
+   //scene.addTriangleMesh(meshGrid1);
 
 
    /*
