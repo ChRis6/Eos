@@ -28,7 +28,7 @@
 #include "Ray.h"
 #include "RayIntersection.h"
 
-//#define PRINT_PROGRESS
+#define PRINT_PROGRESS
 
 // setters - getters
 void RayTracer::setAASamples(int samples){
@@ -291,7 +291,7 @@ glm::vec4 RayTracer::rayTrace(const Scene& scene, const Camera& camera, const Ra
 	}
 	else{
 		// return background color
-		return glm::vec4(0.1f);
+		return glm::vec4(0.0f);
 	}
 
 }
