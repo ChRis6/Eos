@@ -25,6 +25,7 @@
 
 #include <glm/glm.hpp>
 #include "cudaWrapper.h"
+#include "cudaQualifiers.h"
 
 class Ray{
 

@@ -57,8 +57,8 @@ public:
 	void setRefractiveIndex(float refractiveIndex)   { m_RefractiveIndex     = refractiveIndex;}
 
 	float getAmbientIntensity()    const { return m_AmbientIntensity;}
-	glm::vec4 getDiffuseColor()    const { return m_DiffuseColor;}
-	glm::vec4 getSpecularColor()   const { return m_SpecularColor;}
+	const glm::vec4& getDiffuseColor()    const { return m_DiffuseColor;}
+	const glm::vec4& getSpecularColor()   const { return m_SpecularColor;}
 	int getShininess()             const { return m_Shininess;}
 	bool isReflective()			   const { return m_Reflective;}
 	float getReflectiveIntensity() const { return m_ReflectionIntensity;}

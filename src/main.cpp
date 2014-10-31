@@ -400,14 +400,14 @@ int main(int argc, char **argv)
    gridMaterialLeft.setReflectionIntensity(1.0f); // mirror
    gridMaterialLeft.setRefractiveIndex(REFRACTIVE_INDEX_WATER);
 
-   Material triangleMeshMaterial(0.1f, glm::vec4(1.0f, 1.0f, 1.0f, 0.0f), glm::vec4(1.0f), 120);
+   Material triangleMeshMaterial(0.1f, glm::vec4(0.75f, 0.75f, 0.75f, 0.0f), glm::vec4(1.0f), 120);
    triangleMeshMaterial.setTransparent(false);
    triangleMeshMaterial.setReflective(false);
    triangleMeshMaterial.setReflectionIntensity(refletionIntensity);
    triangleMeshMaterial.setRefractiveIndex(REFRACTIVE_INDEX_WATER);
 
-   LightSource* lightSource  = new LightSource(glm::vec4(0.0f, 10.0f, -10.0f, 1.0f), glm::vec4(1.0f));  // location , color
-   LightSource* lightSource1 = new LightSource(glm::vec4(10.0f, 10.0f, 10.0f, 1.0f), glm::vec4(1.0f));
+   LightSource* lightSource  = new LightSource(glm::vec4(-20.0f, 10.0f, 10.0f, 1.0f), glm::vec4(1.0f));  // location , color
+   LightSource* lightSource1 = new LightSource(glm::vec4(20.0f, 10.0f, 10.0f, 1.0f), glm::vec4(1.0f));
    //LightSource* lightSource2 = new LightSource(glm::vec4(2000.0f, 0.0f, 40.0f, 1.0f), glm::vec4(1.0f));
 
    Sphere* sphere = new Sphere(glm::vec3(0.8f, 1.65f, 0.0f), 0.7f);
