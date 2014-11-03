@@ -522,8 +522,6 @@ int main(int argc, char **argv)
 
    std::cout << "BVH construction completed.Scene Ready in " << bvh_minutes << " minutes and " << bvh_seconds << " seconds" << std::endl;
    
-   std::cout <<"Printing First Triangles" << std::endl;
-   scene.printFirstN(5);
 
    std::cout << "Attemping to copy scene to device" << std::endl;
    DeviceSceneImporter sceneImporter(&scene);
