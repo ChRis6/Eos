@@ -58,13 +58,10 @@ public:
 	bool findMinDistanceIntersectionBVH(const Ray& ray, RayIntersection& intersection) const;
 	bool shadowRayVisibilityBVH(const Ray& ray) const;
 
-
-
-
 	void setAmbientRefractiveIndex(float refractiveIndex);
 
-	const Surface* getSurface( unsigned int id) const;
-	const LightSource* getLightSource(unsigned int id) const;
+	Surface* getSurface( int id) const;
+	const LightSource* getLightSource( int id) const;
 
 	void render(const Camera& camera, unsigned char* outputImage);
 	

@@ -28,6 +28,7 @@
 
 //#define PRINT_PROGRESS
 
+
 bool Scene::addSurface(Surface* surface){
 	if( surface != NULL){
 		m_SurfaceObjects.push_back(surface);
@@ -75,13 +76,13 @@ int Scene::getNumLightSources() const {
 }
 
 
-const Surface* Scene::getSurface(unsigned int id) const{
+Surface* Scene::getSurface( int id) const{
 	if( id < m_SurfaceObjects.size() )
 		return m_SurfaceObjects[id];
 	return NULL;
 }
 
-const LightSource* Scene::getLightSource( unsigned int id) const{
+const LightSource* Scene::getLightSource( int id) const{
 	if( id < m_LightSources.size())
 		return m_LightSources[id];
 	return NULL;

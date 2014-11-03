@@ -23,8 +23,10 @@
 #include <glm/glm.hpp>
 #include "surface.h"
 
-class Triangle: public Surface{
+class DeviceSceneImporter;
 
+class Triangle: public Surface{
+	friend class DeviceSceneImporter;
 public:
 	Triangle(const glm::vec3& v1, const glm::vec3& v2, const glm::vec3& v3, const glm::vec3& n1, const glm::vec3& n2, const glm::vec3& n3):
 		m_V1(v1),m_V2(v2),m_V3(v3),m_N1(n1),m_N2(n2),m_N3(n3){
