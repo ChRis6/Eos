@@ -24,7 +24,6 @@
 #define _RAY_H
 
 #include <glm/glm.hpp>
-#include "cudaWrapper.h"
 #include "cudaQualifiers.h"
 
 class Ray{
