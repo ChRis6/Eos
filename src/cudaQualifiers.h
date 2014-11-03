@@ -23,12 +23,31 @@
 #ifndef _CUDA_QUALIFIERS_H
 #define _CUDA_QUALIFIERS_H
 
+#include <stdio.h>
+
+// comment when error checking is not required
+#define CHECK_FOR_CUDA_ERRORS
+
 #ifdef __CUDACC__
 	#define HOST __host__
 	#define DEVICE __device__
+
+	#define cudaErrorCheck(ans) { __cudaErrorCheck((ans), __FILE__, __LINE__); }
+	inline void __cudaErrorCheck(cudaError_t code, const char *file, int line, bool abort=true)
+	{
+		#ifdef CHECK_FOR_CUDA_ERRORS
+   		if (code != cudaSuccess) 
+   		{
+      		fprintf(stderr,"GPUassert: %s %s %d\n", cudaGetErrorString(code), file, line);
+      		if (abort) exit(code);
+   		}
+   		#endif
+	}
+
 #else
 	#define HOST
 	#define DEVICE
+	#define cudaErrorCheck(ans) 
 #endif
- 
+
 #endif
