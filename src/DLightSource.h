@@ -26,10 +26,11 @@
 #include "cudaQualifiers.h"
 
 #include <glm/glm.hpp>
-class DLightSource{
+class DeviceSceneImporter;
 
+class DLightSource{
+	friend class DeviceSceneImporter;
 public: // constructors
-	DEVICE DLightSource():m_Position(0.0f),m_Color(1.0f){}
 	DEVICE DLightSource(const glm::vec4& pos, const glm::vec4& color):m_Position(pos), m_Color(color){}
 
 public: // setters - getters
@@ -38,6 +39,10 @@ public: // setters - getters
 
 	DEVICE void setColor(const glm::vec4& color)  { m_Color = color;}
 	DEVICE const glm::vec4& getColor()            { return m_Color;}
+
+private: // methods used ONLY by DeviceSceneImporter class
+	HOST DLightSource():m_Position(0.0f),m_Color(1.0f){}
+
 private:
 	glm::vec4 m_Position;
 	glm::vec4 m_Color;

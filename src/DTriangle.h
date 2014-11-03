@@ -30,18 +30,17 @@
 #include "DRayIntersection.h"
 #include "DMaterial.h"
 
+class DeviceSceneImporter;
+
 class DTriangle{
-
+	friend class DeviceSceneImporter;
 public: // constructor
-	DEVICE DTriangle(): m_V1(0.0f),m_V2(0.0f),m_V3(0.0f),
-						m_N1(0.0f),m_N2(0.0f),m_N3(0.0f){}
-
 	DEVICE DTriangle(const glm::vec3& v1, const glm::vec3& v2, const glm::vec3& v3,
 		             const glm::vec3& n1, const glm::vec3& n2, const glm::vec3& n3):
 						m_V1(v1), m_V2(v2), m_V3(v3),
 						m_N1(n1), m_N2(n2), m_N3(n3){}
 
-public: // methods
+public: // device methods
 	DEVICE bool hit(const Ray& ray, DRayIntersection& intersection, float& distance);
 
 	DEVICE void setTransformation(const glm::mat4& mat);
@@ -50,8 +49,12 @@ public: // methods
 	DEVICE const glm::mat4& getInverseTransposeTransformation();
 	DEVICE const DMaterial& getMaterial();
 
+	DEVICE glm::vec3 getV1()	{ return m_V1;}
 private:
 	DEVICE bool rayTriangleIntersectionTest(const Ray& ray, glm::vec3& baryCoords);
+
+private: // host methods.Used only by DeviceImporter class
+	HOST DEVICE DTriangle(): m_V1(0.0f),m_V2(0.0f),m_V3(0.0f),m_N1(0.0f),m_N2(0.0f),m_N3(0.0f){}
 
 private:
 	// triangle vertices
@@ -69,6 +72,5 @@ private:
 	glm::mat4 m_InverseTranspose;
 
 	DMaterial m_Material;
-
 };
 #endif

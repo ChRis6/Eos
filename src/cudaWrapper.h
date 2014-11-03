@@ -32,6 +32,8 @@
 	#define DEVICE
 #endif
 
+class DScene;
 extern "C" void printHelloGPU();
+extern "C" void printDeviceScene(DScene* d_scene);
 
 #endif

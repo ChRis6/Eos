@@ -25,6 +25,7 @@
 
 #include "cudaQualifiers.h"
 #include "Scene.h"
+#include "DScene.h"
 
 class DeviceSceneImporter{
 
@@ -32,7 +33,9 @@ public:
 	HOST DeviceSceneImporter():m_HostScene(0){}
 	HOST DeviceSceneImporter(Scene* h_scene){ m_HostScene = h_scene;}
 
-
+	HOST DScene* createDeviceScene();
+private:
+	Scene* getScene(){ return m_HostScene;}
 private:
 	Scene* m_HostScene;
 

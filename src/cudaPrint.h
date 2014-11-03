@@ -25,6 +25,9 @@
 
 #include <stdio.h>
 #include "Ray.h"
+#include "DScene.h"
+
 __global__ void printHelloFromGPUKernel();
+__global__ void printDeviceSceneGPUKernel(DScene* d_scene);
 
 #endif

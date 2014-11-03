@@ -47,7 +47,31 @@ __global__ void printHelloFromGPUKernel(){
 
 }
 
+__global__ void printDeviceSceneGPUKernel(DScene* d_scene){
+	int numLights;
+	int numTriangles;
+	int i;
+
+	numLights = d_scene->getNumLights();
+	numTriangles = d_scene->getNumTriangles();
+	printf("Printing Message From GPU...\n");
+	printf("There are %d lights and %d triangles on the CUDA-enabled scene !!!\n\n\n", numLights, numTriangles);
+
+	for( i = 0 ; i < 5; i++){
+		DTriangle* d_triangle = d_scene->getTriangle(i);
+		glm::vec3 v1 = d_triangle->getV1();
+		printf("Triangle: %d\n",i );
+		printf("V1: %f, %f, %f\n\n", v1.x, v1.y, v1.z);
+	}
+
+}
+
 void printHelloGPU(){
 	printHelloFromGPUKernel<<<1,1>>>();
+	cudaDeviceSynchronize();
+}
+
+void printDeviceScene(DScene* d_scene){
+	printDeviceSceneGPUKernel<<<1,1>>>(d_scene);
 	cudaDeviceSynchronize();
 }

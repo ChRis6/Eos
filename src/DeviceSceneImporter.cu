@@ -22,3 +22,114 @@
 
 #include "DeviceSceneImporter.h"
 
+
+/**
+ * Copy entire scene from host to device memory
+ *
+ * BVH is not copied now.
+ * returns: pointer to device allocated DScene class
+ */
+
+HOST DScene* DeviceSceneImporter::createDeviceScene(){
+	
+	DScene* d_scene = NULL;
+	DScene* h_DScene;
+	Scene* h_scene;
+	DLightSource* d_LightsArray;
+	DTriangle* d_TriangleArray;
+	int numLights;
+	int numTriangles;
+
+	// create a temp copy of DScene on host
+	h_DScene = new DScene;
+
+	cudaErrorCheck( cudaMalloc((void**)&d_scene, sizeof(DScene)) );
+	if(!d_scene)
+		return NULL;
+
+	h_scene = this->getScene();
+	numLights = h_scene->getNumLightSources();
+	numTriangles = h_scene->getNumSurfaces();
+
+	// set number of triangles and lights 
+	h_DScene->m_NumLights = numLights;
+	h_DScene->m_NumTriangles = numTriangles;
+
+	// create buffer of DLightSource objects on host
+	// and then copy to Device memory
+	DLightSource* h_DLightSources = new DLightSource[numLights];
+	
+	cudaErrorCheck( cudaMalloc((void**)&d_LightsArray, sizeof(DLightSource) * numLights));
+	if(!d_LightsArray){
+		cudaErrorCheck( cudaFree(d_scene));
+		delete h_DLightSources;
+		return NULL;
+	}
+	
+	for( int i = 0; i < numLights; i++){
+		const LightSource* h_Light = h_scene->getLightSource(i);
+		
+		h_DLightSources[i].m_Position = h_Light->getPosition();
+		h_DLightSources[i].m_Color = h_Light->getPosition();
+	}
+	// maybe transfer later ???
+	cudaErrorCheck( cudaMemcpy(d_LightsArray, h_DLightSources, sizeof(DLightSource) * numLights, cudaMemcpyHostToDevice));
+	// ATTENTION: d_LightsArray points to GPU memory.DONT DEREFERENCE ON HOST
+	h_DScene->m_Lights = d_LightsArray;
+
+	// Now copy triangles to device memory
+
+	DTriangle* h_DTriangles = new DTriangle[numTriangles];
+	for(int i = 0 ; i < numTriangles; i++){
+		
+		Surface* h_Surface = h_scene->getSurface(i);
+
+		Triangle* h_Triangle = dynamic_cast<Triangle*>(h_Surface);
+		
+		if( !h_Triangle){
+			// this surface is not a Triangle.
+			// Only scenes containing Triangles will be copied to gpu.
+			// cleanup and return null
+			cudaErrorCheck( cudaFree(d_scene));
+			cudaErrorCheck( cudaFree(d_LightsArray));
+			delete h_DLightSources;
+			delete h_DTriangles;
+			return NULL;
+		}
+		//vertices
+		h_DTriangles[i].m_V1 = h_Triangle->m_V1;
+		h_DTriangles[i].m_V2 = h_Triangle->m_V2;
+		h_DTriangles[i].m_V3 = h_Triangle->m_V3;
+		// normals
+		h_DTriangles[i].m_N1 = h_DTriangles->m_N1;
+		h_DTriangles[i].m_N2 = h_DTriangles->m_N2;
+		h_DTriangles[i].m_N3 = h_DTriangles->m_N3;
+		// copy transformations
+		h_DTriangles[i].m_Transformation   = h_Triangle->transformation();
+		h_DTriangles[i].m_Inverse          = h_Triangle->getInverseTransformation();
+		h_DTriangles[i].m_InverseTranspose = h_Triangle->getInverseTransposeTransformation();
+		// material
+		DMaterial h_DMaterial;
+		const Material& h_TriangleMaterial = h_Triangle->getMaterial(); 
+		
+		h_DMaterial.m_Diffuse           = h_TriangleMaterial.getDiffuseColor();
+		h_DMaterial.m_Specular          = h_TriangleMaterial.getSpecularColor();
+		h_DMaterial.m_AmbientIntensity  = h_TriangleMaterial.getAmbientIntensity();
+		h_DMaterial.m_Reflectivity      = h_TriangleMaterial.getReflectiveIntensity();
+		h_DMaterial.m_shininess         = h_TriangleMaterial.getShininess();
+
+		h_DTriangles[i].m_Material = h_DMaterial;  
+	}
+
+	cudaErrorCheck( cudaMalloc((void**)&d_TriangleArray, sizeof(DTriangle) * numTriangles));
+	cudaErrorCheck( cudaMemcpy(d_TriangleArray, h_DTriangles, sizeof(DTriangle) * numTriangles, cudaMemcpyHostToDevice));
+	h_DScene->m_Triangles = d_TriangleArray;
+
+	// also copy h_DScene
+	cudaErrorCheck( cudaMemcpy(d_scene, h_DScene, sizeof(DScene), cudaMemcpyHostToDevice)); 
+
+	delete h_DScene;
+	delete h_DLightSources;
+	delete h_DTriangles;
+	return d_scene;
+}

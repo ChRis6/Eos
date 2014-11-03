@@ -31,6 +31,8 @@
 #include "cudaWrapper.h"
 #include "getTime.h"
 #include "Texture.h"
+#include "DeviceSceneImporter.h"
+#include "DScene.h"
 
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stb_image_write.h"
@@ -351,7 +353,7 @@ int main(int argc, char **argv)
    scene.setAASamples(SCENE_AA_1);
 
    RayTracer rayTracer;
-   rayTracer.setAASamples(RAYTRACER_AA_SAMPLES_2);
+   rayTracer.setAASamples(RAYTRACER_AA_SAMPLES_4);
 
    float refletionIntensity = 0.4f;
    Material sphereMaterial(0.075f, glm::vec4(0.0f, 0.0f, 1.0f, 0.0f), glm::vec4(1.0f), 40);
@@ -414,25 +416,25 @@ int main(int argc, char **argv)
    sphere->setTransformation(M);
    sphere->setMaterial(sphereMaterial);
   
-   scene.addSurface(sphere);
+   //scene.addSurface(sphere);
 
    Sphere* sphere1 = new Sphere(glm::vec3(0.8f, 0.0f, 0.0f), 0.7f);
    sphere1->setTransformation(M);
    sphere1->setMaterial(sphereMaterial1);
    
-   scene.addSurface(sphere1);
+   //scene.addSurface(sphere1);
    
    Sphere* sphere2 = new Sphere(glm::vec3(-0.8f, 0.0f, 0.0f), 0.7f);
    sphere2->setTransformation(M);
    sphere2->setMaterial(sphereMaterial2);
    
-   scene.addSurface(sphere2);
+   //scene.addSurface(sphere2);
 
    Sphere* sphere3 = new Sphere(glm::vec3(-0.8f, 1.65f, 0.0f), 0.7f);
    sphere3->setTransformation(M);
    sphere3->setMaterial(sphereMaterial3);
    
-   scene.addSurface(sphere3);
+   //scene.addSurface(sphere3);
 
    Sphere* sphere4 = new Sphere(glm::vec3(0.0f, 0.0f, 5.0f), 1.5f);
    sphere4->setTransformation(M);
@@ -442,7 +444,7 @@ int main(int argc, char **argv)
 
 
 
-   char* triangleMeshFileName = "objmodels/bunny.obj";
+   char* triangleMeshFileName = "objmodels/monkey.obj";
    TriangleMesh* mesh = new TriangleMesh();
    glm::mat4 meshTransformation = glm::translate(glm::mat4(1.0f), glm::vec3(5.0f, 0.0f, -1.0f));
    
@@ -509,6 +511,7 @@ int main(int argc, char **argv)
    bvh_start = getRealTime();
    scene.flush();
    
+
    bvh_end = getRealTime();
 
    bvh_diff = bvh_end - bvh_start;
@@ -519,6 +522,14 @@ int main(int argc, char **argv)
 
    std::cout << "BVH construction completed.Scene Ready in " << bvh_minutes << " minutes and " << bvh_seconds << " seconds" << std::endl;
    
+   std::cout <<"Printing First Triangles" << std::endl;
+   scene.printFirstN(5);
+
+   std::cout << "Attemping to copy scene to device" << std::endl;
+   DeviceSceneImporter sceneImporter(&scene);
+   DScene* d_scene = sceneImporter.createDeviceScene();
+   printDeviceScene(d_scene);
+
    if(renderOnce){
       std::cout << "Rendering Once to Image file..." << std::endl;
       double start,end,diff;
