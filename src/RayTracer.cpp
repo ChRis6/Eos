@@ -207,7 +207,7 @@ void RayTracer::renderWithAA(const Scene& scene, const Camera& camera, unsigned 
     rayOrigin     = camera.getPosition();
 
     int aaSamples = this->getAASamples();
-    float ksi = rand() / RAND_MAX;
+    
     float inv_aaSamples = 1.0 / (float) aaSamples;
     float inv_aaSamplesSquared = inv_aaSamples * inv_aaSamples;
 
@@ -219,10 +219,12 @@ void RayTracer::renderWithAA(const Scene& scene, const Camera& camera, unsigned 
     		glm::vec4 finalColor(0.0f);
 
     		for( int q = 0 ; q < aaSamples ; q++){
+    			float ksi = rand() / RAND_MAX;
     			// how much 'up'
     			float bb = (y + (( q + ksi ) * inv_aaSamples) - norm_height) * inv_norm_height;    			
     			for( int p = 0; p < aaSamples; p++){
     				// how much 'right'
+    				
     				float aa = ( x + (( p + ksi ) * inv_aaSamples)- norm_width) * inv_norm_width;
 
 					glm::vec3 rayDirection = (aa * right ) + ( bb * up ) + viewDirection;
