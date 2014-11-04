@@ -75,3 +75,7 @@ void printDeviceScene(DScene* d_scene){
 	printDeviceSceneGPUKernel<<<1,1>>>(d_scene);
 	cudaDeviceSynchronize();
 }
+
+void resetDevice(){
+	cudaDeviceReset();
+}

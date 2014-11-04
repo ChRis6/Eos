@@ -35,5 +35,5 @@
 class DScene;
 extern "C" void printHelloGPU();
 extern "C" void printDeviceScene(DScene* d_scene);
-
+extern "C" void resetDevice();
 #endif
