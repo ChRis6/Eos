@@ -20,24 +20,24 @@
  * 3. This notice may not be removed or altered from any source distribution.
  */
 
-#ifndef _DEVICE_SCENE_IMPORTER_H
-#define _DEVICE_SCENE_IMPORTER_H
+#ifndef _DEVICE_SCENE_HANDLER_H
+#define _DEVICE_SCENE_HANDLER_H
 
 #include "cudaQualifiers.h"
 #include "Scene.h"
 #include "DScene.h"
+#include "Camera.h"
 
-class DeviceSceneImporter{
+class DeviceSceneHandler{
 
 public:
-	HOST DeviceSceneImporter():m_HostScene(0){}
-	HOST DeviceSceneImporter(Scene* h_scene){ m_HostScene = h_scene;}
+	HOST DeviceSceneHandler():m_HostScene(0){}
+	HOST DeviceSceneHandler(Scene* h_scene){ m_HostScene = h_scene;}
 
 	HOST DScene* createDeviceScene();
 private:
 	Scene* getScene(){ return m_HostScene;}
 private:
 	Scene* m_HostScene;
-
 };
 #endif 

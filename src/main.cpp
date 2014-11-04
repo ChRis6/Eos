@@ -31,7 +31,7 @@
 #include "cudaWrapper.h"
 #include "getTime.h"
 #include "Texture.h"
-#include "DeviceSceneImporter.h"
+#include "DeviceSceneHandler.h"
 #include "DScene.h"
 
 #define STB_IMAGE_WRITE_IMPLEMENTATION
@@ -524,7 +524,7 @@ int main(int argc, char **argv)
    
 
    std::cout << "Attemping to copy scene to device" << std::endl;
-   DeviceSceneImporter sceneImporter(&scene);
+   DeviceSceneHandler sceneImporter(&scene);
    DScene* d_scene = sceneImporter.createDeviceScene();
    printDeviceScene(d_scene);
 
@@ -647,6 +647,7 @@ int main(int argc, char **argv)
    glDeleteProgram(program);
    }
    glfwTerminate();
+   resetDevice();
    return 0;
 }
 

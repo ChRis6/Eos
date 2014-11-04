@@ -29,10 +29,10 @@
 #include "DMaterial.h"
 #include "DLightSource.h"
 
-class DeviceSceneImporter;
+class DeviceSceneHandler;
 
 class DScene{
-	friend class DeviceSceneImporter;
+	friend class DeviceSceneHandler;
 
 private:
 	HOST DEVICE DScene():m_Triangles(0),m_NumTriangles(0),m_Lights(0),m_NumLights(0){}

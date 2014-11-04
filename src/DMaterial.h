@@ -26,10 +26,10 @@
 #include "cudaQualifiers.h"
 #include <glm/glm.hpp>
  
-class DeviceSceneImporter;
+class DeviceSceneHandler;
 
 class DMaterial{
-	friend class DeviceSceneImporter;
+	friend class DeviceSceneHandler;
 public:
 	HOST DEVICE DMaterial():m_Diffuse(1.0f),m_Specular(0.0f),m_AmbientIntensity(0.015f),m_Reflectivity(0.0f),m_shininess(40){}
 	DEVICE DMaterial(const glm::vec4& diffuse, const glm::vec4& specular, float ambient, float reflectivity, int shininess):
@@ -47,7 +47,7 @@ public:
 	DEVICE void setReflectivity(float reflectivity)			{ m_Reflectivity = reflectivity;}
 	DEVICE void setShininess(int shine)						{ m_shininess = shine;  }
 
-//sprivate: // ATTENTION: USED ONLY BY DeviceSceneImporter class.
+//sprivate: // ATTENTION: USED ONLY BY DeviceSceneHandler class.
 
 
 private:

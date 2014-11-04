@@ -30,10 +30,10 @@
 #include "DRayIntersection.h"
 #include "DMaterial.h"
 
-class DeviceSceneImporter;
+class DeviceSceneHandler;
 
 class DTriangle{
-	friend class DeviceSceneImporter;
+	friend class DeviceSceneHandler;
 public: // constructor
 	DEVICE DTriangle(const glm::vec3& v1, const glm::vec3& v2, const glm::vec3& v3,
 		             const glm::vec3& n1, const glm::vec3& n2, const glm::vec3& n3):

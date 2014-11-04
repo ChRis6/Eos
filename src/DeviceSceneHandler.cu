@@ -20,7 +20,7 @@
  * 3. This notice may not be removed or altered from any source distribution.
  */
 
-#include "DeviceSceneImporter.h"
+#include "DeviceSceneHandler.h"
 
 
 /**
@@ -30,7 +30,7 @@
  * returns: pointer to device allocated DScene class
  */
 
-HOST DScene* DeviceSceneImporter::createDeviceScene(){
+HOST DScene* DeviceSceneHandler::createDeviceScene(){
 	
 	DScene* d_scene = NULL;
 	DScene* h_DScene;
@@ -72,6 +72,7 @@ HOST DScene* DeviceSceneImporter::createDeviceScene(){
 		h_DLightSources[i].m_Position = h_Light->getPosition();
 		h_DLightSources[i].m_Color = h_Light->getPosition();
 	}
+	
 	// maybe transfer later ???
 	cudaErrorCheck( cudaMemcpy(d_LightsArray, h_DLightSources, sizeof(DLightSource) * numLights, cudaMemcpyHostToDevice));
 	// ATTENTION: d_LightsArray points to GPU memory.DONT DEREFERENCE ON HOST
