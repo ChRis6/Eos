@@ -38,8 +38,8 @@
 #include "stb_image_write.h"
 
 
-#define WINDOW_WIDTH   1280  // in pixels
-#define WINDOW_HEIGHT  720 // in pixels
+#define WINDOW_WIDTH   640  // in pixels
+#define WINDOW_HEIGHT  480 // in pixels
 #define FOV            70
 
 #ifndef EPSILON
@@ -189,7 +189,7 @@ int main(int argc, char **argv)
 {
    
    
-   bool renderOnce = true;
+   bool renderOnce = false;
 
    srand((int) time(NULL));
 
@@ -321,7 +321,7 @@ int main(int argc, char **argv)
    camera.setViewingDirection(glm::vec3(0.0f,0.0f, -1.0f));
    camera.setRightVector(glm::vec3(1.0f, 0.0f, 0.0f));
    camera.setUpVector(glm::vec3(0.0f, 1.0f, 0.0f));
-   camera.setFov(FOV);
+   //camera.setFov(FOV);
    camera.setWidth(WINDOW_WIDTH);
    camera.setHeight(WINDOW_HEIGHT);
 
@@ -353,7 +353,7 @@ int main(int argc, char **argv)
    scene.setAASamples(SCENE_AA_1);
 
    RayTracer rayTracer;
-   rayTracer.setAASamples(RAYTRACER_AA_SAMPLES_4);
+   rayTracer.setAASamples(RAYTRACER_NO_AA);
 
    float refletionIntensity = 0.4f;
    Material sphereMaterial(0.075f, glm::vec4(0.0f, 0.0f, 1.0f, 0.0f), glm::vec4(1.0f), 40);
