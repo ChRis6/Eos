@@ -31,13 +31,17 @@
 class DeviceSceneHandler{
 
 public:
-	HOST DeviceSceneHandler():m_HostScene(0){}
-	HOST DeviceSceneHandler(Scene* h_scene){ m_HostScene = h_scene;}
+	HOST DeviceSceneHandler():m_HostScene(0),m_DeviceScene(0){}
+	HOST DeviceSceneHandler(Scene* h_scene){ m_HostScene = h_scene; m_DeviceScene = this->createDeviceScene(h_scene);}
 
-	HOST DScene* createDeviceScene();
+	HOST DScene* getDeviceScene();
+	HOST Scene* getHostScene();		
+	HOST void freeDeviceScene();
+
 private:
-	Scene* getScene(){ return m_HostScene;}
+	HOST DScene* createDeviceScene(Scene* h_scene);
 private:
 	Scene* m_HostScene;
+	DScene* m_DeviceScene;
 };
 #endif 

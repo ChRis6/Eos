@@ -30,11 +30,10 @@
  * returns: pointer to device allocated DScene class
  */
 
-HOST DScene* DeviceSceneHandler::createDeviceScene(){
+HOST DScene* DeviceSceneHandler::createDeviceScene(Scene* h_scene){
 	
 	DScene* d_scene = NULL;
 	DScene* h_DScene;
-	Scene* h_scene;
 	DLightSource* d_LightsArray;
 	DTriangle* d_TriangleArray;
 	int numLights;
@@ -47,7 +46,6 @@ HOST DScene* DeviceSceneHandler::createDeviceScene(){
 	if(!d_scene)
 		return NULL;
 
-	h_scene = this->getScene();
 	numLights = h_scene->getNumLightSources();
 	numTriangles = h_scene->getNumSurfaces();
 
@@ -133,4 +131,20 @@ HOST DScene* DeviceSceneHandler::createDeviceScene(){
 	delete h_DLightSources;
 	delete h_DTriangles;
 	return d_scene;
+}
+
+HOST void DeviceSceneHandler::freeDeviceScene(){
+	
+	DScene* d_scene = this->getDeviceScene();
+
+	cudaErrorCheck( cudaFree(d_scene->m_Triangles));
+	cudaErrorCheck( cudaFree(d_scene->m_Lights));
+	cudaErrorCheck( cudaFree(d_scene));	
+}
+
+Scene* DeviceSceneHandler::getHostScene(){
+	return m_HostScene;
+}
+HOST DScene* DeviceSceneHandler::getDeviceScene(){
+	return m_DeviceScene;
 }

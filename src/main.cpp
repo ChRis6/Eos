@@ -525,7 +525,7 @@ int main(int argc, char **argv)
 
    std::cout << "Attemping to copy scene to device" << std::endl;
    DeviceSceneHandler sceneImporter(&scene);
-   DScene* d_scene = sceneImporter.createDeviceScene();
+   DScene* d_scene = sceneImporter.getDeviceScene();
    printDeviceScene(d_scene);
 
    if(renderOnce){
