@@ -24,35 +24,32 @@
 #define _CAMERA_H
 
 #include <glm/glm.hpp>
-#include <math.h>
+#include "cudaQualifiers.h"
 #include "Ray.h"
 
 class Camera {
 
 public:
-	Camera(): m_Position(0.0f),m_ViewingDirection(0.0f),m_RightVector(0.0f),m_UpVector(0.0f),m_Fov(0.0),m_TanFov(0.0f),m_Width(0),m_Height(0)
+	HOST DEVICE Camera(): m_Position(0.0f),m_ViewingDirection(0.0f),m_RightVector(0.0f),m_UpVector(0.0f),m_Width(0),m_Height(0)
 	{}
 
 
 	Ray computeRayFromPixel(int i, int j);
 
 
-	void setPosition(glm::vec3 pos);
-	void setViewingDirection(glm::vec3 dir);
-	void setRightVector(glm::vec3 right);
-	void setUpVector(glm::vec3 up);
-	void setFov(float fov);
-	void setWidth(int width);
-	void setHeight(int height);
+	HOST DEVICE void setPosition(glm::vec3 pos);
+	HOST DEVICE void setViewingDirection(glm::vec3 dir);
+	HOST DEVICE void setRightVector(glm::vec3 right);
+	HOST DEVICE void setUpVector(glm::vec3 up);
+	HOST DEVICE void setWidth(int width);
+	HOST DEVICE void setHeight(int height);
 
-	const glm::vec3& getPosition() const;
-	const glm::vec3& getViewingDirection() const;
-	const glm::vec3& getRightVector() const;
-	const glm::vec3& getUpVector() const;
-	float getFov() const;
-	float getTanFov() const;
-	float getWidth() const;
-	float getHeight() const;
+	HOST DEVICE const glm::vec3& getPosition() const;
+	HOST DEVICE const glm::vec3& getViewingDirection() const;
+	HOST DEVICE const glm::vec3& getRightVector() const;
+	HOST DEVICE const glm::vec3& getUpVector() const;
+	HOST DEVICE int getWidth() const;
+	HOST DEVICE int getHeight() const;
 
 
 private:
@@ -62,8 +59,6 @@ private:
 	glm::vec3 m_RightVector;
 	glm::vec3 m_UpVector;
 
-	float m_Fov;	// in degrees
-	float m_TanFov;	// tangent(FOV)
 	int m_Width;	// width  in pixels
 	int m_Height;   // height in pixels
 };
