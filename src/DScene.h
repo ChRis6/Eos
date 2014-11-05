@@ -28,6 +28,7 @@
 #include "DTriangle.h"
 #include "DMaterial.h"
 #include "DLightSource.h"
+#include "DRayIntersection.h"
 
 class DeviceSceneHandler;
 
@@ -47,6 +48,8 @@ public:
 
 	DEVICE const DLightSource& getLightSource(int index)	{ return m_Lights[index];}
 	DEVICE int getNumLights()	{return m_NumLights;}
+
+	DEVICE bool findMinDistanceIntersectionLinear(const Ray& ray, DRayIntersection& intersection) const;
 private:
 	DTriangle* m_Triangles;
 	int m_NumTriangles;
