@@ -46,7 +46,7 @@ public:
 	DEVICE DTriangle* getTriangle(int index)const {return &(m_Triangles[index]);}
 	DEVICE int getNumTriangles()const			{return m_NumTriangles;}
 
-	DEVICE const DLightSource& getLightSource(int index)	{ return m_Lights[index];}
+	DEVICE DLightSource* getLightSource(int index)	{ return &(m_Lights[index]);}
 	DEVICE int getNumLights()	{return m_NumLights;}
 
 	DEVICE bool findMinDistanceIntersectionLinear(const Ray& ray, DRayIntersection& intersection) const;

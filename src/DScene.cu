@@ -21,7 +21,7 @@
  */
 #include "DScene.h"
 
-DEVICE bool DScene::findMinDistanceIntersectionLinear(const Ray& ray, DRayIntersection& intersection){
+DEVICE bool DScene::findMinDistanceIntersectionLinear(const Ray& ray, DRayIntersection& intersection) const{
 	int numTriangles;
 	int i;
 	bool intersectionFound = false;
@@ -40,8 +40,8 @@ DEVICE bool DScene::findMinDistanceIntersectionLinear(const Ray& ray, DRayInters
 		DTriangle* tri = this->getTriangle(i);
 
 		// transform ray to local coordinates
-		glm::vec3& localRayOrigin    = glm::vec3( tri->getInverseTrasformation() * glm::vec4(ray.getOrigin(), 1.0f));
-		glm::vec3& localRayDirection = glm::vec3( tri->getInverseTrasformation() * glm::vec4(ray.getDirection(), 0.0f));
+		const glm::vec3& localRayOrigin    = glm::vec3( tri->getInverseTrasformation() * glm::vec4(ray.getOrigin(), 1.0f));
+		const glm::vec3& localRayDirection = glm::vec3( tri->getInverseTrasformation() * glm::vec4(ray.getDirection(), 0.0f));
 
 		localRay.setOrigin(localRayOrigin);
 		localRay.setDirection(localRayDirection);
@@ -52,8 +52,8 @@ DEVICE bool DScene::findMinDistanceIntersectionLinear(const Ray& ray, DRayInters
 			if( triDistance < minDist && triDistance > 0.0f){
 
 				minDist = triDistance;
-				min_point  = tri->getTransformation() * glm::vec4(dummyIntersection.getPoint(), 1.0f);
-				min_normal = tri->getInverseTransposeTransformation() * glm::vec4(dummyIntersection.getNormal(), 0.0f);
+				min_point  = tri->getTransformation() * glm::vec4(dummyIntersection.getIntersectionPoint(), 1.0f);
+				min_normal = tri->getInverseTransposeTransformation() * glm::vec4(dummyIntersection.getIntersectionPoint(), 0.0f);
 				intersection.setIntersectionMaterial(tri->getMaterial()); 
 			}
 		}
