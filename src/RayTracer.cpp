@@ -28,7 +28,7 @@
 #include "Ray.h"
 #include "RayIntersection.h"
 
-#define PRINT_PROGRESS
+//#define PRINT_PROGRESS
 
 // setters - getters
 void RayTracer::setAASamples(int samples){
