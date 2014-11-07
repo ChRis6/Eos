@@ -194,7 +194,7 @@ int main(int argc, char **argv)
    
    
    bool renderOnce = false;
-   bool useDeviceRenderer = true;
+   bool useDeviceRenderer = false;
 
    srand((int) time(NULL));
 

@@ -62,6 +62,7 @@ public:
 
 	Surface* getSurface( int id) const;
 	const LightSource* getLightSource( int id) const;
+	Surface** getFirstSurfaceAddress()const	{ return (Surface**) &(m_SurfaceObjects[0]);}
 
 	void render(const Camera& camera, unsigned char* outputImage);
 	

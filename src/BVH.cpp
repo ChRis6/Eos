@@ -26,7 +26,6 @@
 #include "BVH.h"
 
 #define SAH_SURFACE_CEIL  800
-#define SURFACES_PER_LEAF 10
 #define COST_TRAVERSAL    5
 #define COST_INTERSECTION 10
 
@@ -74,54 +73,47 @@ bool by_Z_compareSurfaces(Surface* a, Surface* b){
 
 
 void BVH::buildHierarchy(Surface** surfaces, int numSurfaces){
-
-	// create a temp array of the surfaces
-	Surface** tempSurfaces = new Surface*[numSurfaces];
-	for( int i = 0 ; i < numSurfaces; i++)
-		tempSurfaces[i] = surfaces[i];
-
-	this->buildTopDownHybrid(&m_Root, tempSurfaces, numSurfaces);
-	delete tempSurfaces;
+	this->buildTopDownHybrid(&m_Root, surfaces, 0, numSurfaces);
 }
 
-void BVH::buildTopDown(BvhNode** tree, Surface** surfaces, int numSurfaces){
+void BVH::buildTopDown(BvhNode** tree, Surface** surfaces, int start, int end){
 
 	BvhNode* node = new BvhNode;
 	*tree = node;
 
 	// find bounding box of surfaces
-	node->aabb = this->computeBoxWithSurfaces(surfaces, numSurfaces);
-	node->numSurfacesEncapulated = numSurfaces;
+	node->aabb = this->computeBoxWithSurfaces(surfaces, start, end);
+	node->numSurfacesEncapulated = end - start;
 
 	// is it a leaf ? Only one surface per leaf 
-	if( numSurfaces <= SURFACES_PER_LEAF ){
+	if( end - start < SURFACES_PER_LEAF ){
 		/*
 		node->type = BVH_LEAF;
 		node->leftChild = NULL;
 		node->rightChild = NULL;
 		node->tracedObject = surfaces[0]; 	// get the first surface
 		*/
-		createLeaf(node, surfaces, numSurfaces);
+		createLeaf(node, surfaces, start, end );
 	}
 	else{
 
 		node->tracedObject = NULL;
 		node->tracedObjectArray = NULL;
 		node->type = BVH_NODE;
-		int splitIndex = this->topDownSplitIndex(surfaces, numSurfaces, node->aabb);
+		int splitIndex = this->topDownSplitIndex(surfaces, node->aabb, start, end);
 
 		// recursion
-		buildTopDown( &(node->leftChild), &surfaces[0], splitIndex);
-		buildTopDown( &(node->rightChild),&surfaces[splitIndex], numSurfaces - splitIndex);
+		buildTopDown( &(node->leftChild), surfaces, start, start + splitIndex );
+		buildTopDown( &(node->rightChild), surfaces, start + splitIndex, end);
 	}
 }
 
-Box BVH::computeBoxWithSurfaces(Surface** surfaces, int numSurfaces){
+Box BVH::computeBoxWithSurfaces(Surface** surfaces, int start, int end){
 
-	Box computedBox = surfaces[0]->getLocalBoundingBox();
-	computedBox.transformBoundingBox(surfaces[0]->transformation());
+	Box computedBox = surfaces[start]->getLocalBoundingBox();
+	computedBox.transformBoundingBox(surfaces[start]->transformation());
 
-	for( int i = 1; i < numSurfaces; i++){
+	for( int i = start + 1 ; i < end; i++){
 		// get the bounding box in local surface coordinates
 		Box surfaceBox = surfaces[i]->getLocalBoundingBox();
 		// transform box in world coords
@@ -133,7 +125,7 @@ Box BVH::computeBoxWithSurfaces(Surface** surfaces, int numSurfaces){
 	return computedBox;
 }
 
-int BVH::topDownSplitIndex(Surface** surfaces, int numSurfaces, Box parentBox){
+int BVH::topDownSplitIndex(Surface** surfaces, Box parentBox, int start, int end){
 
 	int split = 0;
 	int biggestIndex;
@@ -141,7 +133,7 @@ int BVH::topDownSplitIndex(Surface** surfaces, int numSurfaces, Box parentBox){
 	float midAxisCoord;
 	Box centroidsBox;
 
-	for( i = 0 ; i < numSurfaces; i++){
+	for( i = start ; i < end; i++){
 		glm::vec4 surfaceCentroidWorldCoords = surfaces[i]->transformation() * glm::vec4(surfaces[i]->getCentroid(), 1.0f);
 		glm::vec3 surfaceCentroid = glm::vec3(surfaceCentroidWorldCoords.x, surfaceCentroidWorldCoords.y, surfaceCentroidWorldCoords.z);
 		centroidsBox.expandToIncludeVertex(surfaceCentroid);
@@ -164,15 +156,15 @@ int BVH::topDownSplitIndex(Surface** surfaces, int numSurfaces, Box parentBox){
 
 	// sort surfaces along axis ( in world coords)
 	if( biggestIndex == 0 )
-		std::sort(surfaces, surfaces + numSurfaces , by_X_compareSurfaces);
+		std::sort(surfaces + start, surfaces + end, by_X_compareSurfaces);
 	else if( biggestIndex == 1)
-		std::sort(surfaces, surfaces + numSurfaces , by_Y_compareSurfaces);
+		std::sort(surfaces + start, surfaces + end, by_Y_compareSurfaces);
 	else if( biggestIndex == 2)
-		std::sort(surfaces, surfaces + numSurfaces , by_Z_compareSurfaces);
+		std::sort(surfaces + start, surfaces + end, by_Z_compareSurfaces);
 
 
 	// find mid split
-	for(i = 0 ; i < numSurfaces; i++){
+	for(i = start ; i < end; i++){
 		glm::vec4 surfaceCentroid = glm::vec4(surfaces[i]->getCentroid(),1.0f);
 		surfaceCentroid = surfaces[i]->transformation() * surfaceCentroid;
 		//std::cout << "X = " << surfaceCentroid.x << std::endl;
@@ -184,35 +176,42 @@ int BVH::topDownSplitIndex(Surface** surfaces, int numSurfaces, Box parentBox){
 	}
 
 	split = i;
-	if( split == 0 || split == numSurfaces){ // bad split ?
-		split = numSurfaces / 2;
+	if( split == start || split == end){ // bad split ?
+		split = start + ( (end - start) / 2 );
 	}
 	
 	return split;
 }
 
-bool BVH::intersectRay(const Ray& ray, RayIntersection& intersectionFound, bool nearest) const{
+bool BVH::intersectRay(const Ray& ray, RayIntersection& intersectionFound, bool nearest, Surface** surfaces) const{
 	
 	
 	Surface* intersectedSurface = NULL;
 	float distance;
 	if(nearest)
-		intersectedSurface = this->intersectRecursiveNearestHit(ray, this->getRoot(), distance, intersectionFound);
+		//intersectedSurface = this->intersectRecursiveNearestHit(ray, this->getRoot(), distance, intersectionFound, surfaces, 0);
+		return  intersectStackNearest(ray, this->getRoot(), intersectionFound, surfaces);
 	else
-		return this->intersectRayVisibilityTest(ray, this->getRoot());
+		return this->intersectRayVisibilityTest(ray, this->getRoot(), surfaces);
+	
 	
 	if( intersectedSurface)
 		return true;
 	return false;
 	
-	//return this->intersectStack(ray, this->getRoot(), intersectionFound);
 }
 
-Surface* BVH::intersectRecursiveNearestHit(const Ray& ray, BvhNode* node, float& minDistance, RayIntersection& intersection) const{
+Surface* BVH::intersectRecursiveNearestHit(const Ray& ray, BvhNode* node, float& minDistance, RayIntersection& intersection, Surface** surfaces, int depth) const{
 	
 	bool rayIntersectsBox = false;
 	float distance = 999999.0f;
 	int minSurfaceIndex;
+	static int maxDepthFound = 0;
+	
+	if( depth > maxDepthFound){
+		//std::cout << "Biggest depth = " << depth << std::endl;
+		maxDepthFound = depth;
+	}
 
 	if( node->aabb.intersectWithRayOptimized(ray, 0.0001f, 999999.0f) == true)
 		rayIntersectsBox = true;
@@ -221,9 +220,9 @@ Surface* BVH::intersectRecursiveNearestHit(const Ray& ray, BvhNode* node, float&
 		// is it a leaf ?
 		if( node->type == BVH_LEAF){
 			RayIntersection dummyIntersection;
-			if( this->intersectRayWithLeaf( ray, node, dummyIntersection, minDistance, minSurfaceIndex)){
+			if( this->intersectRayWithLeaf( ray, node, dummyIntersection, minDistance, minSurfaceIndex, surfaces)){
 				intersection = dummyIntersection;
-				return node->tracedObjectArray[minSurfaceIndex];
+				return surfaces[minSurfaceIndex];
 			}
 			return NULL;
 		}
@@ -234,8 +233,8 @@ Surface* BVH::intersectRecursiveNearestHit(const Ray& ray, BvhNode* node, float&
 		RayIntersection leftChildeIntersection;
 		RayIntersection rightChildIntersection;
 
-		Surface* leftChildSurface  = this->intersectRecursiveNearestHit(ray, node->leftChild, leftChildDistance, leftChildeIntersection);
-		Surface* rightChildSurface = this->intersectRecursiveNearestHit(ray, node->rightChild, rightChildDistance, rightChildIntersection);
+		Surface* leftChildSurface  = this->intersectRecursiveNearestHit(ray, node->leftChild, leftChildDistance, leftChildeIntersection, surfaces, depth + 1);
+		Surface* rightChildSurface = this->intersectRecursiveNearestHit(ray, node->rightChild, rightChildDistance, rightChildIntersection, surfaces, depth +1);
 
 
 		if( leftChildSurface != NULL && leftChildDistance < rightChildDistance ){
@@ -258,7 +257,7 @@ Surface* BVH::intersectRecursiveNearestHit(const Ray& ray, BvhNode* node, float&
 
 }
 
-bool BVH::intersectRayVisibilityTest(const Ray& ray, BvhNode* node) const{
+bool BVH::intersectRayVisibilityTest(const Ray& ray, BvhNode* node, Surface** surfaces) const{
 
 	bool intersectsCurrent;
 	bool intersectsLeftChild;
@@ -272,14 +271,14 @@ bool BVH::intersectRayVisibilityTest(const Ray& ray, BvhNode* node) const{
 			RayIntersection dummyIntersection;
 			float minDistance;
 			int minSurfaceIndex;
-			return this->intersectRayWithLeaf( ray, node, dummyIntersection, minDistance, minSurfaceIndex);				
+			return this->intersectRayWithLeaf( ray, node, dummyIntersection, minDistance, minSurfaceIndex, surfaces);				
 		}
 
-		leftChildSurfaceIntersected = this->intersectRayVisibilityTest(ray, node->leftChild);
+		leftChildSurfaceIntersected = this->intersectRayVisibilityTest(ray, node->leftChild, surfaces);
 		if( leftChildSurfaceIntersected)
 			return true;
 
-		rightChildSurfaceIntersected = this->intersectRayVisibilityTest(ray, node->rightChild);
+		rightChildSurfaceIntersected = this->intersectRayVisibilityTest(ray, node->rightChild, surfaces);
 		if( rightChildSurfaceIntersected)
 			return true;
 
@@ -290,96 +289,27 @@ bool BVH::intersectRayVisibilityTest(const Ray& ray, BvhNode* node) const{
 		return false;
 	}
 }
-/*
- * Returns True when ray actually intersects surface 
- * in local coordinates and fills arguments intersection
- * and distance with results
- *
- * Caution: Argument ray must be  in world coords
- */ 
-
-bool BVH::intersectRayWithLocalSurface(const Ray& ray, Surface* surface, RayIntersection& intersection, float& distance){
-
-	bool surfaceIntersectionFound = false;
-	float distanceFromOrigin = 9999999.0f;
-	RayIntersection possibleIntersection;
-	glm::vec4 intersectionPointWorldCoords;
-	glm::vec4 intersectionNormalWorldCoords;
-
-	// Transform ray to local coordinates
-	const glm::mat4& M = surface->transformation();
-	glm::vec3 localRayOrigin    = glm::vec3(glm::inverse(M) * glm::vec4(ray.getOrigin(), 1.0f));
-	glm::vec3 localRayDirection = glm::vec3(glm::inverse(M) * glm::vec4(ray.getDirection(), 0.0f)); 
-	Ray localRay(localRayOrigin, localRayDirection);
-
-	surfaceIntersectionFound = surface->hit(localRay, possibleIntersection, distanceFromOrigin);
-	if(surfaceIntersectionFound){
-		intersectionPointWorldCoords  = M * glm::vec4( possibleIntersection.getPoint(), 1.0f);
-		intersectionNormalWorldCoords = glm::transpose(glm::inverse(M)) * glm::vec4(possibleIntersection.getNormal(), 0.0f);
-
-		intersection.setPoint(glm::vec3(intersectionPointWorldCoords));
-		intersection.setNormal(glm::normalize(glm::vec3(intersectionNormalWorldCoords)));
-		intersection.setMaterial(surface->getMaterial());
-		distance = distanceFromOrigin;
-		return true;
-	}
-
-	return false;
-
-}
-
-Surface* BVH::pointInsideSurface(glm::vec3& point){
-	return this->isPointInsideSurfaceRecursive(this->getRoot(), point);
-}
-
-Surface* BVH::isPointInsideSurfaceRecursive(BvhNode* node, glm::vec3& point){
-
-	Surface* leftChildSurface  = NULL;
-	Surface* rightChildSurface = NULL; 
-
-	// is point inside the current bounding box ?
-	if( node->aabb.isPointInBox(point) == false )
-		return NULL;
-
-	// point is in box
-
-	// is it a leaf ?
-	if( node->type == BVH_LEAF){
-		if( node->tracedObject->isPointInside(point) )
-			return node->tracedObject;
-		else
-			return NULL;
-	}
-	else{
-		// this isnt a surface.Traverse BVH
-		leftChildSurface  = this->isPointInsideSurfaceRecursive(node->leftChild, point);
-		if( leftChildSurface)
-			return leftChildSurface; 
-
-		rightChildSurface = this->isPointInsideSurfaceRecursive(node->rightChild, point);
-
-		if( rightChildSurface )
-			return rightChildSurface;
-
-		return NULL;
-	}
-}
-
-void BVH::createLeaf(BvhNode* newNode, Surface** surfaces, int numSurfaces){
 
 
-	Surface** leafSurfaces = new Surface*[numSurfaces];
-	for(int i = 0 ; i < numSurfaces; i++)
-		leafSurfaces[i] = surfaces[i];
+
+void BVH::createLeaf(BvhNode* newNode, Surface** surfaces, int start, int end){
+
 	
 	newNode->type = BVH_LEAF;
-	newNode->numSurfacesEncapulated = numSurfaces;
-	newNode->tracedObjectArray = leafSurfaces;
+	newNode->numSurfacesEncapulated = end - start;
 	newNode->leftChild = NULL;
 	newNode->rightChild = NULL;
+
+	
+	int i;
+	for( i = 0; i < (end - start); i++){
+		newNode->surfacesIndices[i] = i + start;
+	}
+
+
 }
 
-bool BVH::intersectRayWithLeaf(const Ray& ray, BvhNode* leaf, RayIntersection& intersection, float& distance, int& leafSurfaceIndex) const{
+bool BVH::intersectRayWithLeaf(const Ray& ray, BvhNode* leaf, RayIntersection& intersection, float& distance, int& leafSurfaceIndex, Surface** surfaces) const{
 
 	int i;
 	bool surfaceIntersectionFound = false;
@@ -392,12 +322,11 @@ bool BVH::intersectRayWithLeaf(const Ray& ray, BvhNode* leaf, RayIntersection& i
 	Ray localRay;
 
 	int numSurfaces = leaf->numSurfacesEncapulated;
-	Surface** surfaces = leaf->tracedObjectArray;
-
+	
 
 	for( i = 0 ; i < numSurfaces; i++){
-		
-		Surface* surface = surfaces[i];
+		int surfaceIndex = leaf->surfacesIndices[i];
+		Surface* surface = surfaces[surfaceIndex];
 
 		// Transform ray to local coordinates
 		const glm::mat4& M = surface->transformation();
@@ -419,7 +348,7 @@ bool BVH::intersectRayWithLeaf(const Ray& ray, BvhNode* leaf, RayIntersection& i
 				intersectionNormalWorldCoords = surface->getInverseTransposeTransformation() * glm::vec4(possibleIntersection.getNormal(), 0.0f);
 				
 				distance = minDistanceFound;
-				leafSurfaceIndex = i;
+				leafSurfaceIndex = surfaceIndex;
 			}
 
 		}
@@ -432,21 +361,21 @@ bool BVH::intersectRayWithLeaf(const Ray& ray, BvhNode* leaf, RayIntersection& i
 	return surfaceIntersectionFound;
 }
 
-void BVH::buildTopDownSAH(BvhNode** tree, Surface** surfaces, int numSurfaces){
+void BVH::buildTopDownSAH(BvhNode** tree, Surface** surfaces, int start, int end){
 
 	int splitIndex;
 	float costSplit;
 	BvhNode* node = new BvhNode;
 	*tree = node;
 
-	node->aabb = this->computeBoxWithSurfaces(surfaces, numSurfaces);
-	node->numSurfacesEncapulated = numSurfaces;
+	node->aabb = this->computeBoxWithSurfaces(surfaces, start, end);
+	node->numSurfacesEncapulated = end - start;
 
-	splitIndex = topDownSplitIndexSAH(surfaces, numSurfaces, node->aabb, costSplit);
+	splitIndex = topDownSplitIndexSAH(surfaces, node->aabb, costSplit, start, end);
 	
 	if( costSplit > node->numSurfacesEncapulated * COST_INTERSECTION){
 		// create leaf.It's cheaper to intersect all surfaces than to make a split
-		createLeaf(node, surfaces, numSurfaces);
+		createLeaf(node, surfaces, start, end);
 	}
 	else{
 
@@ -455,12 +384,12 @@ void BVH::buildTopDownSAH(BvhNode** tree, Surface** surfaces, int numSurfaces){
 		node->tracedObjectArray = NULL;
 
 		// recursion
-		buildTopDownSAH(&(node->leftChild), &surfaces[0], splitIndex);
-		buildTopDownSAH(&(node->rightChild),&surfaces[splitIndex], numSurfaces - splitIndex);
+		buildTopDownSAH(&(node->leftChild), surfaces, start, start + splitIndex);
+		buildTopDownSAH(&(node->rightChild),surfaces, start + splitIndex, end);
 	}
 }
 
-int BVH::topDownSplitIndexSAH(Surface** surfaces, int numSurfaces, Box& parentBox, float& splitCost){
+int BVH::topDownSplitIndexSAH(Surface** surfaces,  Box& parentBox, float& splitCost, int start, int end){
 
 	float computedCost;
 	float parentSurfaceArea;
@@ -478,25 +407,24 @@ int BVH::topDownSplitIndexSAH(Surface** surfaces, int numSurfaces, Box& parentBo
 
 		
 		if( dim == 0)
-			std::sort(surfaces, surfaces + numSurfaces , by_X_compareSurfaces);
+			std::sort(surfaces + start, surfaces + end , by_X_compareSurfaces);
 		else if( dim == 1)
-			std::sort(surfaces, surfaces + numSurfaces , by_Y_compareSurfaces);
+			std::sort(surfaces + start, surfaces + end , by_Y_compareSurfaces);
 		else
-			std::sort(surfaces, surfaces + numSurfaces , by_Z_compareSurfaces);
+			std::sort(surfaces + start, surfaces + end , by_Z_compareSurfaces);
 
 
-		for(i = 0; i < numSurfaces-1; i++){
+		for(i = start ; i < end - 1; i++){
 			nl = i + 1;
-			nr = numSurfaces - nl;
-
-			leftChildBox  = this->computeBoxWithSurfaces(surfaces, nl);
-			rightChildBox = this->computeBoxWithSurfaces(surfaces + nl, nr);
+			
+			leftChildBox  = this->computeBoxWithSurfaces(surfaces, start, nl);
+			rightChildBox = this->computeBoxWithSurfaces(surfaces, nl, end);
 
 			leftChildSurfaceArea  = leftChildBox.computeSurfaceArea();
 			rightChildSurfaceArea = rightChildBox.computeSurfaceArea();
 
 			// SAH: C = CT + nl*CI* (S(Bl) / S(Bp)) + nr* CI * (S(Br) / S(Bp))  
-			computedCost = COST_TRAVERSAL + nl * COST_INTERSECTION * leftChildSurfaceArea / parentSurfaceArea + nr * COST_INTERSECTION * rightChildSurfaceArea / parentSurfaceArea;
+			computedCost = COST_TRAVERSAL + (nl - start) * COST_INTERSECTION * leftChildSurfaceArea / parentSurfaceArea + (end - nl) * COST_INTERSECTION * rightChildSurfaceArea / parentSurfaceArea;
 			if(computedCost < minCost){
 				minCost = computedCost;
 				minCostSplit = nl;
@@ -507,142 +435,120 @@ int BVH::topDownSplitIndexSAH(Surface** surfaces, int numSurfaces, Box& parentBo
 
 	splitCost = minCost;
 
-	if( minCostSplit == 1)
+	if( minCostSplit == start)
 		splitCost = FLT_MAX;	// create leaf
 
 	return minCostSplit;
 }
 
-void BVH::buildTopDownHybrid(BvhNode** tree, Surface** surfaces, int numSurfaces){
+void BVH::buildTopDownHybrid(BvhNode** tree, Surface** surfaces, int start, int end){
 
 	int splitIndex;
 	float costSplit;
 	BvhNode* node = new BvhNode;
 	*tree = node;
 
-	node->aabb = this->computeBoxWithSurfaces(surfaces, numSurfaces);
-	node->numSurfacesEncapulated = numSurfaces;
+	node->aabb = this->computeBoxWithSurfaces(surfaces,  start,  end);
+	node->numSurfacesEncapulated = end - start;
 
-	if( numSurfaces > SAH_SURFACE_CEIL ){
+	if( end - start > SAH_SURFACE_CEIL ){
 
 		// is it a leaf ? Only one surface per leaf 
-		if( numSurfaces <= SURFACES_PER_LEAF ){
-			createLeaf(node, surfaces, numSurfaces);
+		if( end - start < SURFACES_PER_LEAF ){
+			createLeaf(node, surfaces, start, end);
 		}
 		else{
 			node->tracedObject = NULL;
 			node->tracedObjectArray = NULL;
 			node->type = BVH_NODE;
-			splitIndex = this->topDownSplitIndex(surfaces, numSurfaces, node->aabb);
+			splitIndex = this->topDownSplitIndex(surfaces, node->aabb, start, end);
+
+			//std::cout << "median surface index = " << splitIndex << " Start = " << start << " End = " << end<< std::endl;
 
 			// recursion
-			buildTopDownHybrid( &(node->leftChild), &surfaces[0], splitIndex);
-			buildTopDownHybrid( &(node->rightChild),&surfaces[splitIndex], numSurfaces - splitIndex);
+			buildTopDownHybrid( &(node->leftChild), surfaces, start, splitIndex);
+			buildTopDownHybrid( &(node->rightChild),surfaces, splitIndex, end);
 		}
 	}
 	else{
 		// use SAH
 
-		if( numSurfaces <= SURFACES_PER_LEAF){		
-			createLeaf(node, surfaces, numSurfaces);
+		if( end - start < SURFACES_PER_LEAF){		
+			createLeaf(node, surfaces, start, end);
 		}
 		else{
 			node->type = BVH_NODE;
 			node->tracedObject = NULL;
 			node->tracedObjectArray = NULL;
 
-			splitIndex = topDownSplitIndexSAH(surfaces, numSurfaces, node->aabb, costSplit);
+			splitIndex = topDownSplitIndexSAH(surfaces, node->aabb, costSplit, start, end);
+			//std::cout << "SAH split index = " << splitIndex  << " Start = " << start << " End = " << end << std::endl;
+
 			// recursion
-			buildTopDownHybrid(&(node->leftChild), &surfaces[0], splitIndex);
-			buildTopDownHybrid(&(node->rightChild),&surfaces[splitIndex], numSurfaces - splitIndex);
+			buildTopDownHybrid(&(node->leftChild), surfaces, start, splitIndex);
+			buildTopDownHybrid(&(node->rightChild), surfaces, splitIndex, end);
 		}
 	}
 }
 
-/*
- * WIP
- * DONT USE
- */
-bool BVH::intersectStack(const Ray& ray, BvhNode* root, RayIntersection& intersection){
-	
-	std::stack<BvhNode*> nodeStack;
-	float closeIntersectionDistance = 99999999.0f;
-	bool surfaceHitFound = false;
-	bool tempSurfaceHit = false;
-	float tempDistance;
-	float leftChildDistance;
-	float rightChildDistance;
-	float popDistance;
-	int leafSurfaceIndex;
-	RayIntersection tempIntersection;
-	BvhNode* currentNode;
-	BvhNode* popdNode;
-	bool leftChildHit;
-	bool rightChildHit;
 
-	if( root->aabb.intersectWithRay(ray, tempDistance) == false)
+bool BVH::intersectStackNearest(const Ray& ray, BvhNode* root, RayIntersection& intersection, Surface** surfaces) const{
+
+	BvhNode* stack[256];
+	BvhNode** stack_ptr = stack;
+	BvhNode* currNode;
+	float minDistace = FLT_MAX;
+	bool surfaceIntersectionFound = false;
+
+	if( root->aabb.intersectWithRayOptimized(ray, 0.0001f, 999999.0f) == false )
 		return false;
 
-	currentNode = root;
-	while(1){
-		if(currentNode->type == BVH_NODE){
-			leftChildHit = currentNode->leftChild->aabb.intersectWithRay(ray, leftChildDistance);
-			rightChildHit = currentNode->rightChild->aabb.intersectWithRay(ray, rightChildDistance);
+	// push null
+	*stack_ptr++ = NULL;
+	currNode = root;
 
-			if(leftChildHit && rightChildHit){
-				if( leftChildDistance < rightChildDistance){	// left is closest,push right
-					nodeStack.push(currentNode->rightChild);
-					continue;
-				}
-				else{ 
-					nodeStack.push(currentNode->leftChild);
-					continue;
+	while(currNode != NULL){
+
+		if( currNode->type == BVH_NODE ){
+			BvhNode* leftChild  = currNode->leftChild;
+			BvhNode* rightChild = currNode->rightChild;
+
+			bool leftChildIntersected = leftChild->aabb.intersectWithRayOptimized(ray, 0.0001f, 999999.0f);
+			bool rightChildIntersected = rightChild->aabb.intersectWithRayOptimized(ray, 0.0001f, 999999.0f);
+
+			if(leftChildIntersected){
+				currNode = leftChild;
+				if( rightChildIntersected){
+
+					// push right child to stack
+					*stack_ptr++ = rightChild;
 				}
 			}
-			else if( leftChildHit  )
-				currentNode = currentNode->leftChild;
-			else if(rightChildHit )
-				currentNode = currentNode->rightChild;
-
+			else if(rightChildIntersected){
+				currNode = rightChild;
+			} 
+			else{ // none of  the children hit the ray. POP stack
+				currNode = *--stack_ptr;
+			}
 		}
 		else{
-			//leaf
-			tempSurfaceHit =  this->intersectRayWithLeaf(ray, currentNode, tempIntersection, tempDistance, leafSurfaceIndex);
-			if(  tempSurfaceHit ){
-				surfaceHitFound = true;
-				// update close hit
-				if( tempDistance < closeIntersectionDistance ){
-					closeIntersectionDistance = tempDistance;
-					intersection = tempIntersection;
+
+			// node is a leaf
+			float distance;
+			int leafSurfaceIndex;
+			RayIntersection dummyIntersection;
+
+			bool leafIntersected = this->intersectRayWithLeaf(ray, currNode, dummyIntersection, distance, leafSurfaceIndex, surfaces);
+			if( leafIntersected ){
+				surfaceIntersectionFound = true;
+				if( distance < minDistace ){
+					minDistace = distance;
+					intersection = dummyIntersection;
 				}
 			}
+			// pop 
+			currNode = *--stack_ptr;
 		}
-
-		currentNode == NULL;
-		// pop stack
-		while( nodeStack.empty() == false){
-			popdNode = nodeStack.top();
-			nodeStack.pop();
-
-			// intersect with box
-			if( popdNode->aabb.intersectWithRay(ray, tempDistance)){
-				
-				if( surfaceHitFound ){
-					if(tempDistance < closeIntersectionDistance){
-						currentNode = popdNode;
-						break;
-					}
-				}
-				else{
-					currentNode = popdNode;
-				}
-			}
-		}
-
-		if( currentNode == NULL )
-			return surfaceHitFound;
-
 	}
-
-
+	return surfaceIntersectionFound;
 }

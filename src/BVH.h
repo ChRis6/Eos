@@ -27,7 +27,8 @@
 #include "surface.h"
 #include "Ray.h"
 #include "RayIntersection.h"
- 
+
+#define SURFACES_PER_LEAF 6
 
 enum{
 	BVH_NODE,
@@ -42,6 +43,7 @@ typedef struct bvhNode_t{
 	struct bvhNode_t *leftChild;
 	Surface* tracedObject;
 	Surface** tracedObjectArray;
+	int surfacesIndices[SURFACES_PER_LEAF];
 }BvhNode;
 
 /*
@@ -54,30 +56,30 @@ public:
 
 	void buildHierarchy(Surface** surfaces, int numSurfaces);								// builds BVH tree
 	BvhNode* getRoot() const { return m_Root;}												// return Root of tree
-	bool intersectRay(const Ray& ray, RayIntersection& intersectionFound, bool nearest) const;	// Return Intesected Surface with Ray.Get closest hit when nearest = true
-	Surface* pointInsideSurface(glm::vec3& point);											// return surface that has point
+	bool intersectRay(const Ray& ray, RayIntersection& intersectionFound, bool nearest, Surface** surfaces) const;	// Return Intesected Surface with Ray.Get closest hit when nearest = true
+												// return surface that has point
 
 private:
-	Box computeBoxWithSurfaces(Surface** surfaces, int numSurfaces);
+	Box computeBoxWithSurfaces(Surface** surfaces, int start , int end);
 
-	void buildTopDown(BvhNode** tree, Surface** surfaces, int numSurfaces);
-	int topDownSplitIndex(Surface** surfaces, int numSurfaces,Box parentBox);
+	void buildTopDown(BvhNode** tree, Surface** surfaces, int start, int end);
+	int topDownSplitIndex(Surface** surfaces, Box parentBox, int start, int end);
 
-	Surface* intersectRecursiveNearestHit(const Ray& ray, BvhNode* node, float& minDistance, RayIntersection& intersection) const;
-	bool 	 intersectRayVisibilityTest(const Ray& ray, BvhNode* node) const;
-	Surface* isPointInsideSurfaceRecursive(BvhNode* node, glm::vec3& point);
-	bool    intersectRayWithLocalSurface(const Ray& ray, Surface* surface, RayIntersection& intersection, float& distance);
+	Surface* intersectRecursiveNearestHit(const Ray& ray, BvhNode* node, float& minDistance, RayIntersection& intersection, Surface** surfaces, int depth) const;
+	bool 	 intersectRayVisibilityTest(const Ray& ray, BvhNode* node, Surface** surfaces) const;
+	
+	
 
 	// SAH
-	void buildTopDownSAH(BvhNode** tree, Surface** surfaces, int numSurfaces);
-	int topDownSplitIndexSAH(Surface** surfaces, int numSurfaces, Box& parentBox, float& splitCost);	// returns best split index, sets splitCost - cost of split index returned
-	void createLeaf(BvhNode* newNode, Surface** surfaces, int numSurfaces);
-	bool intersectRayWithLeaf(const Ray& ray, BvhNode* leaf, RayIntersection& intersection, float& distance, int& leafSurfaceIndex) const;
+	void buildTopDownSAH(BvhNode** tree, Surface** surfaces, int start, int end);
+	int topDownSplitIndexSAH(Surface** surfaces, Box& parentBox, float& splitCost, int start, int end);	// returns best split index, sets splitCost - cost of split index returned
+	void createLeaf(BvhNode* newNode, Surface** surfaces, int start, int end);
+	bool intersectRayWithLeaf(const Ray& ray, BvhNode* leaf, RayIntersection& intersection, float& distance, int& leafSurfaceIndex, Surface** surfaces) const;
 
 
-	void buildTopDownHybrid(BvhNode** tree, Surface** surfaces, int numSurfaces);
+	void buildTopDownHybrid(BvhNode** tree, Surface** surfaces, int start, int end);
 
-	bool intersectStack(const Ray& ray, BvhNode* root, RayIntersection& intersection);
+	bool intersectStackNearest(const Ray& ray, BvhNode* root, RayIntersection& intersection, Surface** surfaces) const;
 private:
 	BvhNode* m_Root;
 };
