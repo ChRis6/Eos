@@ -31,7 +31,7 @@ class DeviceSceneHandler;
 class DMaterial{
 	friend class DeviceSceneHandler;
 public:
-	HOST DEVICE DMaterial():m_Diffuse(1.0f),m_Specular(0.0f),m_AmbientIntensity(0.015f),m_Reflectivity(0.0f),m_shininess(40){}
+	HOST DEVICE DMaterial():m_Diffuse(0.5f),m_Specular(0.0f),m_AmbientIntensity(0.015f),m_Reflectivity(0.0f),m_shininess(40){}
 	DEVICE DMaterial(const glm::vec4& diffuse, const glm::vec4& specular, float ambient, float reflectivity, int shininess):
 				m_Diffuse(diffuse),m_Specular(specular),m_AmbientIntensity(ambient),m_Reflectivity(reflectivity),m_shininess(shininess){}
 

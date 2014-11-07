@@ -185,3 +185,51 @@ glm::vec3 Scene::getRefractedRay(const glm::vec3& rayDir, const glm::vec3& norma
 	glm::vec3 refractedDirection = ratio * rayDir + ( ratio * c1  - cosT ) * normal;
 	return refractedDirection;
 }
+
+
+void Scene::printScene(){
+
+	int numLights;
+	int numTriangles;
+	int i;
+	printf("Priting Scene from Host\n\n");	
+
+	numLights = this->getNumLightSources();
+	numTriangles = this->getNumSurfaces();
+
+	printf("Scene has %d lights and %d triangles\n", numLights, numTriangles);
+
+	for( i = 0 ; i < numLights; i++){
+		const LightSource* light = this->getLightSource(i);
+		glm::vec4 pos = light->getPosition();
+		glm::vec4 color = light->getLightColor();
+
+		printf("LightSource: %d\n", i+1);
+		printf("Position: %f %f %f\n", pos.x, pos.y, pos.z);
+		printf("Color: %f %f %f\n\n", color.x, color.y, color.z);
+	}
+
+
+	for( i = 0 ; i < numTriangles; i++){
+
+		Surface* surface = this->getSurface(i);
+		Triangle* tri = dynamic_cast<Triangle*>(surface);
+		glm::vec3 v1 = tri->m_V1;
+		glm::vec3 v2 = tri->m_V2;
+		glm::vec3 v3 = tri->m_V3;
+
+
+		glm::vec3 n1 = tri->m_N1;
+		glm::vec3 n2 = tri->m_N2;
+		glm::vec3 n3 = tri->m_N3;
+
+		printf("Triangle: %d\n", i+1);
+		printf("V1: %f %f %f\n", v1.x, v1.y, v1.z);
+		printf("V2: %f %f %f\n", v2.x, v2.y, v2.z);
+		printf("V3: %f %f %f\n\n", v3.x, v3.y, v3.z);
+
+		printf("N1: %f %f %f\n", n1.x, n1.y, n1.z);
+		printf("N2: %f %f %f\n", n2.x, n2.y, n2.z);
+		printf("N3: %f %f %f\n\n", n3.x, n3.y, n3.z);
+	}
+}

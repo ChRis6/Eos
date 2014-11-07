@@ -54,7 +54,7 @@ public:
 private:
 	bool RayTriangleIntersection(const glm::vec3& v1, const glm::vec3& v2, const glm::vec3& v3, const Ray& ray, glm::vec3& barycetricCoords);
 
-private:
+public:
 	// triangle vertices
 	glm::vec3 m_V1;
 	glm::vec3 m_V2;

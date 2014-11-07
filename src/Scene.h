@@ -72,6 +72,8 @@ public:
 	bool isUsingBvh() const {return m_UsingBvh;}
 	void flush();
 
+	void printScene();
+
 private:
 	/*
 	glm::vec4 rayTrace(const Ray& ray, const Camera& camera, float sourceRefactionIndex, int depth);

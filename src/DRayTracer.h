@@ -40,8 +40,9 @@ public:
 	HOST DEVICE void setTracedDepth(int depth)	{ m_TraceDepth = depth; }
 	HOST DEVICE void setAASamples(int samples)  { m_AASamples  = samples;}
 
-private:
 	DEVICE glm::vec4 rayTrace(DScene* scene, Camera* camera, const Ray& ray,  int depth);
+private:
+	
 	DEVICE glm::vec4 shadeIntersection(DScene* scene, const Ray& ray, Camera* camera, DRayIntersection& intersection, int depth);
 	DEVICE glm::vec4 calcPhong(Camera* camera, DLightSource* lightSource, DRayIntersection& intersection);
 	DEVICE glm::vec4 findDiffuseColor(DLightSource* lightSource, const glm::vec4& intersectionToLight, DRayIntersection& intersection);

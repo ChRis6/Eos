@@ -33,6 +33,10 @@
 #include "Texture.h"
 #include "DeviceSceneHandler.h"
 #include "DScene.h"
+#include "DeviceRenderer.h"
+#include "DeviceCameraHandler.h"
+#include "DeviceRayTracerHandler.h"
+
 
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stb_image_write.h"
@@ -190,6 +194,7 @@ int main(int argc, char **argv)
    
    
    bool renderOnce = false;
+   bool useDeviceRenderer = true;
 
    srand((int) time(NULL));
 
@@ -239,6 +244,9 @@ int main(int argc, char **argv)
       glfwTerminate();
       return -1;
    }
+
+   // set cuda device
+   setGLDevice(0);
 
    // hide the cursor
    glfwSetInputMode (window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
@@ -408,8 +416,8 @@ int main(int argc, char **argv)
    triangleMeshMaterial.setReflectionIntensity(refletionIntensity);
    triangleMeshMaterial.setRefractiveIndex(REFRACTIVE_INDEX_WATER);
 
-   LightSource* lightSource  = new LightSource(glm::vec4(-20.0f, 10.0f, 10.0f, 1.0f), glm::vec4(1.0f));  // location , color
-   LightSource* lightSource1 = new LightSource(glm::vec4(20.0f, 10.0f, 10.0f, 1.0f), glm::vec4(1.0f));
+   LightSource* lightSource  = new LightSource(glm::vec4(20.0f, 10.0f, 10.0f, 1.0f), glm::vec4(1.0f));  // location , color
+   LightSource* lightSource1 = new LightSource(glm::vec4(-20.0f, 10.0f, 10.0f, 1.0f), glm::vec4(1.0f));
    //LightSource* lightSource2 = new LightSource(glm::vec4(2000.0f, 0.0f, 40.0f, 1.0f), glm::vec4(1.0f));
 
    Sphere* sphere = new Sphere(glm::vec3(0.8f, 1.65f, 0.0f), 0.7f);
@@ -523,10 +531,32 @@ int main(int argc, char **argv)
    std::cout << "BVH construction completed.Scene Ready in " << bvh_minutes << " minutes and " << bvh_seconds << " seconds" << std::endl;
    
 
+   //scene.printScene();
+   //fflush(stdout);
+
+   // copy scene 
    std::cout << "Attemping to copy scene to device" << std::endl;
    DeviceSceneHandler sceneImporter(&scene);
    DScene* d_scene = sceneImporter.getDeviceScene();
-   printDeviceScene(d_scene);
+
+   // copy camera
+   DeviceCameraHandler cameraHandler(&camera);
+   Camera* d_camera = cameraHandler.getDeviceCamera();
+
+   DeviceRayTracerHandler tracerHandler(&rayTracer);
+   DRayTracer* d_tracer = tracerHandler.getDeviceTracer();
+
+   DeviceRenderer deviceRenderer(d_scene, d_tracer, d_camera, WINDOW_WIDTH, WINDOW_HEIGHT);   
+
+   if( renderOnce && useDeviceRenderer){
+      
+      deviceRenderer.renderToHostBuffer(imageBuffer, WINDOW_WIDTH * WINDOW_HEIGHT * 4);
+
+      stbi_write_png("rayTracedImageCuda.png", WINDOW_WIDTH, WINDOW_HEIGHT, 4, imageBuffer + WINDOW_WIDTH * WINDOW_HEIGHT * 4, -WINDOW_WIDTH*4);
+
+      // reset for host rendering
+      memset(imageBuffer, 0, sizeof(unsigned char) * 4 * WINDOW_WIDTH * WINDOW_HEIGHT);
+   }
 
    if(renderOnce){
       std::cout << "Rendering Once to Image file..." << std::endl;
@@ -616,10 +646,19 @@ int main(int argc, char **argv)
 
       /* Raytracing */
       //scene.render(camera, imageBuffer);
-      rayTracer.render(scene, camera, imageBuffer);
+      if( useDeviceRenderer){
 
-      // copy pixels to GPU buffer (async copy)
-      glBufferSubData(GL_PIXEL_UNPACK_BUFFER, 0, sizeof(GLchar) * WINDOW_WIDTH * WINDOW_HEIGHT * 4, imageBuffer);
+         cameraHandler.updateDeviceCamera(&camera);
+         d_camera = cameraHandler.getDeviceCamera();
+
+         deviceRenderer.renderToGLPixelBuffer(pbo);
+      }
+      else{
+         rayTracer.render(scene, camera, imageBuffer);
+      }
+
+      if( !useDeviceRenderer)
+         glBufferSubData(GL_PIXEL_UNPACK_BUFFER, 0, sizeof(GLchar) * WINDOW_WIDTH * WINDOW_HEIGHT * 4, imageBuffer);
       
       // update texture data from the GL_PIXEL_UNPACK_BUFFER bounded pixel buffer object
       glTexSubImage2D(GL_TEXTURE_2D, 0, 0 , 0, WINDOW_WIDTH, WINDOW_HEIGHT, GL_RGBA, GL_UNSIGNED_BYTE, NULL);

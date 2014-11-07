@@ -68,7 +68,7 @@ HOST DScene* DeviceSceneHandler::createDeviceScene(Scene* h_scene){
 		const LightSource* h_Light = h_scene->getLightSource(i);
 		
 		h_DLightSources[i].m_Position = h_Light->getPosition();
-		h_DLightSources[i].m_Color = h_Light->getPosition();
+		h_DLightSources[i].m_Color = h_Light->getLightColor();
 	}
 	
 	// maybe transfer later ???
@@ -100,9 +100,10 @@ HOST DScene* DeviceSceneHandler::createDeviceScene(Scene* h_scene){
 		h_DTriangles[i].m_V2 = h_Triangle->m_V2;
 		h_DTriangles[i].m_V3 = h_Triangle->m_V3;
 		// normals
-		h_DTriangles[i].m_N1 = h_DTriangles->m_N1;
-		h_DTriangles[i].m_N2 = h_DTriangles->m_N2;
-		h_DTriangles[i].m_N3 = h_DTriangles->m_N3;
+		h_DTriangles[i].m_N1 = h_Triangle->m_N1;
+		h_DTriangles[i].m_N2 = h_Triangle->m_N2;
+		h_DTriangles[i].m_N3 = h_Triangle->m_N3;
+		
 		// copy transformations
 		h_DTriangles[i].m_Transformation   = h_Triangle->transformation();
 		h_DTriangles[i].m_Inverse          = h_Triangle->getInverseTransformation();

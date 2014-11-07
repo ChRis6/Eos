@@ -52,13 +52,32 @@ DEVICE glm::vec4 DRayTracer::shadeIntersection(DScene* scene, const Ray& ray, Ca
 }
 
 DEVICE glm::vec4 DRayTracer::calcPhong(Camera* camera, DLightSource* lightSource, DRayIntersection& intersection){
+	glm::vec4 diffuseColor(0.0f, 0.0f, 0.0f, 0.0f);
+	glm::vec4 specularColor(0.0f, 0.0f, 0.0f, 0.0f);
+	glm::vec4 intersectionToLight;
+	glm::vec4 viewVector;
+	glm::vec4 reflectedVector;
 
 	glm::vec4 intersectionPointInWorld  = glm::vec4(intersection.getIntersectionPoint() , 1.0f);
 	glm::vec4 intersectionNormalInWorld = glm::vec4(intersection.getIntersectionNormal(), 0.0f);
 
-	glm::vec4 intersectionToLight = glm::normalize(lightSource->getPosition() - intersectionPointInWorld);
+	
+	// specular reflection
+	intersectionToLight = glm::normalize(lightSource->getPosition() - intersectionPointInWorld);
+	viewVector          = glm::normalize(glm::vec4(camera->getPosition(),1.0f) - intersectionPointInWorld);
+	reflectedVector     = glm::normalize((2.0f * glm::dot(intersectionNormalInWorld, intersectionToLight) * intersectionNormalInWorld) - intersectionToLight);
+	
+	// find diffuse first
+	diffuseColor = this->findDiffuseColor(lightSource, intersectionToLight, intersection);
 
-	return this->findDiffuseColor(lightSource, intersectionToLight, intersection);
+	float dot = glm::dot( viewVector, reflectedVector);
+	if( dot > 0.0f){
+		float specularTerm = glm::pow(dot, (float)intersection.getIntersectionMaterial().getShininess());
+		specularColor += specularTerm * lightSource->getColor() * intersection.getIntersectionMaterial().getSpecularColor();
+	}
+
+	return diffuseColor + specularColor;
+
 }
 
 DEVICE glm::vec4 DRayTracer::findDiffuseColor(DLightSource* lightSource, const glm::vec4& intersectionToLight, DRayIntersection& intersection){

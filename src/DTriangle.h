@@ -56,7 +56,7 @@ private:
 private: // host methods.Used only by DeviceImporter class
 	HOST DEVICE DTriangle(): m_V1(0.0f),m_V2(0.0f),m_V3(0.0f),m_N1(0.0f),m_N2(0.0f),m_N3(0.0f){}
 
-private:
+public:
 	// triangle vertices
 	glm::vec3 m_V1;
 	glm::vec3 m_V2;

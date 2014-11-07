@@ -50,7 +50,7 @@ DEVICE bool DTriangle::hit(const Ray& ray, DRayIntersection& intersection, float
 	bool collision;
 	glm::vec3 barCoords(0.0f);
 	glm::vec3 pos(0.0f);
-	glm::vec3 norm(0.0f);
+	
 	
 	collision = this->rayTriangleIntersectionTest( ray, barCoords);
 	if(collision){
@@ -62,12 +62,11 @@ DEVICE bool DTriangle::hit(const Ray& ray, DRayIntersection& intersection, float
 		// interpolate normals
 		u = barCoords.y;
 		v = barCoords.z;
-		norm = glm::normalize(m_N1 * ( 1.0f - u - v) + (m_N2 * u) + (m_N3*v));
+		glm::vec3 norm = glm::normalize(m_N1 * ( 1.0f - u - v) + (m_N2 * u) + (m_N3*v));
 		
 		intersection.setIntersectionPoint(pos);
 		intersection.setIntersectionNormal(norm);
 		intersection.setIntersectionMaterial(this->getMaterial());
-
 		return true;
 	}
 	return false;

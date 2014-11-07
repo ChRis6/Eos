@@ -53,7 +53,7 @@ DEVICE bool DScene::findMinDistanceIntersectionLinear(const Ray& ray, DRayInters
 
 				minDist = triDistance;
 				min_point  = tri->getTransformation() * glm::vec4(dummyIntersection.getIntersectionPoint(), 1.0f);
-				min_normal = tri->getInverseTransposeTransformation() * glm::vec4(dummyIntersection.getIntersectionPoint(), 0.0f);
+				min_normal = tri->getInverseTransposeTransformation() * glm::vec4(dummyIntersection.getIntersectionNormal(), 0.0f);
 				intersection.setIntersectionMaterial(tri->getMaterial()); 
 			}
 		}

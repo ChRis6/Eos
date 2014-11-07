@@ -34,16 +34,25 @@
 class DeviceRenderer{
 
 public:
-	HOST DeviceRenderer(DScene* scene, DRayTracer* tracer, Camera* camera):m_Dscene(scene),m_DrayTracer(tracer),m_Camera(camera){}
+	
+	
+	HOST DeviceRenderer(DScene* scene, DRayTracer* tracer, Camera* camera, int width, int height):m_Dscene(scene),m_DrayTracer(tracer),m_Camera(camera),
+						m_Width(width),m_Height(height){}
+
 
 	HOST void renderToGLPixelBuffer(GLuint pbo)const;
 	HOST void renderToHostBuffer(void* h_buffer, unsigned int buffer_len)const;	// call to render only once.
 
 	HOST void setCamera(Camera* d_camera);	// d_camera must point to GPU memory
+	HOST int getWidth()const	{ return m_Width;}
+	HOST int getHeight()const   {return m_Height;}
+	HOST DScene* getDeviceScene() const { return m_Dscene;}
+	HOST DRayTracer* getDeviceRayTracer() const { return m_DrayTracer;}
+	HOST Camera* getDeviceCamera()const 	{return m_Camera;}
 
 private:
 	HOST DeviceRenderer():m_Dscene(NULL),m_DrayTracer(NULL),m_Camera(NULL){}
-	HOST void renderToCudaBuffer(void* d_buffer, int buffer_len)const;
+	HOST void renderToCudaBuffer(void* d_buffer, unsigned int buffer_len)const;
 private:
 	/* 
 	 * all the pointers MUST point to GPU memory.Each one has to be allocated
@@ -53,6 +62,10 @@ private:
 	DScene*     m_Dscene;		
 	DRayTracer* m_DrayTracer;
 	Camera*     m_Camera;
+
+
+	int m_Width;
+	int m_Height;
 };
 
 #endif
