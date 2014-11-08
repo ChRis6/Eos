@@ -58,42 +58,22 @@ void Box::expandToIncludeBox(const Box& newBox){
 	m_Bounds[1] = m_MaxVertex;
 }
 
-bool Box::intersectWithRay(const Ray& ray, float& distance) const{
+HOST DEVICE bool Box::intersectWithRay(const Ray& ray, float& distance) const{
 
 
 	// lb is the corner of AABB with minimal coordinates - left bottom, rt is maximal corner
 	const glm::vec3& lb = this->getMinVertex();
 	const glm::vec3& rt = this->getMaxVertex();
 
-	glm::vec3 rayOrigin = ray.getOrigin();
-	glm::vec3 rayInvDirection = ray.getInvDirection();
+	const glm::vec3& rayOrigin = ray.getOrigin();
+	const glm::vec3& rayInvDirection = ray.getInvDirection();
 
-	float t1 = (lb.x - rayOrigin.x) * rayInvDirection.x;
-	float t2 = (rt.x - rayOrigin.x) * rayInvDirection.x;
-	float t3 = (lb.y - rayOrigin.y) * rayInvDirection.y;
-	float t4 = (rt.y - rayOrigin.y) * rayInvDirection.y;
-	float t5 = (lb.z - rayOrigin.z) * rayInvDirection.z;
-	float t6 = (rt.z - rayOrigin.z) * rayInvDirection.z;
+	float tmin = fmaxf(fmaxf(fminf(((lb.x - rayOrigin.x) * rayInvDirection.x), ((rt.x - rayOrigin.x) * rayInvDirection.x)), fminf(((lb.y - rayOrigin.y) * rayInvDirection.y), ((rt.y - rayOrigin.y) * rayInvDirection.y))), fminf(((lb.z - rayOrigin.z) * rayInvDirection.z), ((rt.z - rayOrigin.z) * rayInvDirection.z)));
+	float tmax = fminf(fminf(fmaxf(((lb.x - rayOrigin.x) * rayInvDirection.x), ((rt.x - rayOrigin.x) * rayInvDirection.x)), fmaxf(((lb.y - rayOrigin.y) * rayInvDirection.y), ((rt.y - rayOrigin.y) * rayInvDirection.y))), fmaxf(((lb.z - rayOrigin.z) * rayInvDirection.z), ((rt.z - rayOrigin.z) * rayInvDirection.z)));
 
-	float tmin = glm::max(glm::max(glm::min(t1, t2), glm::min(t3, t4)), glm::min(t5, t6));
-	float tmax = glm::min(glm::min(glm::max(t1, t2), glm::max(t3, t4)), glm::max(t5, t6));
-
-	// if tmax < 0, ray (line) is intersecting AABB, but whole AABB is behing
-	if (tmax < 0)
-	{
-    	//t = tmax;
-    	return false;
-	}
-
-	// if tmin > tmax, ray doesn't intersect AABB
-	if (tmin > tmax)
-	{
-    	//t = tmax;
-    	return false;
-	}
-
-	//t = tmin;
 	distance = tmin;
+	if (tmax < 0 || tmin > tmax)
+    	return false;
 	return true;
 }
 
@@ -106,11 +86,11 @@ void Box::transformBoundingBox(const glm::mat4& transformation){
 	 */
 	glm::vec4 transformedMin = transformation * glm::vec4(m_MinVertex, 1.0f);
 	glm::vec4 transformedMax = transformation * glm::vec4(m_MaxVertex, 1.0f);
-	float newMinX,newMinY,newMinZ;
-	float newMaxX,newMaxY,newMaxZ;
+	//float newMinX,newMinY,newMinZ;
+	//float newMaxX,newMaxY,newMaxZ;
 
-	newMinX = newMinY = newMinZ = 99999999.0f;
-	newMaxX = newMaxY = newMaxZ = -999999999.0f;
+	//newMinX = newMinY = newMinZ = 99999999.0f;
+	//newMaxX = newMaxY = newMaxZ = -999999999.0f;
 
 	glm::vec4 newMin;
 	glm::vec4 newMax;
@@ -222,7 +202,7 @@ bool Box::isPointInBox(glm::vec3& point){
 	return false;
 }
 
-bool Box::intersectWithRayOptimized(const Ray& ray, float t0, float t1) const{
+HOST DEVICE bool Box::intersectWithRayOptimized(const Ray& ray, float t0, float t1) const{
 
 	float tmin,tmax,tymin,tymax,tzmin,tzmax;
 	const glm::vec3& rayOrigin = ray.getOrigin();

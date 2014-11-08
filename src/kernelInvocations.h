@@ -26,5 +26,5 @@
 #include "kernelWrapper.h"
 
 __global__ void __oneThreadPerPixel_kernel();
-__global__ void __renderToBuffer_kernel(void* buffer, unsigned int buffer_len, Camera* camera, DScene* scene, DRayTracer* rayTracer, int width, int height);
+__global__ void __renderToBuffer_kernel(char* buffer, unsigned int buffer_len, Camera* camera, DScene* scene, DRayTracer* rayTracer, int width, int height);
 #endif

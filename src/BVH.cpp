@@ -490,7 +490,7 @@ void BVH::buildTopDownHybrid(BvhNode** tree, Surface** surfaces, int start, int 
 
 bool BVH::intersectStackNearest(const Ray& ray, BvhNode* root, RayIntersection& intersection, Surface** surfaces) const {
 
-	BvhNode* stack[256];
+	BvhNode* stack[64];
 	BvhNode** stack_ptr = stack;
 	
 	float minDistace = FLT_MAX;

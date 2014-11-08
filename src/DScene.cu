@@ -63,3 +63,100 @@ DEVICE bool DScene::findMinDistanceIntersectionLinear(const Ray& ray, DRayInters
 	intersection.setIntersectionNormal(glm::vec3(min_normal));
 	return intersectionFound;
 }
+
+DEVICE bool DScene::intersectRayWithLeaf(const Ray& ray, BvhNode* node, DRayIntersection& intersection, float& distance) const{
+		 
+	Ray localRay;
+	DTriangle* minTri = NULL;
+
+	#pragma unroll 2
+	for( int i = 0; i < node->numSurfacesEncapulated; i++){
+		int triIndex = node->surfacesIndices[i];
+
+		DTriangle* tri = this->getTriangle(triIndex);
+
+		// transform ray to local coordinates
+		localRay.setOrigin(glm::vec3( tri->getInverseTrasformation() * glm::vec4(ray.getOrigin(), 1.0f)));
+		localRay.setDirection(glm::vec3( tri->getInverseTrasformation() * glm::vec4(ray.getDirection(), 0.0f)));
+
+		if( tri->hit(localRay, intersection, distance) ){
+			// intersection found
+			minTri = tri;
+		}
+	}
+
+	if( minTri != NULL ){
+		intersection.setIntersectionPoint(glm::vec3(minTri->getTransformation() * glm::vec4(intersection.getIntersectionPoint(), 1.0f)));
+		intersection.setIntersectionNormal(glm::vec3(minTri->getInverseTransposeTransformation() * glm::vec4(intersection.getIntersectionNormal(), 0.0f)));
+		return true;
+	}
+	return false;
+}
+
+
+DEVICE bool DScene::findMinDistanceIntersectionBVH(const Ray& ray, DRayIntersection& intersection) const{
+	
+	BvhNode* stack[64];
+	BvhNode** stack_ptr = stack;
+	
+	float minDistace = 99999.0f;
+	bool surfaceIntersectionFound = false;
+	BvhNode* currNode = &m_BvhBuffer[0];
+
+	if( currNode->aabb.intersectWithRay(ray, minDistace) == false )
+		return false;
+	minDistace = 99999.0f;
+	// push null
+	*stack_ptr++ = NULL;
+
+	while(currNode != NULL){
+
+		if( currNode->type == BVH_NODE ){
+
+			float leftDistance;
+			float rightDistance;
+
+
+			BvhNode* leftChild  = &m_BvhBuffer[currNode->leftChildIndex];	
+			BvhNode* rightChild = &m_BvhBuffer[currNode->rightChildIndex];
+
+			bool leftChildIntersected = leftChild->aabb.intersectWithRay(ray, leftDistance);
+			bool rightChildIntersected = rightChild->aabb.intersectWithRay(ray, rightDistance);
+
+			if(leftChildIntersected){
+				currNode = leftChild;
+				if( rightChildIntersected){
+
+					// push right child to stack
+					*stack_ptr++ = rightChild;
+				}
+			}
+			else if(rightChildIntersected){
+				currNode = rightChild;
+			} 
+			else{ // none of  the children hit the ray. POP stack
+				currNode = *--stack_ptr;
+			}
+		}
+		else{
+
+			// node is a leaf
+			//float distance;
+			//DRayIntersection dummyIntersection;
+			if( this->intersectRayWithLeaf(ray, currNode, intersection, minDistace) ){
+				surfaceIntersectionFound = true;
+				//if( distance < minDistace){
+				//	minDistace = distance;
+				//	intersection = dummyIntersection;
+				//}
+			}
+			// pop 
+			currNode = *--stack_ptr;
+		}
+	}
+	return surfaceIntersectionFound;
+}
+
+DEVICE bool DScene::visibilityTest(const Ray& ray) const{
+	return false;
+}

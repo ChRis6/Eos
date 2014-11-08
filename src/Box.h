@@ -24,6 +24,7 @@
 #define _BOX_H
 
 #include <glm/glm.hpp>
+#include "cudaQualifiers.h"
 #include "Ray.h"
 
 /*
@@ -40,8 +41,8 @@ public:
 	void setMinVertex(const glm::vec3& min);
 	void setMaxVertex(const glm::vec3& max);
 
-	const glm::vec3& getMinVertex() const;
-	const glm::vec3& getMaxVertex() const;
+	HOST DEVICE const glm::vec3& getMinVertex() const;
+	HOST DEVICE const glm::vec3& getMaxVertex() const;
 	int getBiggestDimension() const;
 	glm::vec3 getBoxCentroid();
 
@@ -49,8 +50,8 @@ public:
 	float computeSurfaceArea();
 	void expandToIncludeBox(const Box& newBox);
 	void expandToIncludeVertex(const glm::vec3& vertex);
-	bool intersectWithRay(const Ray& ray, float& distance) const;
-	bool intersectWithRayOptimized(const Ray& ray, float t0, float t1) const;
+	HOST DEVICE bool intersectWithRay(const Ray& ray, float& distance) const;
+	HOST DEVICE bool intersectWithRayOptimized(const Ray& ray, float t0, float t1) const;
 	void transformBoundingBox(const glm::mat4& transformation);
 	bool isPointInBox(glm::vec3& point);
 

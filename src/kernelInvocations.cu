@@ -33,7 +33,7 @@ __global__ void __oneThreadPerPixel_kernel(){
 
 }
 
-__global__ void __renderToBuffer_kernel(void* buffer, unsigned int buffer_len, Camera* camera, DScene* scene, DRayTracer* rayTracer, int width, int height){
+__global__ void __renderToBuffer_kernel(char* buffer, unsigned int buffer_len, Camera* camera, DScene* scene, DRayTracer* rayTracer, int width, int height){
 	
 	
     int pi = blockIdx.x * blockDim.x + threadIdx.x;
@@ -42,27 +42,25 @@ __global__ void __renderToBuffer_kernel(void* buffer, unsigned int buffer_len, C
 
     if (pi < width && pj < height){
 
-    	char* image = (char*) buffer;
-    	
     	// generate ray
     	Ray ray;
-        float norm_width  = width  / 2.0f;
-    	float norm_height = height / 2.0f;  
+  
+    	//float bb = (pj - norm_height) / norm_height;
+    	//float aa = (pi - norm_width) / norm_width;
+        //float aa = ((2.0f * pi - width) / (float) width);
+    	//float bb = ((2.0f * pj - height) / (float) height);
 
-    	float bb = (pj - norm_height) / norm_height;
-    	float aa = (pi - norm_width) / norm_width; 
-    	
     	ray.setOrigin(camera->getPosition());
-    	ray.setDirection( glm::normalize((aa * camera->getRightVector() ) + ( bb * camera->getUpVector()) + camera->getViewingDirection()));
+    	ray.setDirection( glm::normalize((((2.0f * pi - width) / (float) width) * camera->getRightVector() ) + ( ((2.0f * pj - height) / (float) height) * camera->getUpVector()) + camera->getViewingDirection()));
  		
  		// find color
  		glm::vec4 color = rayTracer->rayTrace(scene, camera, ray, 0);	// depth = 0
 
  		// store color
-    	image[4 * (pi + pj * width)]      = floor(color.x == 1.0 ? 255 : glm::min(color.x * 256.0, 255.0));
-        image[1 +  4* (pi + pj * width)]  = floor(color.y == 1.0 ? 255 : glm::min(color.y * 256.0, 255.0));
-        image[2 +  4* (pi + pj * width)]  = floor(color.z == 1.0 ? 255 : glm::min(color.z * 256.0, 255.0));
-        image[3 +  4* (pi + pj * width)]  = (char)255;
+    	buffer[4 * (pi + pj * width)]      = floor(color.x == 1.0 ? 255 : fminf(color.x * 256.0f, 255.0f));
+        buffer[1 +  4* (pi + pj * width)]  = floor(color.y == 1.0 ? 255 : fminf(color.y * 256.0f, 255.0f));
+        buffer[2 +  4* (pi + pj * width)]  = floor(color.z == 1.0 ? 255 : fminf(color.z * 256.0f, 255.0f));
+        buffer[3 +  4* (pi + pj * width)]  = (char)255;
     }     
 
 }
@@ -70,7 +68,7 @@ __global__ void __renderToBuffer_kernel(void* buffer, unsigned int buffer_len, C
 
 /* ============ WRAPPERS ====================*/
 
-void renderToBuffer(void* buffer, unsigned int buffer_len, Camera* camera, DScene* scene, DRayTracer* rayTracer, int blockdim[], int tpblock[], int width, int height){
+void renderToBuffer(char* buffer, unsigned int buffer_len, Camera* camera, DScene* scene, DRayTracer* rayTracer, int blockdim[], int tpblock[], int width, int height){
 
 	dim3 threadsPerBlock;
 	dim3 numBlocks;

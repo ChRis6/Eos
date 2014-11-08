@@ -42,8 +42,8 @@
 #include "stb_image_write.h"
 
 
-#define WINDOW_WIDTH   640  // in pixels
-#define WINDOW_HEIGHT  480 // in pixels
+#define WINDOW_WIDTH   1920  // in pixels
+#define WINDOW_HEIGHT  1080 // in pixels
 #define FOV            70
 
 #ifndef EPSILON
@@ -193,10 +193,12 @@ int main(int argc, char **argv)
 {
    
    
-   bool renderOnce = false;
-   bool useDeviceRenderer = false;
+   bool renderOnce = true;
+   bool useDeviceRenderer = true;
 
    srand((int) time(NULL));
+   double cpu_time = 0.0;
+   double gpu_time = 0.0;
 
 
    GLuint vao;
@@ -454,7 +456,7 @@ int main(int argc, char **argv)
 
    char* triangleMeshFileName = "objmodels/monkey.obj";
    TriangleMesh* mesh = new TriangleMesh();
-   glm::mat4 meshTransformation = glm::translate(glm::mat4(1.0f), glm::vec3(5.0f, 0.0f, -1.0f));
+   glm::mat4 meshTransformation = glm::translate(glm::mat4(1.0f), glm::vec3(2.0f, 0.0f, -1.0f));
    
    mesh->setTransformation(meshTransformation);
    mesh->setMaterial(triangleMeshMaterial);
@@ -474,7 +476,7 @@ int main(int argc, char **argv)
    meshGrid->setMaterial(gridMaterial);
    
    meshGrid->loadFromFile(triangleMeshGridFileName);
-   //scene.addTriangleMesh(meshGrid);
+   scene.addTriangleMesh(meshGrid);
 
 
 
@@ -524,6 +526,7 @@ int main(int argc, char **argv)
 
    bvh_diff = bvh_end - bvh_start;
 
+
    bvh_minutes = bvh_diff / 60;
    bvh_seconds = ((int)bvh_diff) % 60;
    bvh_msecs = bvh_diff * 1000;
@@ -549,17 +552,34 @@ int main(int argc, char **argv)
    DeviceRenderer deviceRenderer(d_scene, d_tracer, d_camera, WINDOW_WIDTH, WINDOW_HEIGHT);   
 
    if( renderOnce && useDeviceRenderer){
+      std::cout << "Rendering Once to Image file (GPU)..." << std::endl;
+      double start,end,diff;
+      double msecs;
+      int hours,minutes,seconds;
       
+      start = getRealTime();
       deviceRenderer.renderToHostBuffer(imageBuffer, WINDOW_WIDTH * WINDOW_HEIGHT * 4);
+      end = getRealTime();
+
+      diff = end - start;
+      gpu_time = diff;
+      minutes = diff / 60;
+      seconds = ((int)diff) % 60;
+      msecs = diff * 1000;
+
+
+      
 
       stbi_write_png("rayTracedImageCuda.png", WINDOW_WIDTH, WINDOW_HEIGHT, 4, imageBuffer + WINDOW_WIDTH * WINDOW_HEIGHT * 4, -WINDOW_WIDTH*4);
+      std::cout << "Rendering Once: Completed in " << minutes << "minutes, " << seconds << "sec " << std::endl;
+      std::cout << "That's About " << msecs << "ms" << std::endl;
 
       // reset for host rendering
       memset(imageBuffer, 0, sizeof(unsigned char) * 4 * WINDOW_WIDTH * WINDOW_HEIGHT);
    }
 
    if(renderOnce){
-      std::cout << "Rendering Once to Image file..." << std::endl;
+      std::cout << "Rendering Once to Image file HOST..." << std::endl;
       double start,end,diff;
       double msecs;
       int hours,minutes,seconds;
@@ -569,7 +589,7 @@ int main(int argc, char **argv)
       end = getRealTime();
 
       diff = end - start;
-
+      cpu_time = diff;
       minutes = diff / 60;
       seconds = ((int)diff) % 60;
       msecs = diff * 1000;
@@ -578,9 +598,14 @@ int main(int argc, char **argv)
 
       // make image (0,0) top left corner
       // Start at the end of the image buffer and use negative stride
-      stbi_write_png("rayTracedImageAA.png", WINDOW_WIDTH, WINDOW_HEIGHT, 4, imageBuffer + WINDOW_WIDTH * WINDOW_HEIGHT * 4, -WINDOW_WIDTH*4);
+      stbi_write_png("rayTracedImageCPU.png", WINDOW_WIDTH, WINDOW_HEIGHT, 4, imageBuffer + WINDOW_WIDTH * WINDOW_HEIGHT * 4, -WINDOW_WIDTH*4);
       std::cout << "Rendering Once: Completed in " << minutes << "minutes, " << seconds << "sec " << std::endl;
       std::cout << "That's About " << msecs << "ms" << std::endl;
+
+      if( useDeviceRenderer){
+         std::cout << "GPU Speedup: " << cpu_time / gpu_time << "x" << std::endl;
+      }
+
    }
    else{
    while (glfwGetKey(window, GLFW_KEY_ESCAPE) != GLFW_PRESS && !glfwWindowShouldClose(window))

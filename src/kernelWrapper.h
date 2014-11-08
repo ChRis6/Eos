@@ -28,5 +28,5 @@
 #include "DScene.h"
 
 extern "C" void threadPerPixel_kernel();
-extern "C" void renderToBuffer(void* buffer, unsigned int buffer_len, Camera* camera, DScene* scene, DRayTracer* rayTracer, int blockdim[], int tpblock[], int width, int height);
+extern "C" void renderToBuffer(char* buffer, unsigned int buffer_len, Camera* camera, DScene* scene, DRayTracer* rayTracer, int blockdim[], int tpblock[], int width, int height);
 #endif

@@ -44,6 +44,7 @@ HOST void DeviceRenderer::renderToGLPixelBuffer(GLuint pbo)const {
 	cudaErrorCheck( cudaGraphicsResourceGetMappedPointer(&d_pbo, &d_pboSize, cudaResourcePBO)); 
 
 	// render
+	cudaFuncSetCacheConfig("__renderToBuffer_kernel", cudaFuncCachePreferL1);
 	this->renderToCudaBuffer(d_pbo, d_pboSize);
 	// wait for kernel
 	cudaErrorCheck( cudaDeviceSynchronize());
@@ -74,7 +75,7 @@ HOST void DeviceRenderer::renderToCudaBuffer(void* d_buffer, unsigned int buffer
 	d_scene  = this->getDeviceScene();
 	d_tracer = this->getDeviceRayTracer();
 
-	renderToBuffer(d_buffer, buffer_len, d_camera, d_scene, d_tracer, blockdim, threadPerBlock, width, height);
+	renderToBuffer((char*)d_buffer, buffer_len, d_camera, d_scene, d_tracer, blockdim, threadPerBlock, width, height);
 }
 
 
@@ -88,7 +89,7 @@ HOST void  DeviceRenderer::renderToHostBuffer(void* h_buffer, unsigned int buffe
 	this->renderToCudaBuffer(d_buffer, buffer_len);
 
 	// wait for computation
-	cudaDeviceSynchronize();
+	cudaErrorCheck( cudaDeviceSynchronize());
 
 	// copy result to host buffer
 	cudaErrorCheck( cudaMemcpy( h_buffer, d_buffer, buffer_len, cudaMemcpyDeviceToHost));

@@ -29,6 +29,7 @@
 #include "DMaterial.h"
 #include "DLightSource.h"
 #include "DRayIntersection.h"
+#include "BVH.h"
 
 class DeviceSceneHandler;
 
@@ -48,14 +49,24 @@ public:
 
 	DEVICE DLightSource* getLightSource(int index)	{ return &(m_Lights[index]);}
 	DEVICE int getNumLights()	{return m_NumLights;}
-
+	DEVICE bool isUsingBVH()	{ return m_UsingBVH;}
 	DEVICE bool findMinDistanceIntersectionLinear(const Ray& ray, DRayIntersection& intersection) const;
+	DEVICE bool findMinDistanceIntersectionBVH(const Ray& ray, DRayIntersection& intersection) const;
+	DEVICE bool visibilityTest(const Ray& ray) const;
+
+private:
+	DEVICE bool intersectRayWithLeaf(const Ray& ray, BvhNode* node, DRayIntersection& intersection, float& distance) const;
 private:
 	DTriangle* m_Triangles;
 	int m_NumTriangles;
 
 	DLightSource* m_Lights;
 	int m_NumLights;
+
+	BvhNode* m_BvhBuffer;
+	int m_BvhBufferSize;
+
+	bool m_UsingBVH;
 
 };
 #endif

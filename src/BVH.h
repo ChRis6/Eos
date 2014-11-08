@@ -60,6 +60,8 @@ public:
 	bool intersectRay(const Ray& ray, RayIntersection& intersectionFound, bool nearest, Surface** surfaces) const;	// Return Intesected Surface with Ray.Get closest hit when nearest = true
 												// return surface that has point
 
+	BvhNode* getNodesBuffer() const	{ return m_NodesBuffer;}
+	int getNodesBufferSize() const 	{ return m_FlatTreePointers.size();}
 private:
 	Box computeBoxWithSurfaces(Surface** surfaces, int start , int end);
 

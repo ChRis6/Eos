@@ -47,66 +47,37 @@ DEVICE const DMaterial& DTriangle::getMaterial(){
 
 DEVICE bool DTriangle::hit(const Ray& ray, DRayIntersection& intersection, float& distance){
 	
-	bool collision;
 	glm::vec3 barCoords(0.0f);
-	glm::vec3 pos(0.0f);
-	
-	
-	collision = this->rayTriangleIntersectionTest( ray, barCoords);
-	if(collision){
-		float u,v;
+	if( this->rayTriangleIntersectionTest( ray, barCoords)){
+		if( barCoords.x < distance){
+			distance = barCoords.x;	
 
-		distance = barCoords.x;
-		pos = ray.getOrigin() + distance * ray.getDirection();
-
-		// interpolate normals
-		u = barCoords.y;
-		v = barCoords.z;
-		glm::vec3 norm = glm::normalize(m_N1 * ( 1.0f - u - v) + (m_N2 * u) + (m_N3*v));
-		
-		intersection.setIntersectionPoint(pos);
-		intersection.setIntersectionNormal(norm);
-		intersection.setIntersectionMaterial(this->getMaterial());
-		return true;
+			intersection.setIntersectionPoint(ray.getOrigin() + barCoords.x * ray.getDirection());
+			intersection.setIntersectionNormal(glm::normalize(m_N1 * ( 1.0f - barCoords.y - barCoords.z) + (m_N2 * barCoords.y) + (m_N3*barCoords.z)));
+			intersection.setIntersectionMaterial(this->getMaterial());
+			return true;
+		}
 	}
 	return false;
 }
 
 DEVICE bool DTriangle::rayTriangleIntersectionTest(const Ray& ray, glm::vec3& baryCoords){
-	const glm::vec3& v1 = m_V1;
-	const glm::vec3& v2 = m_V2;
-	const glm::vec3& v3 = m_V3; 
 
-	float t,u,v;
-	glm::vec3 e1 = v2 - v1;
-	glm::vec3 e2 = v3 - v1;
-	glm::vec3 P = glm::cross(ray.getDirection(), e2);
-	
-	float det = glm::dot(e1, P);
+	const glm::vec3& P = glm::cross(ray.getDirection(), m_V3 - m_V1);
+	float det = glm::dot(m_V2 - m_V1, P);
 	if (det > -0.00001f && det < 0.00001f)
     	return false;
 
-    float inv_det = 1.0f / det;
- 
-  	glm::vec3 T = ray.getOrigin() - v1;
-  	glm::vec3 Q = glm::cross(T, e1);
+    det = 1.0f / det;
+  	const glm::vec3& T = ray.getOrigin() - m_V1;
+  	const glm::vec3& Q = glm::cross(T, m_V2 - m_V1);
   	
-  	t = glm::dot(e2, Q) * inv_det;
-	
+  	baryCoords.x = glm::dot(m_V3 - m_V1, Q) * det;
+	baryCoords.y = glm::dot(T, P) * det;
+	baryCoords.z = glm::dot(ray.getDirection(), Q) * det;
 
-  	if (t < 0.0f)
+  	if ((baryCoords.x < 0.0f) || (baryCoords.y < 0.0f || baryCoords.y > 1.0f) || ( baryCoords.z < 0.0f || baryCoords.y + baryCoords.z > 1.0f) )
     	return false;
   	
-  	u = glm::dot(T, P) * inv_det;
-  	if (u < 0.0f || u > 1.0f)
-    	return false;
-
-  	v = glm::dot(ray.getDirection(), Q) * inv_det;
-  	if (v < 0.0f || u + v > 1.0f)
-    	return false;
-
-   	baryCoords.x = t;
-   	baryCoords.y = u;
-	baryCoords.z = v;
   	return true;
 }

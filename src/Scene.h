@@ -74,6 +74,7 @@ public:
 	void flush();
 
 	void printScene();
+	const BVH& getBVH() const	{ return m_Bvh;}
 
 private:
 	/*
