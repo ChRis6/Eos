@@ -49,8 +49,8 @@ public:
 	float computeSurfaceArea();
 	void expandToIncludeBox(const Box& newBox);
 	void expandToIncludeVertex(const glm::vec3& vertex);
-	bool intersectWithRay(const Ray& ray, float& distance);
-	bool intersectWithRayOptimized(const Ray& ray, float t0, float t1);
+	bool intersectWithRay(const Ray& ray, float& distance) const;
+	bool intersectWithRayOptimized(const Ray& ray, float t0, float t1) const;
 	void transformBoundingBox(const glm::mat4& transformation);
 	bool isPointInBox(glm::vec3& point);
 

@@ -58,7 +58,7 @@ void Box::expandToIncludeBox(const Box& newBox){
 	m_Bounds[1] = m_MaxVertex;
 }
 
-bool Box::intersectWithRay(const Ray& ray, float& distance){
+bool Box::intersectWithRay(const Ray& ray, float& distance) const{
 
 
 	// lb is the corner of AABB with minimal coordinates - left bottom, rt is maximal corner
@@ -222,7 +222,7 @@ bool Box::isPointInBox(glm::vec3& point){
 	return false;
 }
 
-bool Box::intersectWithRayOptimized(const Ray& ray, float t0, float t1){
+bool Box::intersectWithRayOptimized(const Ray& ray, float t0, float t1) const{
 
 	float tmin,tmax,tymin,tymax,tzmin,tzmax;
 	const glm::vec3& rayOrigin = ray.getOrigin();

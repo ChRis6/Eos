@@ -73,7 +73,16 @@ bool by_Z_compareSurfaces(Surface* a, Surface* b){
 
 
 void BVH::buildHierarchy(Surface** surfaces, int numSurfaces){
+	// build
 	this->buildTopDownHybrid(&m_Root, surfaces, 0, numSurfaces);
+	// flat
+	
+	m_FlatTreePointers.reserve(1000);
+	m_FlatTreePointers.push_back(m_Root);
+	this->makeTreeFlat(m_Root, 0, m_FlatTreePointers);
+	this->copyFlatToBuffer();
+
+	this->deallocateTreePointers(this->getRoot());
 }
 
 void BVH::buildTopDown(BvhNode** tree, Surface** surfaces, int start, int end){
@@ -97,14 +106,12 @@ void BVH::buildTopDown(BvhNode** tree, Surface** surfaces, int start, int end){
 	}
 	else{
 
-		node->tracedObject = NULL;
-		node->tracedObjectArray = NULL;
 		node->type = BVH_NODE;
 		int splitIndex = this->topDownSplitIndex(surfaces, node->aabb, start, end);
 
 		// recursion
-		buildTopDown( &(node->leftChild), surfaces, start, start + splitIndex );
-		buildTopDown( &(node->rightChild), surfaces, start + splitIndex, end);
+		buildTopDown( &(node->leftChild), surfaces, start, splitIndex );
+		buildTopDown( &(node->rightChild), surfaces, splitIndex, end);
 	}
 }
 
@@ -192,13 +199,8 @@ bool BVH::intersectRay(const Ray& ray, RayIntersection& intersectionFound, bool 
 		//intersectedSurface = this->intersectRecursiveNearestHit(ray, this->getRoot(), distance, intersectionFound, surfaces, 0);
 		return  intersectStackNearest(ray, this->getRoot(), intersectionFound, surfaces);
 	else
-		return this->intersectRayVisibilityTest(ray, this->getRoot(), surfaces);
-	
-	
-	if( intersectedSurface)
-		return true;
-	return false;
-	
+		return intersectStackVisibility(ray, this->getRoot(), surfaces);
+		
 }
 
 Surface* BVH::intersectRecursiveNearestHit(const Ray& ray, BvhNode* node, float& minDistance, RayIntersection& intersection, Surface** surfaces, int depth) const{
@@ -380,12 +382,10 @@ void BVH::buildTopDownSAH(BvhNode** tree, Surface** surfaces, int start, int end
 	else{
 
 		node->type = BVH_NODE;
-		node->tracedObject = NULL;
-		node->tracedObjectArray = NULL;
 
 		// recursion
-		buildTopDownSAH(&(node->leftChild), surfaces, start, start + splitIndex);
-		buildTopDownSAH(&(node->rightChild),surfaces, start + splitIndex, end);
+		buildTopDownSAH(&(node->leftChild), surfaces, start, splitIndex);
+		buildTopDownSAH(&(node->rightChild),surfaces, splitIndex, end);
 	}
 }
 
@@ -458,8 +458,7 @@ void BVH::buildTopDownHybrid(BvhNode** tree, Surface** surfaces, int start, int 
 			createLeaf(node, surfaces, start, end);
 		}
 		else{
-			node->tracedObject = NULL;
-			node->tracedObjectArray = NULL;
+
 			node->type = BVH_NODE;
 			splitIndex = this->topDownSplitIndex(surfaces, node->aabb, start, end);
 
@@ -478,9 +477,6 @@ void BVH::buildTopDownHybrid(BvhNode** tree, Surface** surfaces, int start, int 
 		}
 		else{
 			node->type = BVH_NODE;
-			node->tracedObject = NULL;
-			node->tracedObjectArray = NULL;
-
 			splitIndex = topDownSplitIndexSAH(surfaces, node->aabb, costSplit, start, end);
 			//std::cout << "SAH split index = " << splitIndex  << " Start = " << start << " End = " << end << std::endl;
 
@@ -492,26 +488,96 @@ void BVH::buildTopDownHybrid(BvhNode** tree, Surface** surfaces, int start, int 
 }
 
 
-bool BVH::intersectStackNearest(const Ray& ray, BvhNode* root, RayIntersection& intersection, Surface** surfaces) const{
+bool BVH::intersectStackNearest(const Ray& ray, BvhNode* root, RayIntersection& intersection, Surface** surfaces) const {
 
 	BvhNode* stack[256];
 	BvhNode** stack_ptr = stack;
-	BvhNode* currNode;
+	
 	float minDistace = FLT_MAX;
 	bool surfaceIntersectionFound = false;
+	BvhNode* currNode = &m_NodesBuffer[0];
 
-	if( root->aabb.intersectWithRayOptimized(ray, 0.0001f, 999999.0f) == false )
+	if( currNode->aabb.intersectWithRayOptimized(ray, 0.0001f, 999999.0f) == false )
 		return false;
 
 	// push null
 	*stack_ptr++ = NULL;
-	currNode = root;
 
 	while(currNode != NULL){
 
 		if( currNode->type == BVH_NODE ){
-			BvhNode* leftChild  = currNode->leftChild;
-			BvhNode* rightChild = currNode->rightChild;
+			//BvhNode* leftChild  = currNode->leftChild;
+			//BvhNode* rightChild = currNode->rightChild;
+
+			int leftIndex = currNode->leftChildIndex;
+			int rightIndex = currNode->rightChildIndex;
+
+			//BvhNode* leftChild  = m_FlatTreePointers[leftIndex];	
+			//BvhNode* rightChild = m_FlatTreePointers[rightIndex];
+
+			BvhNode* leftChild  = &m_NodesBuffer[leftIndex];	
+			BvhNode* rightChild = &m_NodesBuffer[rightIndex];
+
+			bool leftChildIntersected = leftChild->aabb.intersectWithRayOptimized(ray, 0.0001f, 999999.0f);
+			bool rightChildIntersected = rightChild->aabb.intersectWithRayOptimized(ray, 0.0001f, 999999.0f);
+
+			if(leftChildIntersected){
+				currNode = leftChild;
+				if( rightChildIntersected){
+
+					// push right child to stack
+					*stack_ptr++ = rightChild;
+				}
+			}
+			else if(rightChildIntersected){
+				currNode = rightChild;
+			} 
+			else{ // none of  the children hit the ray. POP stack
+				currNode = *--stack_ptr;
+			}
+		}
+		else{
+
+			// node is a leaf
+			
+			float distance;
+			int leafSurfaceIndex;
+			RayIntersection dummyIntersection;
+
+			bool leafIntersected = this->intersectRayWithLeaf(ray, currNode, dummyIntersection, distance, leafSurfaceIndex, surfaces);
+			if( leafIntersected ){
+				surfaceIntersectionFound = true;
+				if( distance < minDistace ){
+					minDistace = distance;
+					intersection = dummyIntersection;
+				}
+			}
+			// pop 
+			currNode = *--stack_ptr;
+		}
+	}
+	return surfaceIntersectionFound;
+}
+
+bool BVH::intersectStackVisibility(const Ray& ray, BvhNode* root, Surface** surfaces) const{
+
+	BvhNode* stack[256];
+	BvhNode** stack_ptr = stack;
+	BvhNode* currNode;
+
+	currNode = &m_NodesBuffer[0];
+	if( currNode->aabb.intersectWithRayOptimized(ray, 0.0001f, 999999.0f) == false )
+		return false;
+
+	// push null
+	*stack_ptr++ = NULL;
+	
+	while(currNode != NULL){
+
+		if( currNode->type == BVH_NODE ){
+
+			BvhNode* leftChild  =  &m_NodesBuffer[currNode->leftChildIndex];
+			BvhNode* rightChild =  &m_NodesBuffer[currNode->rightChildIndex];
 
 			bool leftChildIntersected = leftChild->aabb.intersectWithRayOptimized(ray, 0.0001f, 999999.0f);
 			bool rightChildIntersected = rightChild->aabb.intersectWithRayOptimized(ray, 0.0001f, 999999.0f);
@@ -539,16 +605,59 @@ bool BVH::intersectStackNearest(const Ray& ray, BvhNode* root, RayIntersection& 
 			RayIntersection dummyIntersection;
 
 			bool leafIntersected = this->intersectRayWithLeaf(ray, currNode, dummyIntersection, distance, leafSurfaceIndex, surfaces);
-			if( leafIntersected ){
-				surfaceIntersectionFound = true;
-				if( distance < minDistace ){
-					minDistace = distance;
-					intersection = dummyIntersection;
-				}
-			}
+			if( leafIntersected )
+				return true;
+			
 			// pop 
 			currNode = *--stack_ptr;
 		}
 	}
-	return surfaceIntersectionFound;
+	return false;
+}
+
+void BVH::makeTreeFlat(BvhNode* node, int nodeIndex, std::vector<BvhNode*>& array){
+	int left;
+	int right;
+	if(node == NULL)
+		return;
+
+
+	array.push_back(node->leftChild);
+	left = array.size() - 1;
+	
+
+	array.push_back(node->rightChild);
+	right = array.size() - 1;
+	
+
+	node->leftChildIndex = left;
+	node->rightChildIndex = right;
+
+	makeTreeFlat(node->leftChild, left, array);
+	makeTreeFlat(node->rightChild, right, array);
+
+}
+
+void BVH::copyFlatToBuffer(){
+	int numObjects;
+
+	numObjects = m_FlatTreePointers.size();
+
+	m_NodesBuffer = new BvhNode[numObjects];
+	for( int i = 0; i < numObjects; i++){
+
+		if( m_FlatTreePointers[i] != NULL)
+			m_NodesBuffer[i] = *m_FlatTreePointers[i];
+			
+	}
+
+}
+
+void BVH::deallocateTreePointers(BvhNode* node){
+	if( node == NULL)
+		return;
+	deallocateTreePointers(node->leftChild);
+	deallocateTreePointers(node->rightChild);
+
+	delete(node);
 }

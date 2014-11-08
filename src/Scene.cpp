@@ -110,12 +110,12 @@ bool Scene::findMinDistanceIntersectionBVH(const Ray& ray, RayIntersection& inte
 		return true;
 	return false;
 	*/
-	return this->m_Bvh.intersectRay(ray, intersection, true);
+	return this->m_Bvh.intersectRay(ray, intersection, true, this->getFirstSurfaceAddress());
 }
 
 bool Scene::shadowRayVisibilityBVH(const Ray& ray) const{
 	RayIntersection dummyIntersection;
-	return this->m_Bvh.intersectRay(ray, dummyIntersection, false);
+	return this->m_Bvh.intersectRay(ray, dummyIntersection, false, this->getFirstSurfaceAddress());
 }
 bool Scene::findMinDistanceIntersectionLinear(const Ray& ray, RayIntersection& intersection) const{
 

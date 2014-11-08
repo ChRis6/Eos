@@ -27,6 +27,7 @@
 #include "surface.h"
 #include "Ray.h"
 #include "RayIntersection.h"
+#include <vector>
 
 #define SURFACES_PER_LEAF 6
 
@@ -41,8 +42,8 @@ typedef struct bvhNode_t{
 	int numSurfacesEncapulated;
 	struct bvhNode_t *rightChild;
 	struct bvhNode_t *leftChild;
-	Surface* tracedObject;
-	Surface** tracedObjectArray;
+	int leftChildIndex;
+	int rightChildIndex;
 	int surfacesIndices[SURFACES_PER_LEAF];
 }BvhNode;
 
@@ -78,10 +79,16 @@ private:
 
 
 	void buildTopDownHybrid(BvhNode** tree, Surface** surfaces, int start, int end);
-
 	bool intersectStackNearest(const Ray& ray, BvhNode* root, RayIntersection& intersection, Surface** surfaces) const;
+	bool intersectStackVisibility(const Ray& ray, BvhNode* root, Surface** surfaces) const;
+	
+	void makeTreeFlat(BvhNode* node, int nodeIndex, std::vector<BvhNode*>& array);
+	void copyFlatToBuffer();
+	void deallocateTreePointers(BvhNode* node);
 private:
 	BvhNode* m_Root;
+	std::vector<BvhNode*> m_FlatTreePointers;
+	BvhNode*	m_NodesBuffer;	
 };
 
 #endif
