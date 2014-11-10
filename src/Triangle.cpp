@@ -34,6 +34,9 @@ bool Triangle::hit(const Ray& ray, RayIntersection& intersection, float& distanc
 	collision = this->RayTriangleIntersection(m_V1, m_V2, m_V3, ray, barCoords);
 	if(collision){
 
+		if( barCoords.x > distance )
+			return false;
+
 		distance = barCoords.x;
 		pos = ray.getOrigin() + distance * ray.getDirection();
 
@@ -45,7 +48,7 @@ bool Triangle::hit(const Ray& ray, RayIntersection& intersection, float& distanc
 		intersection.setPoint(pos);
 		intersection.setNormal(norm);
 		intersection.setMaterial(this->getMaterial());
-
+		intersection.setMaterialIndex(m_MaterialIndex);
 		return true;
 	}
 	return false;
@@ -118,6 +121,15 @@ Material& Triangle::getMaterial(){
 
 void Triangle::setMaterial(Material& material){
 	m_Material = &material;
+}
+
+int Triangle::getMaterialIndex(){
+	return m_MaterialIndex;
+}    
+
+void Triangle::setMaterialIndex(int index){
+	m_MaterialIndex = index;
+	fflush(stdout);
 }
 
 const Box& Triangle::getLocalBoundingBox(){

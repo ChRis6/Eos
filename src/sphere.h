@@ -78,6 +78,9 @@ public:
 	virtual void setMaterial(Material& material){m_Material = material;}
 	virtual bool isPointInside(glm::vec3& point);
 
+	virtual int getMaterialIndex();    
+	virtual void setMaterialIndex(int index);
+
 private:
 	bool quadSolve(float a, float b, float c, float& t);
 
@@ -91,7 +94,8 @@ private:
 	glm::mat4 m_InverseTranspose;
 	Material  m_Material;
 	Box m_BoundingBox;
-	
+
+	int m_MaterialIndex;
 };
 
 

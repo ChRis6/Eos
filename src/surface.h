@@ -40,7 +40,10 @@ public:
 	virtual void setTransformation(glm::mat4& transformation) = 0;
 	virtual Material& getMaterial() = 0;
 	virtual void setMaterial(Material& material) = 0;
-	virtual bool isPointInside(glm::vec3& point) = 0;    
+	virtual bool isPointInside(glm::vec3& point) = 0;
+
+	virtual int getMaterialIndex() = 0;    
+	virtual void setMaterialIndex(int index) = 0;
 };
 
 

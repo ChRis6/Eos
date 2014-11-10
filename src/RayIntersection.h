@@ -38,16 +38,21 @@ public:
 	void setPoint(const glm::vec3& point);
 	void setNormal(const glm::vec3& normal);
 	void setMaterial(const Material& material);
+	void setMaterialIndex(int idx)	{ m_MaterialIndex = idx;}
 
 	const glm::vec3& getPoint() const;
 	const glm::vec3& getNormal() const;
 	const Material& getMaterial() const;
+	
+	int getMaterialIndex()const { return m_MaterialIndex;}
+	
 
 private:
 	glm::vec3 m_Point;
 	glm::vec3 m_Normal;
 
 	Material m_Material;
+	int m_MaterialIndex;
 };
 
 

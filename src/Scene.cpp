@@ -67,6 +67,18 @@ bool Scene::addLightSource(LightSource* light){
 	return false;
 }
 
+int Scene::addMaterial(Material material){
+
+	
+	m_Materials.push_back(material);
+	
+	return m_Materials.size() - 1 ;
+}
+const Material& Scene::getMaterialAtIndex(int index) const {
+	return m_Materials[index];
+}
+
+
 int Scene::getNumSurfaces() const{
 	return m_SurfaceObjects.size();
 }

@@ -30,6 +30,7 @@
 #include "Camera.h"
 #include "BVH.h"
 #include "triangleMesh.h"
+#include "Material.h"
 
 #define SCENE_AA_32   32
 #define SCENE_AA_16   16
@@ -44,7 +45,10 @@ public:
 
 	bool addSurface(Surface* surface);
 	bool addTriangleMesh(TriangleMesh* mesh);			
-	bool addLightSource(LightSource* light);   
+	bool addLightSource(LightSource* light);
+	int addMaterial(Material material);
+	const Material& getMaterialAtIndex(int index) const;
+
 	int getNumSurfaces() const;
 	int getNumLightSources() const;
 	float getAmbientRefractiveIndex() const;
@@ -91,6 +95,7 @@ private:
 private:
 	std::vector<Surface*> m_SurfaceObjects;
 	std::vector<LightSource*> m_LightSources;
+	std::vector<Material>    m_Materials;
 	int m_MaxTracedDepth;
 	float m_AmbientRefractiveIndex; 
 

@@ -372,34 +372,34 @@ int main(int argc, char **argv)
    sphereMaterial.setReflectionIntensity(refletionIntensity);
    sphereMaterial.setTransparent(false);
    sphereMaterial.setRefractiveIndex(REFRACTIVE_INDEX_WATER);
-   
+   //int sphereMaterialIndex = scene.addMaterial(sphereMaterial);
 
    Material sphereMaterial1(0.075f, glm::vec4(0.0f, 1.0f, 0.0f, 0.0f), glm::vec4(1.0f), 120);
    sphereMaterial1.setReflective(true);
    sphereMaterial1.setTransparent(false);
    sphereMaterial1.setReflectionIntensity(refletionIntensity);
    sphereMaterial1.setRefractiveIndex(REFRACTIVE_INDEX_WATER);
- 
+   //int sphereMaterial1Index = scene.addMaterial(sphereMaterial1);
 
    Material sphereMaterial2(0.075f, glm::vec4(1.0f, 1.0f, 0.0f, 0.0f), glm::vec4(1.0f), 120);
    sphereMaterial2.setReflective(true);
    sphereMaterial2.setTransparent(false);
    sphereMaterial2.setReflectionIntensity(refletionIntensity);
-   
+   //int sphereMaterial2Index = scene.addMaterial(sphereMaterial2);
 
    Material sphereMaterial3(0.075f, glm::vec4(1.0f, 0.0f, 0.0f, 0.0f), glm::vec4(1.0f), 120);
    sphereMaterial3.setReflective(true);
    sphereMaterial3.setTransparent(false);
    sphereMaterial3.setReflectionIntensity(refletionIntensity);
    sphereMaterial3.setRefractiveIndex(REFRACTIVE_INDEX_WATER);
-   
+   //int sphereMaterial3Index = scene.addMaterial(sphereMaterial3);
 
    Material sphereMaterial4(0.075f, glm::vec4(0.5f, 0.5f, 0.5f, 1.0f), glm::vec4(1.0f), 120);
    sphereMaterial4.setReflective(true);
    sphereMaterial4.setTransparent(false);
    sphereMaterial4.setReflectionIntensity(refletionIntensity);
    sphereMaterial4.setRefractiveIndex(REFRACTIVE_INDEX_AMBER);
-   
+   //int sphereMaterial4Index = scene.addMaterial(sphereMaterial4);
 
    Material gridMaterial(0.1f, glm::vec4(0.5f, 0.5f, 0.5f, 0.0f), glm::vec4(0.0f), 140);
    gridMaterial.setTransparent(false);
@@ -418,6 +418,8 @@ int main(int argc, char **argv)
    triangleMeshMaterial.setReflective(false);
    triangleMeshMaterial.setReflectionIntensity(refletionIntensity);
    triangleMeshMaterial.setRefractiveIndex(REFRACTIVE_INDEX_WATER);
+   int triangleMeshMaterialIndex = scene.addMaterial(triangleMeshMaterial);
+
 
    LightSource* lightSource  = new LightSource(glm::vec4(20.0f, 10.0f, 10.0f, 1.0f), glm::vec4(1.0f));  // location , color
    LightSource* lightSource1 = new LightSource(glm::vec4(-20.0f, 10.0f, 10.0f, 1.0f), glm::vec4(1.0f));
@@ -462,6 +464,9 @@ int main(int argc, char **argv)
    mesh->setTransformation(meshTransformation);
    mesh->setMaterial(triangleMeshMaterial);
    
+   printf("Setting Triangle Mesh material Index: %d\n", triangleMeshMaterialIndex);
+   mesh->setMaterialIndex(triangleMeshMaterialIndex);
+
    mesh->loadFromFile(triangleMeshFileName);
    scene.addTriangleMesh(mesh);
    
@@ -473,10 +478,10 @@ int main(int argc, char **argv)
    TriangleMesh* meshGrid = new TriangleMesh();
    glm::mat4 meshGridTransformation = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -1.5f, 0.0f));
    
-   meshGrid->setTransformation(meshGridTransformation);
-   meshGrid->setMaterial(gridMaterial);
+   //meshGrid->setTransformation(meshGridTransformation);
+   //meshGrid->setMaterial(gridMaterial);
    
-   meshGrid->loadFromFile(triangleMeshGridFileName);
+   //meshGrid->loadFromFile(triangleMeshGridFileName);
    //scene.addTriangleMesh(meshGrid);
 
 

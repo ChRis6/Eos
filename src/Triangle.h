@@ -46,7 +46,10 @@ public:
 	virtual const glm::mat4& getInverseTransposeTransformation();
 	virtual Material& getMaterial();
 	virtual void setMaterial(Material& material);
-	virtual bool isPointInside(glm::vec3& point); 
+	virtual bool isPointInside(glm::vec3& point);
+
+	virtual int getMaterialIndex();    
+	virtual void setMaterialIndex(int index); 
 
 	void setInverseTransformation(glm::mat4& inverse);
 	void setInverseTransposeTransformation(glm::mat4& inverseTranspose);
@@ -74,4 +77,6 @@ public:
 	glm::mat4* m_LocalToWorldTransformation;
 	glm::mat4* m_Inverse;
   	glm::mat4* m_InverseTranspose;
+
+  	int m_MaterialIndex;
 };

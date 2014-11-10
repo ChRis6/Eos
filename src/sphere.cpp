@@ -119,6 +119,13 @@ glm::vec3 Sphere::getCentroid(){
 const glm::mat4& Sphere::transformation(){
   return m_LocalToWorldTransformation;
 }
+int Sphere::getMaterialIndex(){
+  return m_MaterialIndex;
+}    
+
+void Sphere::setMaterialIndex(int index){
+  m_MaterialIndex = index;
+}
 
 void Sphere::setTransformation(glm::mat4& transformation){
   m_LocalToWorldTransformation = transformation;

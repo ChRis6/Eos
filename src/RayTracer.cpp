@@ -271,6 +271,7 @@ glm::vec4 RayTracer::rayTrace(const Scene& scene, const Camera& camera, const Ra
 	RayIntersection intersection;
 	glm::vec4 finalColor(0.0f);
 	
+	intersection.setMaterialIndex(-1);
 	if( depth > this->getTracedDepth())
 		return finalColor;
 
@@ -313,6 +314,8 @@ glm::vec4 RayTracer::shadeIntersection(const Scene& scene, const Ray& ray, const
 	Ray tempRay;	// use one ray for shadows - reflections
 
 	const glm::vec3& intersectionPoint = intersection.getPoint();
+	const Material& intersectionMaterial = scene.getMaterialAtIndex( intersection.getMaterialIndex());
+	
 	numLights = scene.getNumLightSources();
 	for( int i = 0 ; i < numLights; i++){
 		// light source i
@@ -336,13 +339,13 @@ glm::vec4 RayTracer::shadeIntersection(const Scene& scene, const Ray& ray, const
 		// is the point in shadow ?
 		if( inShadow == false) {
 			// point is not in shadow.Calculate phong
-			phongColour += this->calcPhong(camera, lightSource, intersection);
+			phongColour += this->calcPhong(scene, camera, lightSource, intersection);
 		}
 
 	}
 
 	// calculate reflections for the surface
-	if( intersection.getMaterial().isReflective()){
+	if( intersectionMaterial.isReflective()){
 		
 		glm::vec3 reflectedRayDirection = glm::normalize(glm::reflect(ray.getDirection(), intersection.getNormal()));
 		glm::vec3 reflectedRayOrigin    = intersectionPoint + epsilon * reflectedRayDirection;
@@ -350,12 +353,12 @@ glm::vec4 RayTracer::shadeIntersection(const Scene& scene, const Ray& ray, const
 		
 		tempRay.setOrigin(reflectedRayOrigin);
 		tempRay.setDirection(reflectedRayDirection);
-		reflectedColour += intersection.getMaterial().getReflectiveIntensity() * 
+		reflectedColour += intersectionMaterial.getReflectiveIntensity() * 
 		                   this->rayTrace(scene, camera, tempRay, depth + 1);
 		
 	}
 	// is the surface transparent ? 
-	if( intersection.getMaterial().isTransparent()){
+	if( intersectionMaterial.isTransparent()){
 		
 		glm::vec3 zeroVector(0.0f);
 		float n1,n2;
@@ -370,7 +373,7 @@ glm::vec4 RayTracer::shadeIntersection(const Scene& scene, const Ray& ray, const
 		if( iDOTn < 0.0f ){
 			//Ray is outside of the material going in
 			n1 = scene.getAmbientRefractiveIndex();
-			n2 = intersection.getMaterial().getRefractiveIndex();
+			n2 = intersectionMaterial.getRefractiveIndex();
 		}
 		else{
 			// ray is in the material going out
@@ -412,7 +415,7 @@ glm::vec4 RayTracer::shadeIntersection(const Scene& scene, const Ray& ray, const
 
 }
 
-glm::vec4 RayTracer::calcPhong( const Camera& camera, const LightSource* lightSource, RayIntersection& intersection){
+glm::vec4 RayTracer::calcPhong( const Scene& scene, const Camera& camera, const LightSource* lightSource, RayIntersection& intersection){
 
 	glm::vec4 diffuseColor(0.0f, 0.0f, 0.0f, 0.0f);
 	glm::vec4 specularColor(0.0f, 0.0f, 0.0f, 0.0f);
@@ -423,6 +426,8 @@ glm::vec4 RayTracer::calcPhong( const Camera& camera, const LightSource* lightSo
 	glm::vec4 intersectionPointInWorld  = glm::vec4(intersection.getPoint() , 1.0f);
 	glm::vec4 intersectionNormalInWorld = glm::vec4(intersection.getNormal(), 0.0f);
 
+	int materialIndex = intersection.getMaterialIndex();
+	const Material& material = scene.getMaterialAtIndex(materialIndex);
 	
 	// specular reflection
 	intersectionToLight = glm::normalize(lightSource->getPosition() - intersectionPointInWorld);
@@ -430,20 +435,21 @@ glm::vec4 RayTracer::calcPhong( const Camera& camera, const LightSource* lightSo
 	reflectedVector     = glm::normalize((2.0f * glm::dot(intersectionNormalInWorld, intersectionToLight) * intersectionNormalInWorld) - intersectionToLight);
 	
 	// find diffuse first
-	diffuseColor = this->findDiffuseColor(lightSource, intersectionToLight, intersection);
+	diffuseColor = this->findDiffuseColor(scene, lightSource, intersectionToLight, intersection);
 
 	float dot = glm::dot( viewVector, reflectedVector);
 	if( dot > 0.0f){
-		float specularTerm = glm::pow(dot, (float)intersection.getMaterial().getShininess());
-		specularColor += specularTerm * lightSource->getLightColor() * intersection.getMaterial().getSpecularColor();
+		float specularTerm = glm::pow(dot, (float)material.getShininess());
+		specularColor += specularTerm * lightSource->getLightColor() * material.getSpecularColor();
 	}
 
 	return diffuseColor + specularColor;
 }
 
-glm::vec4 RayTracer::findDiffuseColor(const LightSource* lightSource, const glm::vec4& intersectionToLight, const RayIntersection& intersection){
+glm::vec4 RayTracer::findDiffuseColor( const Scene& scene, const LightSource* lightSource, const glm::vec4& intersectionToLight, const RayIntersection& intersection){
 	glm::vec4 diffuseColor;
-	const Material& material = intersection.getMaterial();
+	int materialIndex = intersection.getMaterialIndex();
+	const Material& material = scene.getMaterialAtIndex(materialIndex);
 
 
 	float dot = glm::dot(intersectionToLight, glm::vec4(intersection.getNormal(), 0.0f));

@@ -338,27 +338,18 @@ bool BVH::intersectRayWithLeaf(const Ray& ray, BvhNode* leaf, RayIntersection& i
 		localRay.setDirection(localRayDirection);
 
 		
-		if(surface->hit(localRay, possibleIntersection, distanceFromOrigin)){
+		if(surface->hit(localRay, intersection, distance)){
 			
 			surfaceIntersectionFound  = true;
-
-			if( distanceFromOrigin < minDistanceFound ){
-				//update distance
-				minDistanceFound = distanceFromOrigin;
-			
-				intersectionPointWorldCoords  = M * glm::vec4( possibleIntersection.getPoint(), 1.0f);
-				intersectionNormalWorldCoords = surface->getInverseTransposeTransformation() * glm::vec4(possibleIntersection.getNormal(), 0.0f);
-				
-				distance = minDistanceFound;
-				leafSurfaceIndex = surfaceIndex;
-			}
-
+			intersectionPointWorldCoords  = M * glm::vec4( intersection.getPoint(), 1.0f);
+			intersectionNormalWorldCoords = surface->getInverseTransposeTransformation() * glm::vec4(intersection.getNormal(), 0.0f);
+					
+			leafSurfaceIndex = surfaceIndex;
 		}
 	}
 	if(surfaceIntersectionFound){
 		intersection.setPoint(glm::vec3(intersectionPointWorldCoords));
 		intersection.setNormal(glm::normalize(glm::vec3(intersectionNormalWorldCoords)));
-		intersection.setMaterial(surfaces[leafSurfaceIndex]->getMaterial());
 	}	
 	return surfaceIntersectionFound;
 }
@@ -540,17 +531,15 @@ bool BVH::intersectStackNearest(const Ray& ray, BvhNode* root, RayIntersection& 
 
 			// node is a leaf
 			
-			float distance;
+			
 			int leafSurfaceIndex;
-			RayIntersection dummyIntersection;
-
-			bool leafIntersected = this->intersectRayWithLeaf(ray, currNode, dummyIntersection, distance, leafSurfaceIndex, surfaces);
+			bool leafIntersected = this->intersectRayWithLeaf(ray, currNode, intersection, minDistace, leafSurfaceIndex, surfaces);
 			if( leafIntersected ){
 				surfaceIntersectionFound = true;
-				if( distance < minDistace ){
-					minDistace = distance;
-					intersection = dummyIntersection;
-				}
+				//if( distance < minDistace ){
+				//	minDistace = distance;
+				//	intersection = dummyIntersection;
+				//}
 			}
 			// pop 
 			currNode = *--stack_ptr;
