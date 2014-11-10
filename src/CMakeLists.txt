@@ -13,6 +13,9 @@ include_directories(${GLEW_INLUDE_PATH})
 include_directories(${ASSIMP_INCLUDE_DIR})
 include_directories(glm)
 
+
+#set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS}; -arch=sm_20 -maxrregcount 40)
+set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS};-O3 -gencode arch=compute_30,code=sm_30)
 SET(CUDA_SEPARABLE_COMPILATION ON)
 set(BUILD_SHARED_LIBS OFF)
 
@@ -22,6 +25,5 @@ FILE(GLOB CUSources *.cu)
 
 include_directories(${Eos_SOURCE_DIR}/glfw-3.0.4/include)
 
-set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS}; -O3 -arch=sm_20)
 cuda_add_executable(Eos ${CPPSources} ${CUSources})
 target_link_libraries(Eos glfw ${GLFW_LIBRARIES} ${GLEW_LIBRARY} ${ASSIMP_LIBRARIES})
