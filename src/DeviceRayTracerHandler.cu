@@ -28,8 +28,8 @@ HOST DRayTracer* DeviceRayTracerHandler::createDeviceTracer(RayTracer* h_tracer)
 	DRayTracer* h_DRayTracer;
 	
 	h_DRayTracer = new DRayTracer;
-	h_DRayTracer->setAASamples( h_tracer->getAASamples());
-	h_DRayTracer->setTracedDepth( h_tracer->getTracedDepth());
+	//h_DRayTracer->setAASamples( h_tracer->getAASamples());
+	//h_DRayTracer->setTracedDepth( h_tracer->getTracedDepth());
 
 	// allocate device memory and copy
 	cudaErrorCheck( cudaMalloc((void**)&d_rayTracer, sizeof(DRayTracer)));

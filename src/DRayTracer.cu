@@ -21,37 +21,38 @@
  */
 
 #include "DRayTracer.h"
+#include "BVH.h"
+#define MAX_TRACED_DEPTH 4
 
-
-DEVICE glm::vec4 DRayTracer::rayTrace(DScene* scene, Camera* camera, const Ray& ray,  int depth){
+DEVICE glm::vec4 DRayTracer::rayTrace(DScene* scene, Camera* camera, const Ray& ray,  int depth, BvhNode** sharedStack, int threadIndex){
 	DRayIntersection intersection;
 	
-	if( depth > this->getTracedDepth() )
+	if( depth > MAX_TRACED_DEPTH )
 		return glm::vec4(0.0f);
-	// find itersection
-	if( scene->isUsingBVH() ){
-		if( scene->findMinDistanceIntersectionBVH(ray, intersection))
-			return this->shadeIntersection(scene, ray, camera, intersection, depth);
 
-	}
-	else{
-		if( scene->findMinDistanceIntersectionLinear( ray, intersection)){
+	if( scene->findMinDistanceIntersectionBVH(ray, intersection, sharedStack, threadIndex))
+		return this->shadeIntersection(scene, ray, camera, intersection, depth);
 
-			return this->shadeIntersection(scene, ray, camera, intersection, depth);
-		}
-	}
 	return glm::vec4(0.0f);
 }
 
 DEVICE glm::vec4 DRayTracer::shadeIntersection(DScene* scene, const Ray& ray, Camera* camera, DRayIntersection& intersection, int depth){
 	int numLights;
-	int i;
 	glm::vec4 finalColor(0.0f);
 
 	numLights = scene->getNumLights();
-	for( i = 0; i < numLights; i++){
+	for( int i = 0; i < numLights; i++){
 		finalColor += this->calcPhong(camera, scene->getLightSource(i), intersection);
 	}
+	return finalColor;
+}
+
+DEVICE glm::vec4 DRayTracer::shadeIntersectionNew(Camera* camera, DRayIntersection* intersectionBuffer, DLightSource* lights, int numLights, int threadID){
+
+	glm::vec4 finalColor(0.0f);
+	for( int i = 0 ; i < numLights; i++)
+		finalColor += this->calcPhong(camera, &lights[i], intersectionBuffer[threadID]);
+
 	return finalColor;
 }
 

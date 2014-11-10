@@ -44,13 +44,57 @@ HOST void DeviceRenderer::renderToGLPixelBuffer(GLuint pbo)const {
 	cudaErrorCheck( cudaGraphicsResourceGetMappedPointer(&d_pbo, &d_pboSize, cudaResourcePBO)); 
 
 	// render
-	cudaFuncSetCacheConfig("__renderToBuffer_kernel", cudaFuncCachePreferL1);
 	this->renderToCudaBuffer(d_pbo, d_pboSize);
 	// wait for kernel
 	cudaErrorCheck( cudaDeviceSynchronize());
 	// unbind
 	cudaErrorCheck( cudaGraphicsUnmapResources( 1, &cudaResourcePBO, 0));
 	return;
+}
+
+HOST void DeviceRenderer::renderSceneToGLPixelBuffer(DScene* h_Dscene, DRayIntersection* intersectionBuffer, int bufferSize, GLuint pbo) const{
+	Camera* d_camera;
+	DRayTracer* d_tracer;
+	void* d_pbo = NULL;
+	size_t d_pboSize;
+	cudaGraphicsResource_t cudaResourcePBO;
+	
+	int blockdim[2];
+	int threadPerBlock[2];
+
+
+	// bind
+	cudaErrorCheck( cudaGraphicsGLRegisterBuffer(&cudaResourcePBO, pbo, cudaGraphicsRegisterFlagsWriteDiscard));	// only write
+	cudaErrorCheck( cudaGraphicsMapResources ( 1, &cudaResourcePBO, 0));
+	// get pointer
+	cudaErrorCheck( cudaGraphicsResourceGetMappedPointer(&d_pbo, &d_pboSize, cudaResourcePBO));
+
+	int width = this->getWidth();
+	int height = this->getHeight();
+
+	// (16,16) threads per block
+	threadPerBlock[0] = 16;
+	threadPerBlock[1] = 16;
+
+	blockdim[0] = width / threadPerBlock[0];
+	blockdim[1] = height / threadPerBlock[1];
+
+	d_camera = this->getDeviceCamera();
+	d_tracer = this->getDeviceRayTracer();
+
+	cudaErrorCheck( cudaMemset(intersectionBuffer, 0, bufferSize * sizeof(DRayIntersection)));
+	// invoke intersectio kernel.Traverse the BVH first
+	calculateIntersections(d_camera, intersectionBuffer, bufferSize, h_Dscene->m_Triangles, h_Dscene->m_NumTriangles,
+						   h_Dscene->m_BvhBuffer, width, height, blockdim, threadPerBlock);
+	// wait for kernel
+	cudaErrorCheck( cudaDeviceSynchronize());
+
+	// shadeIntersections
+	shadeIntersectionsToBuffer((char*)d_pbo, d_pboSize, d_tracer, d_camera, h_Dscene->m_Lights, h_Dscene->m_NumLights, intersectionBuffer, bufferSize, 
+										width, height, blockdim, threadPerBlock);
+
+	cudaErrorCheck( cudaDeviceSynchronize());
+	cudaErrorCheck( cudaGraphicsUnmapResources( 1, &cudaResourcePBO, 0));
 }
 
 HOST void DeviceRenderer::renderToCudaBuffer(void* d_buffer, unsigned int buffer_len)const{
@@ -93,6 +137,48 @@ HOST void  DeviceRenderer::renderToHostBuffer(void* h_buffer, unsigned int buffe
 
 	// copy result to host buffer
 	cudaErrorCheck( cudaMemcpy( h_buffer, d_buffer, buffer_len, cudaMemcpyDeviceToHost));
+	cudaErrorCheck( cudaFree(d_buffer));
+}
+
+
+HOST void DeviceRenderer::renderSceneToHostBuffer(DScene* h_Dscene, DRayIntersection* intersectionBuffer, int bufferSize, void* imageBuffer, int imageBufferSize){
+	Camera* d_camera;
+	DRayTracer* d_tracer;
+	void* d_image;
+	cudaErrorCheck( cudaMalloc(&d_image, imageBufferSize));
+	cudaErrorCheck( cudaMemset(d_image, 0, imageBufferSize));
+
+	int blockdim[2];
+	int threadPerBlock[2];
+
+	int width = this->getWidth();
+	int height = this->getHeight();
+
+	threadPerBlock[0] = 16;
+	threadPerBlock[1] = 16;
+
+	blockdim[0] = width / threadPerBlock[0];
+	blockdim[1] = height / threadPerBlock[1];
+
+	d_camera = this->getDeviceCamera();
+
+	cudaErrorCheck( cudaMemset(intersectionBuffer, 0, bufferSize * sizeof(DRayIntersection)));
+	calculateIntersections(d_camera, intersectionBuffer, bufferSize, h_Dscene->m_Triangles, h_Dscene->m_NumTriangles,
+						   h_Dscene->m_BvhBuffer, width, height, blockdim, threadPerBlock);
+
+	d_tracer = this->getDeviceRayTracer();
+
+	cudaErrorCheck( cudaDeviceSynchronize());
+
+		// shadeIntersections
+	shadeIntersectionsToBuffer((char*)d_image, imageBufferSize, d_tracer, d_camera, h_Dscene->m_Lights, h_Dscene->m_NumLights, intersectionBuffer, bufferSize, 
+										width, height, blockdim, threadPerBlock);
+
+	cudaErrorCheck( cudaDeviceSynchronize());
+
+	cudaErrorCheck( cudaMemcpy( imageBuffer, d_image, imageBufferSize, cudaMemcpyDeviceToHost));
+	cudaErrorCheck( cudaFree(d_image));
+
 }
 HOST void DeviceRenderer::setCamera(Camera* d_camera){
 	m_Camera = d_camera;

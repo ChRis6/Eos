@@ -20,28 +20,14 @@
  * 3. This notice may not be removed or altered from any source distribution.
  */
 
-#ifndef _DEVICE_SCENE_HANDLER_H
-#define _DEVICE_SCENE_HANDLER_H
+#include "DeviceRayIntersectionHandler.h"
 
-#include "cudaQualifiers.h"
-#include "Scene.h"
-#include "DScene.h"
-#include "Camera.h"
+HOST DRayIntersection* DeviceRayIntersectionHandler::createDRayIntersectionBuffer(int size){
+	DRayIntersection* d_buffer;
 
-class DeviceSceneHandler{
+	cudaErrorCheck( cudaMalloc((void**) &d_buffer, sizeof(DRayIntersection) * size));
+	m_IntersectionBuffer = d_buffer;
+	m_BufferSize = size;
 
-public:
-	HOST DeviceSceneHandler(Scene* h_scene){ m_DeviceScene = this->createDeviceScene(h_scene);}
-
-	HOST DScene* getDeviceSceneDevicePointer();
-	HOST DScene* getDeviceSceneHostPointer();		
-	HOST void freeDeviceScene();
-
-private:
-	HOST DScene* createDeviceScene(Scene* h_scene);
-	HOST DeviceSceneHandler():m_HostScene(0),m_DeviceScene(0){}
-private:
-	DScene* m_HostScene;
-	DScene* m_DeviceScene;
-};
-#endif 
+	return d_buffer;
+}

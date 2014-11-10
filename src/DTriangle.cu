@@ -61,6 +61,22 @@ DEVICE bool DTriangle::hit(const Ray& ray, DRayIntersection& intersection, float
 	return false;
 }
 
+DEVICE bool DTriangle::hit(const Ray& ray, DRayIntersection* intersection, float& distance){
+	
+	glm::vec3 barCoords(0.0f);
+	if( this->rayTriangleIntersectionTest( ray, barCoords)){
+		if( barCoords.x < distance){
+			distance = barCoords.x;	
+
+			intersection->setIntersectionPoint(ray.getOrigin() + barCoords.x * ray.getDirection());
+			intersection->setIntersectionNormal(glm::normalize(m_N1 * ( 1.0f - barCoords.y - barCoords.z) + (m_N2 * barCoords.y) + (m_N3*barCoords.z)));
+			intersection->setIntersectionMaterial(this->getMaterial());
+			return true;
+		}
+	}
+	return false;
+}
+
 DEVICE bool DTriangle::rayTriangleIntersectionTest(const Ray& ray, glm::vec3& baryCoords){
 
 	const glm::vec3& P = glm::cross(ray.getDirection(), m_V3 - m_V1);

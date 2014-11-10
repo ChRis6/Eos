@@ -32,9 +32,11 @@
 #include "BVH.h"
 
 class DeviceSceneHandler;
+class DeviceRenderer;
 
 class DScene{
 	friend class DeviceSceneHandler;
+	friend class DeviceRenderer;
 
 private:
 	HOST DEVICE DScene():m_Triangles(0),m_NumTriangles(0),m_Lights(0),m_NumLights(0){}
@@ -44,14 +46,12 @@ public:
 	DEVICE void setNumTriangles(int num) { m_NumTriangles = num;}
 	DEVICE void setTrianglesArray(DTriangle* array){m_Triangles = array;}
 
-	DEVICE DTriangle* getTriangle(int index)const {return &(m_Triangles[index]);}
-	DEVICE int getNumTriangles()const			{return m_NumTriangles;}
+	DEVICE FORCE_INLINE DTriangle* getTriangle(int index)const {return &(m_Triangles[index]);}
+	DEVICE FORCE_INLINE int getNumTriangles()const			{return m_NumTriangles;}
 
-	DEVICE DLightSource* getLightSource(int index)	{ return &(m_Lights[index]);}
-	DEVICE int getNumLights()	{return m_NumLights;}
-	DEVICE bool isUsingBVH()	{ return m_UsingBVH;}
-	DEVICE bool findMinDistanceIntersectionLinear(const Ray& ray, DRayIntersection& intersection) const;
-	DEVICE bool findMinDistanceIntersectionBVH(const Ray& ray, DRayIntersection& intersection) const;
+	DEVICE FORCE_INLINE DLightSource* getLightSource(int index)	{ return &(m_Lights[index]);}
+	DEVICE FORCE_INLINE int getNumLights()	{return m_NumLights;}
+	DEVICE bool findMinDistanceIntersectionBVH(const Ray& ray, DRayIntersection& intersection, BvhNode** stack, int threadStackIndex) const;
 	DEVICE bool visibilityTest(const Ray& ray) const;
 
 private:
@@ -64,9 +64,5 @@ private:
 	int m_NumLights;
 
 	BvhNode* m_BvhBuffer;
-	int m_BvhBufferSize;
-
-	bool m_UsingBVH;
-
 };
 #endif

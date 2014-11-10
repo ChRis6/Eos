@@ -41,7 +41,7 @@ HOST DScene* DeviceSceneHandler::createDeviceScene(Scene* h_scene){
 
 	// create a temp copy of DScene on host
 	h_DScene = new DScene;
-	h_DScene->m_UsingBVH = false;
+	//h_DScene->m_UsingBVH = false;
 
 	cudaErrorCheck( cudaMalloc((void**)&d_scene, sizeof(DScene)) );
 	if(!d_scene)
@@ -130,7 +130,7 @@ HOST DScene* DeviceSceneHandler::createDeviceScene(Scene* h_scene){
 	// is  there a bvh ?
 	if( h_scene->isUsingBvh()){
 
-		h_DScene->m_UsingBVH = true;
+		//h_DScene->m_UsingBVH = true;
 		const BVH& sceneBVH = h_scene->getBVH();
 		int numNodes   = sceneBVH.getNodesBufferSize();
 		BvhNode* h_bvh = sceneBVH.getNodesBuffer();
@@ -146,7 +146,7 @@ HOST DScene* DeviceSceneHandler::createDeviceScene(Scene* h_scene){
 		cudaErrorCheck( cudaMemcpy(d_bvh, h_Dbvh, sizeof(BvhNode) * numNodes, cudaMemcpyHostToDevice));
 
 		h_DScene->m_BvhBuffer = d_bvh;
-		h_DScene->m_BvhBufferSize = numNodes;
+		//h_DScene->m_BvhBufferSize = numNodes;
 
 		delete h_Dbvh;
 	}
@@ -154,7 +154,8 @@ HOST DScene* DeviceSceneHandler::createDeviceScene(Scene* h_scene){
 	// also copy h_DScene
 	cudaErrorCheck( cudaMemcpy(d_scene, h_DScene, sizeof(DScene), cudaMemcpyHostToDevice)); 
 
-	delete h_DScene;
+	//delete h_DScene;
+	m_HostScene = h_DScene;
 	delete h_DLightSources;
 	delete h_DTriangles;
 	return d_scene;
@@ -162,16 +163,17 @@ HOST DScene* DeviceSceneHandler::createDeviceScene(Scene* h_scene){
 
 HOST void DeviceSceneHandler::freeDeviceScene(){
 	
-	DScene* d_scene = this->getDeviceScene();
+	DScene* d_scene = this->getDeviceSceneDevicePointer();
 
 	cudaErrorCheck( cudaFree(d_scene->m_Triangles));
 	cudaErrorCheck( cudaFree(d_scene->m_Lights));
-	cudaErrorCheck( cudaFree(d_scene));	
+	cudaErrorCheck( cudaFree(d_scene));
+	delete m_HostScene;	
 }
 
-Scene* DeviceSceneHandler::getHostScene(){
+DScene* DeviceSceneHandler::getDeviceSceneHostPointer(){
 	return m_HostScene;
 }
-HOST DScene* DeviceSceneHandler::getDeviceScene(){
+HOST DScene* DeviceSceneHandler::getDeviceSceneDevicePointer(){
 	return m_DeviceScene;
 }

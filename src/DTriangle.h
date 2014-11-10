@@ -42,6 +42,7 @@ public: // constructor
 
 public: // device methods
 	DEVICE bool hit(const Ray& ray, DRayIntersection& intersection, float& distance);
+	DEVICE bool hit(const Ray& ray, DRayIntersection* intersection, float& distance);
 
 	DEVICE void setTransformation(const glm::mat4& mat);
 	DEVICE const glm::mat4& getTransformation();

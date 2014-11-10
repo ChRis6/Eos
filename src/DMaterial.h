@@ -35,17 +35,17 @@ public:
 	DEVICE DMaterial(const glm::vec4& diffuse, const glm::vec4& specular, float ambient, float reflectivity, int shininess):
 				m_Diffuse(diffuse),m_Specular(specular),m_AmbientIntensity(ambient),m_Reflectivity(reflectivity),m_shininess(shininess){}
 
-	DEVICE const glm::vec4& getDiffuseColor()const 	{ return m_Diffuse;     }
-	DEVICE const glm::vec4& getSpecularColor()const { return m_Specular;    }
-	DEVICE float getAmbientIntensity()const         { return m_AmbientIntensity;     }
-	DEVICE float getReflectivity()const				{ return m_Reflectivity;}
-	DEVICE int getShininess()const					{ return m_shininess;   }
+	DEVICE FORCE_INLINE const glm::vec4& getDiffuseColor()const 	{ return m_Diffuse;     }
+	DEVICE FORCE_INLINE const glm::vec4& getSpecularColor()const { return m_Specular;    }
+	DEVICE FORCE_INLINE float getAmbientIntensity()const         { return m_AmbientIntensity;     }
+	DEVICE FORCE_INLINE float getReflectivity()const				{ return m_Reflectivity;}
+	DEVICE FORCE_INLINE int getShininess()const					{ return m_shininess;   }
 
-	DEVICE void setDiffuseColor(const glm::vec4& diffuse) 	{ m_Diffuse  = diffuse; }
-	DEVICE void setSpecularColor(const glm::vec4& specular) { m_Specular = specular;}
-	DEVICE void setAmbientIntensity(float ambient)          { m_AmbientIntensity  = ambient; }
-	DEVICE void setReflectivity(float reflectivity)			{ m_Reflectivity = reflectivity;}
-	DEVICE void setShininess(int shine)						{ m_shininess = shine;  }
+	DEVICE FORCE_INLINE void setDiffuseColor(const glm::vec4& diffuse) 	{ m_Diffuse  = diffuse; }
+	DEVICE FORCE_INLINE void setSpecularColor(const glm::vec4& specular) { m_Specular = specular;}
+	DEVICE FORCE_INLINE void setAmbientIntensity(float ambient)          { m_AmbientIntensity  = ambient; }
+	DEVICE FORCE_INLINE void setReflectivity(float reflectivity)			{ m_Reflectivity = reflectivity;}
+	DEVICE FORCE_INLINE void setShininess(int shine)						{ m_shininess = shine;  }
 
 //sprivate: // ATTENTION: USED ONLY BY DeviceSceneHandler class.
 

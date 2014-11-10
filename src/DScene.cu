@@ -21,48 +21,6 @@
  */
 #include "DScene.h"
 
-DEVICE bool DScene::findMinDistanceIntersectionLinear(const Ray& ray, DRayIntersection& intersection) const{
-	int numTriangles;
-	int i;
-	bool intersectionFound = false;
-	float minDist;
-	Ray localRay;
-	DRayIntersection dummyIntersection;
-	glm::vec4 min_point;
-	glm::vec4 min_normal;
-
-	numTriangles = this->getNumTriangles();
-	minDist = 9999999.0f;
-
-	for( i = 0; i < numTriangles; i++){
-
-		float triDistance;
-		DTriangle* tri = this->getTriangle(i);
-
-		// transform ray to local coordinates
-		const glm::vec3& localRayOrigin    = glm::vec3( tri->getInverseTrasformation() * glm::vec4(ray.getOrigin(), 1.0f));
-		const glm::vec3& localRayDirection = glm::vec3( tri->getInverseTrasformation() * glm::vec4(ray.getDirection(), 0.0f));
-
-		localRay.setOrigin(localRayOrigin);
-		localRay.setDirection(localRayDirection);
-		
-		if( tri->hit(localRay, dummyIntersection, triDistance) ){
-			// hit found.Transform intersection to world coordinates
-			intersectionFound = true;
-			if( triDistance < minDist && triDistance > 0.0f){
-
-				minDist = triDistance;
-				min_point  = tri->getTransformation() * glm::vec4(dummyIntersection.getIntersectionPoint(), 1.0f);
-				min_normal = tri->getInverseTransposeTransformation() * glm::vec4(dummyIntersection.getIntersectionNormal(), 0.0f);
-				intersection.setIntersectionMaterial(tri->getMaterial()); 
-			}
-		}
-	}
-
-	intersection.setIntersectionPoint(glm::vec3(min_normal));
-	intersection.setIntersectionNormal(glm::vec3(min_normal));
-	return intersectionFound;
-}
 
 DEVICE bool DScene::intersectRayWithLeaf(const Ray& ray, BvhNode* node, DRayIntersection& intersection, float& distance) const{
 		 
@@ -94,13 +52,12 @@ DEVICE bool DScene::intersectRayWithLeaf(const Ray& ray, BvhNode* node, DRayInte
 }
 
 
-DEVICE bool DScene::findMinDistanceIntersectionBVH(const Ray& ray, DRayIntersection& intersection) const{
-	
-	BvhNode* stack[64];
-	BvhNode** stack_ptr = stack;
-	
+DEVICE bool DScene::findMinDistanceIntersectionBVH(const Ray& ray, DRayIntersection& intersection, BvhNode** stack, int threadStackIndex) const{
+	BvhNode* stackLocal[32];
+	//BvhNode** stack_ptr = &stack[threadStackIndex];
+	BvhNode** stack_ptr = stackLocal;
 	float minDistace = 99999.0f;
-	bool surfaceIntersectionFound = false;
+	
 	BvhNode* currNode = &m_BvhBuffer[0];
 
 	if( currNode->aabb.intersectWithRay(ray, minDistace) == false )
@@ -114,14 +71,14 @@ DEVICE bool DScene::findMinDistanceIntersectionBVH(const Ray& ray, DRayIntersect
 		if( currNode->type == BVH_NODE ){
 
 			float leftDistance;
-			float rightDistance;
+			//float rightDistance;
 
 
 			BvhNode* leftChild  = &m_BvhBuffer[currNode->leftChildIndex];	
 			BvhNode* rightChild = &m_BvhBuffer[currNode->rightChildIndex];
 
 			bool leftChildIntersected = leftChild->aabb.intersectWithRay(ray, leftDistance);
-			bool rightChildIntersected = rightChild->aabb.intersectWithRay(ray, rightDistance);
+			bool rightChildIntersected = rightChild->aabb.intersectWithRay(ray, leftDistance);
 
 			if(leftChildIntersected){
 				currNode = leftChild;
@@ -139,22 +96,12 @@ DEVICE bool DScene::findMinDistanceIntersectionBVH(const Ray& ray, DRayIntersect
 			}
 		}
 		else{
-
-			// node is a leaf
-			//float distance;
-			//DRayIntersection dummyIntersection;
-			if( this->intersectRayWithLeaf(ray, currNode, intersection, minDistace) ){
-				surfaceIntersectionFound = true;
-				//if( distance < minDistace){
-				//	minDistace = distance;
-				//	intersection = dummyIntersection;
-				//}
-			}
+			this->intersectRayWithLeaf(ray, currNode, intersection, minDistace);
 			// pop 
 			currNode = *--stack_ptr;
 		}
 	}
-	return surfaceIntersectionFound;
+	return minDistace < 99999.0f;
 }
 
 DEVICE bool DScene::visibilityTest(const Ray& ray) const{

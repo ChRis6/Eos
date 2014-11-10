@@ -24,7 +24,18 @@
 #define _KERNEL_INVOCATIONS_H
 
 #include "kernelWrapper.h"
+#include "cudaQualifiers.h"
 
 __global__ void __oneThreadPerPixel_kernel();
 __global__ void __renderToBuffer_kernel(char* buffer, unsigned int buffer_len, Camera* camera, DScene* scene, DRayTracer* rayTracer, int width, int height);
+__global__ void __calculateIntersections_kernel(Camera* camera, DRayIntersection* intersectionBuffer, int intersectionBufferSize, 
+	                                            DTriangle* trianglesBuffer, int trianglesBufferSize, BvhNode* bvh, int width, int height);
+__global__ void __shadeIntersectionsToBuffer_kernel(char* imageBuffer, unsigned int imageSize, DRayTracer* rayTracer, Camera* camera,
+													DLightSource* lights, int numLights,
+													DRayIntersection* intersectionBuffer, int intersectionBufferSize, 
+										 			int width, int height);
+
+
+DEVICE void traverseTreeAndStore(const Ray& ray, DRayIntersection* intersectionBuffer, int intersectionBufferSize, DTriangle* trianglesBuffer, int trianglesBufferSize, BvhNode* bvh, int threadID );
+DEVICE bool intersectRayWithLeafNode(const Ray& ray, BvhNode* node, DRayIntersection* intersection, float& distance, DTriangle* triangles);
 #endif

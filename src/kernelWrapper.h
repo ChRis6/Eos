@@ -26,7 +26,13 @@
 #include "Camera.h"
 #include "DRayTracer.h"
 #include "DScene.h"
+#include "DRayIntersection.h"
+#include "DTriangle.h"
 
 extern "C" void threadPerPixel_kernel();
 extern "C" void renderToBuffer(char* buffer, unsigned int buffer_len, Camera* camera, DScene* scene, DRayTracer* rayTracer, int blockdim[], int tpblock[], int width, int height);
+extern "C" void calculateIntersections(Camera* camera, DRayIntersection* intersectionBuffer, int intersectionBufferSize, DTriangle* trianglesBuffer, int trianglesBufferSize, BvhNode* bvh,
+									   int width, int height, int blockdim[], int tpblock[]);
+extern "C" void shadeIntersectionsToBuffer(char* imageBuffer, unsigned int imageSize, DRayTracer* rayTracer, Camera* camera, DLightSource* lights, int numLights, DRayIntersection* intersectionBuffer, int intersectionBufferSize, 
+										 int width, int height, int blockdim[], int tpblockp[]);
 #endif

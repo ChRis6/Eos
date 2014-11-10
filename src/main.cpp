@@ -36,6 +36,7 @@
 #include "DeviceRenderer.h"
 #include "DeviceCameraHandler.h"
 #include "DeviceRayTracerHandler.h"
+#include "DeviceRayIntersectionHandler.h"
 
 
 #define STB_IMAGE_WRITE_IMPLEMENTATION
@@ -476,7 +477,7 @@ int main(int argc, char **argv)
    meshGrid->setMaterial(gridMaterial);
    
    meshGrid->loadFromFile(triangleMeshGridFileName);
-   scene.addTriangleMesh(meshGrid);
+   //scene.addTriangleMesh(meshGrid);
 
 
 
@@ -493,19 +494,6 @@ int main(int argc, char **argv)
    //scene.addTriangleMesh(meshGrid1);
 
 
-   /*
-   float diskRadiusSquared = 2.0f;
-   glm::vec3 diskPlanePoint(0.0f, -1.0f, 0.0f);
-   glm::vec3 diskNormal(0.0f, 1.0f, 0.0f);
-
-   Disk *disk = new Disk(diskRadiusSquared, diskPlanePoint, diskNormal);
-   disk->setTransformation(glm::mat4(1.0f));
-
-   gridMaterial.setReflective(true);
-   disk->setMaterial(gridMaterial);
-
- */
-   //scene.addSurface(disk);
 
 
    scene.addLightSource(lightSource);
@@ -540,7 +528,8 @@ int main(int argc, char **argv)
    // copy scene 
    std::cout << "Attemping to copy scene to device" << std::endl;
    DeviceSceneHandler sceneImporter(&scene);
-   DScene* d_scene = sceneImporter.getDeviceScene();
+   DScene* d_scene = sceneImporter.getDeviceSceneDevicePointer();
+   DScene* h_DScene = sceneImporter.getDeviceSceneHostPointer();
 
    // copy camera
    DeviceCameraHandler cameraHandler(&camera);
@@ -549,7 +538,11 @@ int main(int argc, char **argv)
    DeviceRayTracerHandler tracerHandler(&rayTracer);
    DRayTracer* d_tracer = tracerHandler.getDeviceTracer();
 
-   DeviceRenderer deviceRenderer(d_scene, d_tracer, d_camera, WINDOW_WIDTH, WINDOW_HEIGHT);   
+   DeviceRenderer deviceRenderer(d_scene, d_tracer, d_camera, WINDOW_WIDTH, WINDOW_HEIGHT);
+
+   DeviceRayIntersectionHandler intersectionHandler;
+   DRayIntersection* d_IntersectionBuffer = intersectionHandler.createDRayIntersectionBuffer( WINDOW_WIDTH * WINDOW_HEIGHT);
+   int dRayIntersectionBufferSize = intersectionHandler.getBufferSize();   
 
    if( renderOnce && useDeviceRenderer){
       std::cout << "Rendering Once to Image file (GPU)..." << std::endl;
@@ -558,7 +551,8 @@ int main(int argc, char **argv)
       int hours,minutes,seconds;
       
       start = getRealTime();
-      deviceRenderer.renderToHostBuffer(imageBuffer, WINDOW_WIDTH * WINDOW_HEIGHT * 4);
+      //deviceRenderer.renderToHostBuffer(imageBuffer, WINDOW_WIDTH * WINDOW_HEIGHT * 4);
+      deviceRenderer.renderSceneToHostBuffer(h_DScene, d_IntersectionBuffer, dRayIntersectionBufferSize, imageBuffer, WINDOW_WIDTH * WINDOW_HEIGHT * 4);
       end = getRealTime();
 
       diff = end - start;
@@ -674,9 +668,10 @@ int main(int argc, char **argv)
       if( useDeviceRenderer){
 
          cameraHandler.updateDeviceCamera(&camera);
-         d_camera = cameraHandler.getDeviceCamera();
+         //d_camera = cameraHandler.getDeviceCamera();
 
-         deviceRenderer.renderToGLPixelBuffer(pbo);
+         //deviceRenderer.renderToGLPixelBuffer(pbo);
+         deviceRenderer.renderSceneToGLPixelBuffer(h_DScene, d_IntersectionBuffer, dRayIntersectionBufferSize, pbo );
       }
       else{
          rayTracer.render(scene, camera, imageBuffer);

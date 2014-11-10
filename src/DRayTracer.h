@@ -32,15 +32,17 @@
 class DRayTracer{
 
 public:
-	HOST DEVICE DRayTracer():m_AASamples(1),m_TraceDepth(4){}
+	//HOST DEVICE DRayTracer():m_AASamples(1),m_TraceDepth(4){}
+	HOST DEVICE DRayTracer(){}
 
-	HOST DEVICE int getTracedDepth()const { return m_TraceDepth;}
-	HOST DEVICE int getAASamples()const   { return m_AASamples;}
+	//HOST DEVICE int getTracedDepth()const { return m_TraceDepth;}
+	//HOST DEVICE int getAASamples()const   { return m_AASamples;}
 
-	HOST DEVICE void setTracedDepth(int depth)	{ m_TraceDepth = depth; }
-	HOST DEVICE void setAASamples(int samples)  { m_AASamples  = samples;}
+	//HOST DEVICE void setTracedDepth(int depth)	{ m_TraceDepth = depth; }
+	//HOST DEVICE void setAASamples(int samples)  { m_AASamples  = samples;}
 
-	DEVICE glm::vec4 rayTrace(DScene* scene, Camera* camera, const Ray& ray,  int depth);
+	DEVICE glm::vec4 rayTrace(DScene* scene, Camera* camera, const Ray& ray,  int depth, BvhNode** sharedStack, int threadIndex);
+	DEVICE glm::vec4 shadeIntersectionNew(Camera* camera, DRayIntersection* intersectionBuffer, DLightSource* lights, int numLights, int threadID);
 private:
 	
 	DEVICE glm::vec4 shadeIntersection(DScene* scene, const Ray& ray, Camera* camera, DRayIntersection& intersection, int depth);
@@ -48,8 +50,8 @@ private:
 	DEVICE glm::vec4 findDiffuseColor(DLightSource* lightSource, const glm::vec4& intersectionToLight, DRayIntersection& intersection);
 
 private:
-	int m_AASamples;
-	int m_TraceDepth;
+	//int m_AASamples;
+	//int m_TraceDepth;
 };
 
 #endif

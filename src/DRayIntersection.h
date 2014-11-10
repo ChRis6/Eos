@@ -33,13 +33,13 @@ public:
 	DEVICE DRayIntersection(const glm::vec3& point, const glm::vec3& normal, const DMaterial& material):
 							m_Point(point),m_Normal(normal),m_Material(material){}
 
-	DEVICE const glm::vec3& getIntersectionPoint()    { return m_Point;}
-	DEVICE const glm::vec3& getIntersectionNormal()   { return m_Normal;}
-	DEVICE const DMaterial& getIntersectionMaterial() { return m_Material;}
+	DEVICE FORCE_INLINE const glm::vec3& getIntersectionPoint()    { return m_Point;}
+	DEVICE FORCE_INLINE const glm::vec3& getIntersectionNormal()   { return m_Normal;}
+	DEVICE FORCE_INLINE const DMaterial& getIntersectionMaterial() { return m_Material;}
 
-	DEVICE void setIntersectionPoint(const glm::vec3& point)	{ m_Point    = point; }
-	DEVICE void setIntersectionNormal(const glm::vec3& normal)  { m_Normal   = normal;}
-	DEVICE void setIntersectionMaterial(const DMaterial& mat)   { m_Material = mat;   }
+	DEVICE FORCE_INLINE void setIntersectionPoint(const glm::vec3& point)	{ m_Point    = point; }
+	DEVICE FORCE_INLINE void setIntersectionNormal(const glm::vec3& normal)  { m_Normal   = normal;}
+	DEVICE FORCE_INLINE void setIntersectionMaterial(const DMaterial& mat)   { m_Material = mat;   }
 private:
 	glm::vec3 m_Point;
 	glm::vec3 m_Normal;

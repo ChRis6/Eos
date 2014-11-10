@@ -31,7 +31,7 @@
 #ifdef __CUDACC__
 	#define HOST __host__
 	#define DEVICE __device__
-
+ 	#define FORCE_INLINE __forceinline__
 	#define cudaErrorCheck(ans) { __cudaErrorCheck((ans), __FILE__, __LINE__); }
 	inline void __cudaErrorCheck(cudaError_t code, const char *file, int line, bool abort=true)
 	{
@@ -47,6 +47,7 @@
 #else
 	#define HOST
 	#define DEVICE
+	#define FORCE_INLINE
 	#define cudaErrorCheck(ans) 
 #endif
 
