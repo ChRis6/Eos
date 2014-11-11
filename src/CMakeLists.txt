@@ -13,7 +13,7 @@ include_directories(${GLEW_INLUDE_PATH})
 include_directories(${ASSIMP_INCLUDE_DIR})
 include_directories(glm)
 
-
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wall -g")
 #set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS}; -arch=sm_20 -maxrregcount 40)
 set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS};-O3 -gencode arch=compute_30,code=sm_30)
 SET(CUDA_SEPARABLE_COMPILATION ON)
