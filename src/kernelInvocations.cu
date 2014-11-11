@@ -78,6 +78,8 @@ __global__ void __calculateIntersections_kernel(Camera* camera,
 
     int threadID = width * pj + pi;
 
+    
+
     if ( pi < width && pj < height){
         Ray ray;
 
@@ -89,9 +91,10 @@ __global__ void __calculateIntersections_kernel(Camera* camera,
 
 }
 
-__global__ void __shadeIntersectionsToBuffer_kernel(char* imageBuffer, unsigned int imageSize, DRayTracer* rayTracer, Camera* camera,
+__global__ void __shadeIntersectionsToBuffer_kernel(uchar4* imageBuffer, unsigned int imageSize, DRayTracer* rayTracer, Camera* camera,
                                                     DLightSource* lights, int numLights,
-                                                    DRayIntersection* intersectionBuffer, int intersectionBufferSize, 
+                                                    DRayIntersection* intersectionBuffer, int intersectionBufferSize,
+                                                    DMaterial* materialsBuffer, int materialsBufferSize, 
                                                     int width, int height){
 
 
@@ -100,12 +103,16 @@ __global__ void __shadeIntersectionsToBuffer_kernel(char* imageBuffer, unsigned 
     int threadID = width * pj + pi;
     if( pi < width && pj < height ){
     
-        glm::vec4 color = rayTracer->shadeIntersectionNew(camera, intersectionBuffer, lights, numLights, threadID);
-    
-        imageBuffer[4 * (pi + pj * width)]      = floor(color.x == 1.0 ? 255 : fminf(color.x * 256.0f, 255.0f));
-        imageBuffer[1 +  4* (pi + pj * width)]  = floor(color.y == 1.0 ? 255 : fminf(color.y * 256.0f, 255.0f));
-        imageBuffer[2 +  4* (pi + pj * width)]  = floor(color.z == 1.0 ? 255 : fminf(color.z * 256.0f, 255.0f));
-        imageBuffer[3 +  4* (pi + pj * width)]  = 255;
+        glm::vec4 color = rayTracer->shadeIntersectionNew(camera, intersectionBuffer, lights, numLights, materialsBuffer, materialsBufferSize, threadID);
+        
+        uchar4 ucharColor;
+        ucharColor.x = floor(color.x == 1.0 ? 255 : fminf(color.x * 256.0f, 255.0f));
+        ucharColor.y = floor(color.y == 1.0 ? 255 : fminf(color.y * 256.0f, 255.0f));
+        ucharColor.z = floor(color.z == 1.0 ? 255 : fminf(color.z * 256.0f, 255.0f));
+        ucharColor.w = 255;
+
+        imageBuffer[threadID] = ucharColor;
+
     }
 }
 
@@ -183,8 +190,8 @@ DEVICE bool intersectRayWithLeafNode(const Ray& ray, BvhNode* node, DRayIntersec
     }
 
     if( minTri != NULL ){
-        intersection->setIntersectionPoint(glm::vec3(minTri->getTransformation() * glm::vec4(intersection->getIntersectionPoint(), 1.0f)));
-        intersection->setIntersectionNormal(glm::vec3(minTri->getInverseTransposeTransformation() * glm::vec4(intersection->getIntersectionNormal(), 0.0f)));
+        intersection->setIntersectionPoint(minTri->getTransformation() * intersection->getIntersectionPoint());
+        intersection->setIntersectionNormal(minTri->getInverseTransposeTransformation() * intersection->getIntersectionNormal());
         return true;
     }
     return false;
@@ -230,9 +237,10 @@ void calculateIntersections(Camera* camera, DRayIntersection* intersectionBuffer
 
 }
 
-void shadeIntersectionsToBuffer(char* imageBuffer, unsigned int imageSize, DRayTracer* rayTracer,
+void shadeIntersectionsToBuffer(uchar4* imageBuffer, unsigned int imageSize, DRayTracer* rayTracer,
                                 Camera* camera, DLightSource* lights, int numLights,
-                                DRayIntersection* intersectionBuffer, int intersectionBufferSize, 
+                                DRayIntersection* intersectionBuffer, int intersectionBufferSize,
+                                DMaterial* materialsBuffer, int materialsBufferSize, 
                                 int width, int height, int blockdim[], int tpblockp[]){
 
 
@@ -249,7 +257,8 @@ void shadeIntersectionsToBuffer(char* imageBuffer, unsigned int imageSize, DRayT
 
  __shadeIntersectionsToBuffer_kernel<<< numBlocks, threadsPerBlock>>>(imageBuffer, imageSize, rayTracer, camera,
                                     lights, numLights,
-                                    intersectionBuffer,intersectionBufferSize, 
+                                    intersectionBuffer,intersectionBufferSize,
+                                    materialsBuffer, materialsBufferSize, 
                                     width, height);
 
 }

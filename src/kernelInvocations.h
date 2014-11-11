@@ -32,7 +32,8 @@ __global__ void __calculateIntersections_kernel(Camera* camera, DRayIntersection
 	                                            DTriangle* trianglesBuffer, int trianglesBufferSize, BvhNode* bvh, int width, int height);
 __global__ void __shadeIntersectionsToBuffer_kernel(char* imageBuffer, unsigned int imageSize, DRayTracer* rayTracer, Camera* camera,
 													DLightSource* lights, int numLights,
-													DRayIntersection* intersectionBuffer, int intersectionBufferSize, 
+													DRayIntersection* intersectionBuffer, int intersectionBufferSize,
+													DMaterial* materialsBuffer, int materialsBufferSize, 
 										 			int width, int height);
 
 

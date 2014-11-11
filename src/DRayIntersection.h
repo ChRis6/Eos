@@ -30,20 +30,23 @@
 class DRayIntersection{
 public:
 	DEVICE DRayIntersection():m_Point(0.0f),m_Normal(0.0f),m_Material(){}
-	DEVICE DRayIntersection(const glm::vec3& point, const glm::vec3& normal, const DMaterial& material):
+	DEVICE DRayIntersection(const glm::vec4& point, const glm::vec4& normal, const DMaterial& material):
 							m_Point(point),m_Normal(normal),m_Material(material){}
 
-	DEVICE FORCE_INLINE const glm::vec3& getIntersectionPoint()    { return m_Point;}
-	DEVICE FORCE_INLINE const glm::vec3& getIntersectionNormal()   { return m_Normal;}
-	DEVICE FORCE_INLINE const DMaterial& getIntersectionMaterial() { return m_Material;}
+	DEVICE FORCE_INLINE const glm::vec4& getIntersectionPoint()    { return m_Point;        }
+	DEVICE FORCE_INLINE const glm::vec4& getIntersectionNormal()   { return m_Normal;       }
+	DEVICE FORCE_INLINE const DMaterial& getIntersectionMaterial() { return m_Material;     }
+	DEVICE FORCE_INLINE int getIntersectionMaterialIndex()		   { return m_MaterialIndex;}
 
-	DEVICE FORCE_INLINE void setIntersectionPoint(const glm::vec3& point)	{ m_Point    = point; }
-	DEVICE FORCE_INLINE void setIntersectionNormal(const glm::vec3& normal)  { m_Normal   = normal;}
-	DEVICE FORCE_INLINE void setIntersectionMaterial(const DMaterial& mat)   { m_Material = mat;   }
+	DEVICE FORCE_INLINE void setIntersectionPoint(const glm::vec4& point)	 { m_Point    = point;     }
+	DEVICE FORCE_INLINE void setIntersectionNormal(const glm::vec4& normal)  { m_Normal   = normal;    }
+	DEVICE FORCE_INLINE void setIntersectionMaterial(const DMaterial& mat)   { m_Material = mat;       }
+	DEVICE FORCE_INLINE void setIntersectionMaterialIndex(int index)		 { m_MaterialIndex = index;}
 private:
-	glm::vec3 m_Point;
-	glm::vec3 m_Normal;
+	glm::vec4 m_Point;
+	glm::vec4 m_Normal;
 	DMaterial m_Material;
+	int m_MaterialIndex;
 };
 
 #endif

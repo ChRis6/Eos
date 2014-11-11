@@ -48,6 +48,7 @@ public:
 	bool addLightSource(LightSource* light);
 	int addMaterial(Material material);
 	const Material& getMaterialAtIndex(int index) const;
+	int getNumMaterials() const { return m_Materials.size();}
 
 	int getNumSurfaces() const;
 	int getNumLightSources() const;

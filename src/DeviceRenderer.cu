@@ -90,8 +90,8 @@ HOST void DeviceRenderer::renderSceneToGLPixelBuffer(DScene* h_Dscene, DRayInter
 	cudaErrorCheck( cudaDeviceSynchronize());
 
 	// shadeIntersections
-	shadeIntersectionsToBuffer((char*)d_pbo, d_pboSize, d_tracer, d_camera, h_Dscene->m_Lights, h_Dscene->m_NumLights, intersectionBuffer, bufferSize, 
-										width, height, blockdim, threadPerBlock);
+	shadeIntersectionsToBuffer((uchar4*)d_pbo, d_pboSize, d_tracer, d_camera, h_Dscene->m_Lights, h_Dscene->m_NumLights, intersectionBuffer, bufferSize, 
+										h_Dscene->m_Materials, h_Dscene->m_NumMaterials, width, height, blockdim, threadPerBlock);
 
 	cudaErrorCheck( cudaDeviceSynchronize());
 	cudaErrorCheck( cudaGraphicsUnmapResources( 1, &cudaResourcePBO, 0));
@@ -171,8 +171,8 @@ HOST void DeviceRenderer::renderSceneToHostBuffer(DScene* h_Dscene, DRayIntersec
 	cudaErrorCheck( cudaDeviceSynchronize());
 
 		// shadeIntersections
-	shadeIntersectionsToBuffer((char*)d_image, imageBufferSize, d_tracer, d_camera, h_Dscene->m_Lights, h_Dscene->m_NumLights, intersectionBuffer, bufferSize, 
-										width, height, blockdim, threadPerBlock);
+	shadeIntersectionsToBuffer((uchar4*)d_image, imageBufferSize, d_tracer, d_camera, h_Dscene->m_Lights, h_Dscene->m_NumLights, intersectionBuffer, bufferSize, 
+										h_Dscene->m_Materials, h_Dscene->m_NumMaterials, width, height, blockdim, threadPerBlock);
 
 	cudaErrorCheck( cudaDeviceSynchronize());
 

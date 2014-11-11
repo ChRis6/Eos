@@ -42,12 +42,16 @@ public:
 	//HOST DEVICE void setAASamples(int samples)  { m_AASamples  = samples;}
 
 	DEVICE glm::vec4 rayTrace(DScene* scene, Camera* camera, const Ray& ray,  int depth, BvhNode** sharedStack, int threadIndex);
-	DEVICE glm::vec4 shadeIntersectionNew(Camera* camera, DRayIntersection* intersectionBuffer, DLightSource* lights, int numLights, int threadID);
+	DEVICE glm::vec4 shadeIntersectionNew(Camera* camera, DRayIntersection* intersectionBuffer, DLightSource* lights, int numLights,
+										  DMaterial* materials, int numMaterials, int threadID);
 private:
 	
 	DEVICE glm::vec4 shadeIntersection(DScene* scene, const Ray& ray, Camera* camera, DRayIntersection& intersection, int depth);
 	DEVICE glm::vec4 calcPhong(Camera* camera, DLightSource* lightSource, DRayIntersection& intersection);
+	DEVICE glm::vec4 calcPhongWithMaterials(Camera* camera, DLightSource* lightSource, DRayIntersection& intersection, DMaterial* materials, int numMaterials);
+
 	DEVICE glm::vec4 findDiffuseColor(DLightSource* lightSource, const glm::vec4& intersectionToLight, DRayIntersection& intersection);
+	DEVICE glm::vec4 findDiffuseColorWithMaterials(DLightSource* lightSource, const glm::vec4& intersectionToLight, DRayIntersection& intersection, DMaterial* materials, int numMaterials);
 
 private:
 	//int m_AASamples;

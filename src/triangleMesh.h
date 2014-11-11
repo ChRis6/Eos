@@ -45,6 +45,9 @@ public:
 	void setSceneStartIndex(int start){m_SceneIndexStart = start;}
 	void setSceneEndIndex(int end){m_SceneIndexEnd = end;}
 
+	void setMaterialIndex(int index) { m_MaterialIndex = index;}
+	int getMaterialIndex(int index)const { return m_MaterialIndex;}
+
 private:
 	bool RayTriangleIntersection(glm::vec3 v1, glm::vec3 v2, glm::vec3 v3, const Ray& ray, glm::vec3& barycetricCoords);
 	bool RayBoxIntersection(const Ray& ray, const Box& box);
@@ -57,6 +60,7 @@ private:
 	glm::mat4 m_InverseTranspose;
 
 	Material m_Material;
+	int m_MaterialIndex;
 	
 	unsigned int m_SceneIndexStart;
 	unsigned int m_SceneIndexEnd;

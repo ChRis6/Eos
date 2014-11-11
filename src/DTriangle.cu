@@ -52,9 +52,10 @@ DEVICE bool DTriangle::hit(const Ray& ray, DRayIntersection& intersection, float
 		if( barCoords.x < distance){
 			distance = barCoords.x;	
 
-			intersection.setIntersectionPoint(ray.getOrigin() + barCoords.x * ray.getDirection());
-			intersection.setIntersectionNormal(glm::normalize(m_N1 * ( 1.0f - barCoords.y - barCoords.z) + (m_N2 * barCoords.y) + (m_N3*barCoords.z)));
+			intersection.setIntersectionPoint(glm::vec4(ray.getOrigin() + barCoords.x * ray.getDirection(), 1.0f));	// set vec4 intersection point
+			intersection.setIntersectionNormal(glm::vec4(glm::normalize(m_N1 * ( 1.0f - barCoords.y - barCoords.z) + (m_N2 * barCoords.y) + (m_N3*barCoords.z)), 0.0f));
 			intersection.setIntersectionMaterial(this->getMaterial());
+			intersection.setIntersectionMaterialIndex(this->getMaterialIndex());
 			return true;
 		}
 	}
@@ -68,9 +69,10 @@ DEVICE bool DTriangle::hit(const Ray& ray, DRayIntersection* intersection, float
 		if( barCoords.x < distance){
 			distance = barCoords.x;	
 
-			intersection->setIntersectionPoint(ray.getOrigin() + barCoords.x * ray.getDirection());
-			intersection->setIntersectionNormal(glm::normalize(m_N1 * ( 1.0f - barCoords.y - barCoords.z) + (m_N2 * barCoords.y) + (m_N3*barCoords.z)));
+			intersection->setIntersectionPoint(glm::vec4(ray.getOrigin() + barCoords.x * ray.getDirection(), 1.0f) );
+			intersection->setIntersectionNormal(glm::vec4(glm::normalize(m_N1 * ( 1.0f - barCoords.y - barCoords.z) + (m_N2 * barCoords.y) + (m_N3*barCoords.z)), 0.0f));
 			intersection->setIntersectionMaterial(this->getMaterial());
+			intersection->setIntersectionMaterialIndex(this->getMaterialIndex());
 			return true;
 		}
 	}

@@ -109,6 +109,9 @@ HOST DScene* DeviceSceneHandler::createDeviceScene(Scene* h_scene){
 		h_DTriangles[i].m_Transformation   = h_Triangle->transformation();
 		h_DTriangles[i].m_Inverse          = h_Triangle->getInverseTransformation();
 		h_DTriangles[i].m_InverseTranspose = h_Triangle->getInverseTransposeTransformation();
+
+		// material index
+		h_DTriangles[i].m_MaterialIndex = h_Triangle->getMaterialIndex();
 		// material
 		DMaterial h_DMaterial;
 		const Material& h_TriangleMaterial = h_Triangle->getMaterial(); 
@@ -151,6 +154,27 @@ HOST DScene* DeviceSceneHandler::createDeviceScene(Scene* h_scene){
 		delete h_Dbvh;
 	}
 
+	// copy materials
+	int numMaterials = h_scene->getNumMaterials();
+	DMaterial* h_DMaterial = new DMaterial[numMaterials];
+	for( int i = 0; i < numMaterials; i++){
+
+		const Material& hostMaterial = h_scene->getMaterialAtIndex(i);
+
+		h_DMaterial[i].m_Diffuse           = hostMaterial.getDiffuseColor();
+		h_DMaterial[i].m_Specular           = hostMaterial.getSpecularColor();
+		h_DMaterial[i].m_AmbientIntensity  = hostMaterial.getAmbientIntensity();
+		h_DMaterial[i].m_Reflectivity      = hostMaterial.getReflectiveIntensity();
+		h_DMaterial[i].m_shininess         = hostMaterial.getShininess();
+	}
+
+	DMaterial* d_Material;
+	cudaErrorCheck( cudaMalloc( (void**)&d_Material, sizeof(DMaterial) * numMaterials));
+	cudaErrorCheck( cudaMemcpy( d_Material, h_DMaterial, sizeof(DMaterial) * numMaterials, cudaMemcpyHostToDevice));
+
+	h_DScene->m_NumMaterials = numMaterials;
+	h_DScene->m_Materials = d_Material;
+
 	// also copy h_DScene
 	cudaErrorCheck( cudaMemcpy(d_scene, h_DScene, sizeof(DScene), cudaMemcpyHostToDevice)); 
 
@@ -158,6 +182,7 @@ HOST DScene* DeviceSceneHandler::createDeviceScene(Scene* h_scene){
 	m_HostScene = h_DScene;
 	delete h_DLightSources;
 	delete h_DTriangles;
+	delete h_DMaterial;
 	return d_scene;
 }
 

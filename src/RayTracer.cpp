@@ -271,7 +271,7 @@ glm::vec4 RayTracer::rayTrace(const Scene& scene, const Camera& camera, const Ra
 	RayIntersection intersection;
 	glm::vec4 finalColor(0.0f);
 	
-	intersection.setMaterialIndex(-1);
+
 	if( depth > this->getTracedDepth())
 		return finalColor;
 

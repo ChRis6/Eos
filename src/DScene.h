@@ -30,6 +30,7 @@
 #include "DLightSource.h"
 #include "DRayIntersection.h"
 #include "BVH.h"
+#include "DMaterial.h"
 
 class DeviceSceneHandler;
 class DeviceRenderer;
@@ -64,5 +65,9 @@ private:
 	int m_NumLights;
 
 	BvhNode* m_BvhBuffer;
+
+	DMaterial* m_Materials;
+	int m_NumMaterials;
+
 };
 #endif

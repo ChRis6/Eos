@@ -464,7 +464,7 @@ int main(int argc, char **argv)
    mesh->setTransformation(meshTransformation);
    mesh->setMaterial(triangleMeshMaterial);
    
-   printf("Setting Triangle Mesh material Index: %d\n", triangleMeshMaterialIndex);
+   
    mesh->setMaterialIndex(triangleMeshMaterialIndex);
 
    mesh->loadFromFile(triangleMeshFileName);

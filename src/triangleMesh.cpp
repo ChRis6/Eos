@@ -146,6 +146,7 @@ bool TriangleMesh::loadFromFile(const char* filename){
        	newTriangle->setInverseTransposeTransformation(m_InverseTranspose);
 
        	newTriangle->setMaterial(m_Material);
+       	newTriangle->setMaterialIndex(m_MaterialIndex);
 
        	m_Triangles[i] = newTriangle;
 	} 

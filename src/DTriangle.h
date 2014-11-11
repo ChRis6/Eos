@@ -49,6 +49,7 @@ public: // device methods
 	DEVICE const glm::mat4& getInverseTrasformation();
 	DEVICE const glm::mat4& getInverseTransposeTransformation();
 	DEVICE const DMaterial& getMaterial();
+	DEVICE int getMaterialIndex() const{ return m_MaterialIndex;}
 
 	DEVICE glm::vec3 getV1()	{ return m_V1;}
 private:
@@ -73,5 +74,6 @@ public:
 	glm::mat4 m_InverseTranspose;
 
 	DMaterial m_Material;
+	int m_MaterialIndex;
 };
 #endif

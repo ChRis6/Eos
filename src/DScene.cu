@@ -44,8 +44,8 @@ DEVICE bool DScene::intersectRayWithLeaf(const Ray& ray, BvhNode* node, DRayInte
 	}
 
 	if( minTri != NULL ){
-		intersection.setIntersectionPoint(glm::vec3(minTri->getTransformation() * glm::vec4(intersection.getIntersectionPoint(), 1.0f)));
-		intersection.setIntersectionNormal(glm::vec3(minTri->getInverseTransposeTransformation() * glm::vec4(intersection.getIntersectionNormal(), 0.0f)));
+		intersection.setIntersectionPoint(minTri->getTransformation() * intersection.getIntersectionPoint());
+		intersection.setIntersectionNormal(minTri->getInverseTransposeTransformation() * intersection.getIntersectionNormal());
 		return true;
 	}
 	return false;

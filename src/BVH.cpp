@@ -481,7 +481,7 @@ void BVH::buildTopDownHybrid(BvhNode** tree, Surface** surfaces, int start, int 
 
 bool BVH::intersectStackNearest(const Ray& ray, BvhNode* root, RayIntersection& intersection, Surface** surfaces) const {
 
-	BvhNode* stack[64];
+	BvhNode* stack[1024];
 	BvhNode** stack_ptr = stack;
 	
 	float minDistace = FLT_MAX;
@@ -534,13 +534,9 @@ bool BVH::intersectStackNearest(const Ray& ray, BvhNode* root, RayIntersection& 
 			
 			int leafSurfaceIndex;
 			bool leafIntersected = this->intersectRayWithLeaf(ray, currNode, intersection, minDistace, leafSurfaceIndex, surfaces);
-			if( leafIntersected ){
+			if( leafIntersected )
 				surfaceIntersectionFound = true;
-				//if( distance < minDistace ){
-				//	minDistace = distance;
-				//	intersection = dummyIntersection;
-				//}
-			}
+			
 			// pop 
 			currNode = *--stack_ptr;
 		}
@@ -550,7 +546,7 @@ bool BVH::intersectStackNearest(const Ray& ray, BvhNode* root, RayIntersection& 
 
 bool BVH::intersectStackVisibility(const Ray& ray, BvhNode* root, Surface** surfaces) const{
 
-	BvhNode* stack[256];
+	BvhNode* stack[1024];
 	BvhNode** stack_ptr = stack;
 	BvhNode* currNode;
 
