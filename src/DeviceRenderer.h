@@ -40,13 +40,15 @@ public:
 						m_Width(width),m_Height(height){}
 
 
+	HOST void allocateCudaIntersectionBuffer();
+
 	HOST void renderToGLPixelBuffer(GLuint pbo)const;
 	HOST void renderToHostBuffer(void* h_buffer, unsigned int buffer_len)const;	// call to render only once.
 
 	// h_Dscene pointer must be the one returned form DeviceSceneHandler::getDeviceSceneHostPointer()
 	// intersectionBuffer and bufferSize must be created from DeviceRayIntersectionHandler
 	HOST void renderSceneToGLPixelBuffer(DScene* h_Dscene, DRayIntersection* intersectionBuffer, int bufferSize, GLuint pbo) const; 
-	HOST void renderSceneToHostBuffer(DScene* h_Dscene, DRayIntersection* intersectionBuffer, int bufferSize, void* imageBuffer, int imageBufferSize);
+	HOST void renderSceneToHostBuffer(DScene* h_Dscene, cudaIntersection_t* intersectionBuffer, int bufferSize, void* imageBuffer, int imageBufferSize);
 
 	HOST void setCamera(Camera* d_camera);	// d_camera must point to GPU memory
 	HOST int getWidth()const	{ return m_Width;}
@@ -71,6 +73,9 @@ private:
 
 	int m_Width;
 	int m_Height;
+
+	cudaIntersection_t* m_CudaHostIntersection;	// points to host struct containing device buffers
+	cudaIntersection_t* m_CudaDeviceIntersection;	// points to device struct containing device buffers
 };
 
 #endif

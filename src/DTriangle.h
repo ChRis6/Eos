@@ -43,12 +43,12 @@ public: // constructor
 public: // device methods
 	DEVICE bool hit(const Ray& ray, DRayIntersection& intersection, float& distance);
 	DEVICE bool hit(const Ray& ray, DRayIntersection* intersection, float& distance);
+	DEVICE bool hit(const Ray& ray, cudaIntersection_t* intersection, float& distance, int threadID);
 
 	DEVICE void setTransformation(const glm::mat4& mat);
 	DEVICE const glm::mat4& getTransformation();
 	DEVICE const glm::mat4& getInverseTrasformation();
 	DEVICE const glm::mat4& getInverseTransposeTransformation();
-	DEVICE const DMaterial& getMaterial();
 	DEVICE int getMaterialIndex() const{ return m_MaterialIndex;}
 
 	DEVICE glm::vec3 getV1()	{ return m_V1;}
@@ -73,7 +73,6 @@ public:
 	glm::mat4 m_Inverse;
 	glm::mat4 m_InverseTranspose;
 
-	DMaterial m_Material;
 	int m_MaterialIndex;
 };
 #endif

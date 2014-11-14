@@ -35,7 +35,7 @@ __global__ void __oneThreadPerPixel_kernel(){
 
 __global__ void __renderToBuffer_kernel(char* buffer, unsigned int buffer_len, Camera* camera, DScene* scene, DRayTracer* rayTracer, int width, int height){
 	
-	
+	/*
     int pi = (blockIdx.x * blockDim.x + threadIdx.x);
     int pj = (blockIdx.y * blockDim.y + threadIdx.y);
     extern __shared__ BvhNode* bvh_stack[];
@@ -64,12 +64,13 @@ __global__ void __renderToBuffer_kernel(char* buffer, unsigned int buffer_len, C
         buffer[1 +  4* (pi + pj * width)]  = floor(color.y == 1.0 ? 255 : fminf(color.y * 256.0f, 255.0f));
         buffer[2 +  4* (pi + pj * width)]  = floor(color.z == 1.0 ? 255 : fminf(color.z * 256.0f, 255.0f));
         buffer[3 +  4* (pi + pj * width)]  = (char)255;
-    }     
+    } 
+    */    
 
 }
 
 __global__ void __calculateIntersections_kernel(Camera* camera,
-                                                DRayIntersection* intersectionBuffer, int intersectionBufferSize, 
+                                                cudaIntersection_t* intersectionBuffer, int intersectionBufferSize, 
                                                 DTriangle* trianglesBuffer, int trianglesBufferSize,
                                                 BvhNode* bvh, int width, int height){
 
@@ -77,8 +78,6 @@ __global__ void __calculateIntersections_kernel(Camera* camera,
     int pj = (blockIdx.y * blockDim.y + threadIdx.y);
 
     int threadID = width * pj + pi;
-
-    
 
     if ( pi < width && pj < height){
         Ray ray;
@@ -93,18 +92,47 @@ __global__ void __calculateIntersections_kernel(Camera* camera,
 
 __global__ void __shadeIntersectionsToBuffer_kernel(uchar4* imageBuffer, unsigned int imageSize, DRayTracer* rayTracer, Camera* camera,
                                                     DLightSource* lights, int numLights,
-                                                    DRayIntersection* intersectionBuffer, int intersectionBufferSize,
+                                                    cudaIntersection_t* intersectionBuffer, int intersectionBufferSize,
                                                     DMaterial* materialsBuffer, int materialsBufferSize, 
                                                     int width, int height){
 
 
-    int pi = (blockIdx.x * blockDim.x + threadIdx.x);
-    int pj = (blockIdx.y * blockDim.y + threadIdx.y);
-    int threadID = width * pj + pi;
-    if( pi < width && pj < height ){
+    //int pi = (blockIdx.x * blockDim.x + threadIdx.x);
+    //int pj = (blockIdx.y * blockDim.y + threadIdx.y);
     
-        glm::vec4 color = rayTracer->shadeIntersectionNew(camera, intersectionBuffer, lights, numLights, materialsBuffer, materialsBufferSize, threadID);
+    int threadID = width * (blockIdx.y * blockDim.y + threadIdx.y) + (blockIdx.x * blockDim.x + threadIdx.x);
+    if( (blockIdx.x * blockDim.x + threadIdx.x) < width && (blockIdx.y * blockDim.y + threadIdx.y) < height ){
+    
+        //glm::vec4 color = rayTracer->shadeIntersectionNew(camera, intersectionBuffer, lights, numLights, materialsBuffer, materialsBufferSize, threadID);
+        const glm::vec4& cameraPosVec4       = glm::vec4(camera->getPosition(),1.0f);
+        const DMaterial& intersectionMaterial = materialsBuffer[ intersectionBuffer->materialsIndices[threadID]];
+        const glm::vec4& intersectionPointInWorld  = intersectionBuffer->points[threadID];
+        const glm::vec4& intersectionNormalInWorld = intersectionBuffer->normals[threadID];
         
+        glm::vec4 color(0.0f);
+        float dot;
+        
+        //#pragma unroll 2
+        for( int i = 0 ; i < numLights; i++){
+            
+            const glm::vec4& intersectionToLight = glm::normalize(lights[i].getPosition() - intersectionPointInWorld);
+            const glm::vec4& viewVector          = glm::normalize(cameraPosVec4- intersectionPointInWorld);
+            //const glm::vec4& reflectedVector     = glm::normalize((2.0f * glm::dot(intersectionNormalInWorld, intersectionToLight) * intersectionNormalInWorld) - intersectionToLight);
+            const glm::vec4& reflectedVector     = glm::reflect( -intersectionToLight, intersectionNormalInWorld );
+            // calculate diffuse color
+            dot = glm::dot(intersectionToLight, intersectionNormalInWorld);
+            if( dot > 0.0f){
+                color += dot * intersectionMaterial.getDiffuseColor() * lights[i].getColor();
+
+                dot = glm::dot( glm::normalize(cameraPosVec4 - intersectionPointInWorld), reflectedVector);
+                if( dot > 0.0f){
+                    float specularTerm = glm::pow(dot, (float)intersectionMaterial.getShininess());
+                    color += specularTerm * lights[i].getColor() * intersectionMaterial.getSpecularColor();
+                }
+            }
+        }
+
+
         uchar4 ucharColor;
         ucharColor.x = floor(color.x == 1.0 ? 255 : fminf(color.x * 256.0f, 255.0f));
         ucharColor.y = floor(color.y == 1.0 ? 255 : fminf(color.y * 256.0f, 255.0f));
@@ -119,18 +147,18 @@ __global__ void __shadeIntersectionsToBuffer_kernel(uchar4* imageBuffer, unsigne
 /* ================================= DEVICE FUNCTIONS ========================*/
 
 
-DEVICE void traverseTreeAndStore(const Ray& ray, DRayIntersection* intersectionBuffer, int intersectionBufferSize, DTriangle* trianglesBuffer, int trianglesBufferSize, BvhNode* bvh, int threadID ){
+DEVICE void traverseTreeAndStore(const Ray& ray, cudaIntersection_t* intersectionBuffer, int intersectionBufferSize, DTriangle* trianglesBuffer, int trianglesBufferSize, BvhNode* bvh, int threadID ){
 
-    BvhNode* stackLocal[32];
+    BvhNode* stackLocal[128];
     BvhNode** stack_ptr = stackLocal;
-    float minDistace = 99999.0f;
-    
+    float minDistace = 999.0f;
+    float minBoxDistance = 0.0f;
     BvhNode* currNode = &bvh[0];    // bvh
 
-    if( currNode->aabb.intersectWithRay(ray, minDistace) == false )
-        return;
+    //if( currNode->aabb.intersectWithRayNew(ray) == false )
+    //    return;
 
-    minDistace = 99999.0f;
+    minDistace = 9999.0f;
     // push null
     *stack_ptr++ = NULL;
 
@@ -138,40 +166,62 @@ DEVICE void traverseTreeAndStore(const Ray& ray, DRayIntersection* intersectionB
 
         if( currNode->type == BVH_NODE ){
 
-            float leftDistance;
-            //float rightDistance;
+            //float leftDistance = 9999.0f;
+            //float rightDistance = 9999.0f;
 
-
+            /*
             BvhNode* leftChild  = &bvh[currNode->leftChildIndex];   
             BvhNode* rightChild = &bvh[currNode->rightChildIndex];
 
-            bool leftChildIntersected = leftChild->aabb.intersectWithRay(ray, leftDistance);
-            bool rightChildIntersected = rightChild->aabb.intersectWithRay(ray, leftDistance);
+            bool leftChildIntersected = leftChild->aabb.intersectWithRayOptimized(ray, 1e-3, 9999.0f);
+            bool rightChildIntersected = rightChild->aabb.intersectWithRayOptimized(ray, 1e-3, 9999.0f);
+            //bool rightChildIntersected = rightChild->aabb.intersectWithRayNew(ray, rightDistance);
+            //bool leftChildIntersected = leftChild->aabb.intersectWithRayNew(ray, leftDistance);
 
-            if(leftChildIntersected){
+            if( leftChildIntersected){
                 currNode = leftChild;
-                if( rightChildIntersected){
-
+                if( rightChildIntersected)
                     // push right child to stack
                     *stack_ptr++ = rightChild;
-                }
             }
             else if(rightChildIntersected){
                 currNode = rightChild;
-            } 
+            }
             else{ // none of  the children hit the ray. POP stack
+                currNode = *--stack_ptr;
+            }
+            */
+
+            if( currNode->aabb.intersectWithRayOptimized(ray, 0.001, 999.0f) ){
+
+                
+                if( ray.m_sign[currNode->splitAxis] ){
+                    //push left child
+                    *stack_ptr++ = &bvh[currNode->leftChildIndex];
+                    currNode = &bvh[currNode->rightChildIndex];
+                }
+                else{
+                    *stack_ptr++ = &bvh[currNode->rightChildIndex];
+                    currNode = &bvh[currNode->leftChildIndex];
+                }
+
+            }
+            else{
+                // pop
                 currNode = *--stack_ptr;
             }
         }
         else{
-            intersectRayWithLeafNode(ray, currNode, &intersectionBuffer[threadID], minDistace, trianglesBuffer);
+            intersectRayWithLeafNode(ray, currNode, intersectionBuffer, minDistace, trianglesBuffer, threadID);
+            minBoxDistance = minDistace;
             // pop 
             currNode = *--stack_ptr;
         }
+
     }
 }
 
-DEVICE bool intersectRayWithLeafNode(const Ray& ray, BvhNode* node, DRayIntersection* intersection, float& distance, DTriangle* triangles){
+DEVICE bool intersectRayWithLeafNode(const Ray& ray, BvhNode* node, cudaIntersection_t* intersection, float& distance, DTriangle* triangles, int threadID){
     Ray localRay;
     DTriangle* minTri = NULL;
 
@@ -184,14 +234,16 @@ DEVICE bool intersectRayWithLeafNode(const Ray& ray, BvhNode* node, DRayIntersec
         localRay.setOrigin(glm::vec3( tri->getInverseTrasformation() * glm::vec4(ray.getOrigin(), 1.0f)));
         localRay.setDirection(glm::vec3( tri->getInverseTrasformation() * glm::vec4(ray.getDirection(), 0.0f)));
 
-        if( tri->hit(localRay, intersection, distance) )
+        if( tri->hit(localRay, intersection, distance, threadID) )
             minTri = tri;
         
     }
 
     if( minTri != NULL ){
-        intersection->setIntersectionPoint(minTri->getTransformation() * intersection->getIntersectionPoint());
-        intersection->setIntersectionNormal(minTri->getInverseTransposeTransformation() * intersection->getIntersectionNormal());
+        //intersection->setIntersectionPoint(minTri->getTransformation() * intersection->getIntersectionPoint());
+        //intersection->setIntersectionNormal(minTri->getInverseTransposeTransformation() * intersection->getIntersectionNormal());
+        intersection->points[threadID]  = minTri->getTransformation() * intersection->points[threadID];
+        intersection->normals[threadID] = minTri->getInverseTransposeTransformation() * intersection->normals[threadID];
         return true;
     }
     return false;
@@ -216,7 +268,7 @@ void renderToBuffer(char* buffer, unsigned int buffer_len, Camera* camera, DScen
 	__renderToBuffer_kernel<<<numBlocks, threadsPerBlock, 30 >>>(buffer, buffer_len, camera, scene, rayTracer, width, height);
 }
 
-void calculateIntersections(Camera* camera, DRayIntersection* intersectionBuffer, int intersectionBufferSize,
+void calculateIntersections(Camera* camera, cudaIntersection_t* intersectionBuffer, int intersectionBufferSize,
                             DTriangle* trianglesBuffer, int trianglesBufferSize, BvhNode* bvh,
                             int width, int height, int blockdim[], int tpblock[]){
 
@@ -239,7 +291,7 @@ void calculateIntersections(Camera* camera, DRayIntersection* intersectionBuffer
 
 void shadeIntersectionsToBuffer(uchar4* imageBuffer, unsigned int imageSize, DRayTracer* rayTracer,
                                 Camera* camera, DLightSource* lights, int numLights,
-                                DRayIntersection* intersectionBuffer, int intersectionBufferSize,
+                                cudaIntersection_t* intersectionBuffer, int intersectionBufferSize,
                                 DMaterial* materialsBuffer, int materialsBufferSize, 
                                 int width, int height, int blockdim[], int tpblockp[]){
 

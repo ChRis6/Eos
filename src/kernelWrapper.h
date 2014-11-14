@@ -31,9 +31,9 @@
 
 extern "C" void threadPerPixel_kernel();
 extern "C" void renderToBuffer(char* buffer, unsigned int buffer_len, Camera* camera, DScene* scene, DRayTracer* rayTracer, int blockdim[], int tpblock[], int width, int height);
-extern "C" void calculateIntersections(Camera* camera, DRayIntersection* intersectionBuffer, int intersectionBufferSize, DTriangle* trianglesBuffer, int trianglesBufferSize, BvhNode* bvh,
+extern "C" void calculateIntersections(Camera* camera, cudaIntersection_t* intersectionBuffer, int intersectionBufferSize, DTriangle* trianglesBuffer, int trianglesBufferSize, BvhNode* bvh,
 									   int width, int height, int blockdim[], int tpblock[]);
-extern "C" void shadeIntersectionsToBuffer(uchar4* imageBuffer, unsigned int imageSize, DRayTracer* rayTracer, Camera* camera, DLightSource* lights, int numLights, DRayIntersection* intersectionBuffer, int intersectionBufferSize,
+extern "C" void shadeIntersectionsToBuffer(uchar4* imageBuffer, unsigned int imageSize, DRayTracer* rayTracer, Camera* camera, DLightSource* lights, int numLights, cudaIntersection_t* intersectionBuffer, int intersectionBufferSize,
 										 DMaterial* materialsBuffer, int materialsBufferSize, 
 										 int width, int height, int blockdim[], int tpblockp[]);
 #endif

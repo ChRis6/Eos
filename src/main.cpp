@@ -43,8 +43,8 @@
 #include "stb_image_write.h"
 
 
-#define WINDOW_WIDTH   1920  // in pixels
-#define WINDOW_HEIGHT  1080 // in pixels
+#define WINDOW_WIDTH   1280  // in pixels
+#define WINDOW_HEIGHT  720 // in pixels
 #define FOV            70
 
 #ifndef EPSILON
@@ -457,7 +457,7 @@ int main(int argc, char **argv)
 
 
 
-   char* triangleMeshFileName = "objmodels/monkey.obj";
+   char* triangleMeshFileName = "objmodels/bunny.obj";
    TriangleMesh* mesh = new TriangleMesh();
    glm::mat4 meshTransformation = glm::translate(glm::mat4(1.0f), glm::vec3(2.0f, 0.0f, -1.0f));
    
@@ -483,9 +483,6 @@ int main(int argc, char **argv)
    
    //meshGrid->loadFromFile(triangleMeshGridFileName);
    //scene.addTriangleMesh(meshGrid);
-
-
-
 
 
    char* triangleMeshGrid1FileName = "objmodels/grid_back.obj";
@@ -544,6 +541,7 @@ int main(int argc, char **argv)
    DRayTracer* d_tracer = tracerHandler.getDeviceTracer();
 
    DeviceRenderer deviceRenderer(d_scene, d_tracer, d_camera, WINDOW_WIDTH, WINDOW_HEIGHT);
+   deviceRenderer.allocateCudaIntersectionBuffer();
 
    DeviceRayIntersectionHandler intersectionHandler;
    DRayIntersection* d_IntersectionBuffer = intersectionHandler.createDRayIntersectionBuffer( WINDOW_WIDTH * WINDOW_HEIGHT);
@@ -557,7 +555,7 @@ int main(int argc, char **argv)
       
       start = getRealTime();
       //deviceRenderer.renderToHostBuffer(imageBuffer, WINDOW_WIDTH * WINDOW_HEIGHT * 4);
-      deviceRenderer.renderSceneToHostBuffer(h_DScene, d_IntersectionBuffer, dRayIntersectionBufferSize, imageBuffer, WINDOW_WIDTH * WINDOW_HEIGHT * 4);
+      deviceRenderer.renderSceneToHostBuffer(h_DScene, NULL, dRayIntersectionBufferSize, imageBuffer, WINDOW_WIDTH * WINDOW_HEIGHT * 4);
       end = getRealTime();
 
       diff = end - start;

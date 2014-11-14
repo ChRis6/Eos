@@ -41,9 +41,6 @@ DEVICE const glm::mat4& DTriangle::getInverseTransposeTransformation(){
 	return m_InverseTranspose;
 }
 
-DEVICE const DMaterial& DTriangle::getMaterial(){
-	return m_Material;
-}
 
 DEVICE bool DTriangle::hit(const Ray& ray, DRayIntersection& intersection, float& distance){
 	
@@ -54,7 +51,6 @@ DEVICE bool DTriangle::hit(const Ray& ray, DRayIntersection& intersection, float
 
 			intersection.setIntersectionPoint(glm::vec4(ray.getOrigin() + barCoords.x * ray.getDirection(), 1.0f));	// set vec4 intersection point
 			intersection.setIntersectionNormal(glm::vec4(glm::normalize(m_N1 * ( 1.0f - barCoords.y - barCoords.z) + (m_N2 * barCoords.y) + (m_N3*barCoords.z)), 0.0f));
-			intersection.setIntersectionMaterial(this->getMaterial());
 			intersection.setIntersectionMaterialIndex(this->getMaterialIndex());
 			return true;
 		}
@@ -71,13 +67,30 @@ DEVICE bool DTriangle::hit(const Ray& ray, DRayIntersection* intersection, float
 
 			intersection->setIntersectionPoint(glm::vec4(ray.getOrigin() + barCoords.x * ray.getDirection(), 1.0f) );
 			intersection->setIntersectionNormal(glm::vec4(glm::normalize(m_N1 * ( 1.0f - barCoords.y - barCoords.z) + (m_N2 * barCoords.y) + (m_N3*barCoords.z)), 0.0f));
-			intersection->setIntersectionMaterial(this->getMaterial());
 			intersection->setIntersectionMaterialIndex(this->getMaterialIndex());
 			return true;
 		}
 	}
 	return false;
 }
+
+DEVICE bool DTriangle::hit(const Ray& ray, cudaIntersection_t* intersection, float& distance, int threadID){
+
+	glm::vec3 barCoords(0.0f);
+	if( this->rayTriangleIntersectionTest( ray, barCoords)){
+		if( barCoords.x < distance){
+			distance = barCoords.x;	
+
+			intersection->points[threadID]  = glm::vec4(ray.getOrigin() + barCoords.x * ray.getDirection(), 1.0f);
+			intersection->normals[threadID] = (glm::vec4(glm::normalize(m_N1 * ( 1.0f - barCoords.y - barCoords.z) + (m_N2 * barCoords.y) + (m_N3*barCoords.z)), 0.0f));
+			intersection->materialsIndices[threadID] = this->getMaterialIndex();
+			return true;
+		}
+	}
+	return false;
+
+}
+
 
 DEVICE bool DTriangle::rayTriangleIntersectionTest(const Ray& ray, glm::vec3& baryCoords){
 

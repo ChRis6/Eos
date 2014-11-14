@@ -28,15 +28,15 @@
 
 __global__ void __oneThreadPerPixel_kernel();
 __global__ void __renderToBuffer_kernel(char* buffer, unsigned int buffer_len, Camera* camera, DScene* scene, DRayTracer* rayTracer, int width, int height);
-__global__ void __calculateIntersections_kernel(Camera* camera, DRayIntersection* intersectionBuffer, int intersectionBufferSize, 
+__global__ void __calculateIntersections_kernel(Camera* camera, cudaIntersection_t* intersectionBuffer, int intersectionBufferSize, 
 	                                            DTriangle* trianglesBuffer, int trianglesBufferSize, BvhNode* bvh, int width, int height);
 __global__ void __shadeIntersectionsToBuffer_kernel(char* imageBuffer, unsigned int imageSize, DRayTracer* rayTracer, Camera* camera,
 													DLightSource* lights, int numLights,
-													DRayIntersection* intersectionBuffer, int intersectionBufferSize,
+													cudaIntersection_t* intersectionBuffer, int intersectionBufferSize,
 													DMaterial* materialsBuffer, int materialsBufferSize, 
 										 			int width, int height);
 
 
-DEVICE void traverseTreeAndStore(const Ray& ray, DRayIntersection* intersectionBuffer, int intersectionBufferSize, DTriangle* trianglesBuffer, int trianglesBufferSize, BvhNode* bvh, int threadID );
-DEVICE bool intersectRayWithLeafNode(const Ray& ray, BvhNode* node, DRayIntersection* intersection, float& distance, DTriangle* triangles);
+DEVICE void traverseTreeAndStore(const Ray& ray, cudaIntersection_t* intersectionBuffer, int intersectionBufferSize, DTriangle* trianglesBuffer, int trianglesBufferSize, BvhNode* bvh, int threadID );
+DEVICE bool intersectRayWithLeafNode(const Ray& ray, BvhNode* node, cudaIntersection_t* intersection, float& distance, DTriangle* triangles, int threadID);
 #endif

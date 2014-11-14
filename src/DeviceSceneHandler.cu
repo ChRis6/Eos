@@ -111,18 +111,7 @@ HOST DScene* DeviceSceneHandler::createDeviceScene(Scene* h_scene){
 		h_DTriangles[i].m_InverseTranspose = h_Triangle->getInverseTransposeTransformation();
 
 		// material index
-		h_DTriangles[i].m_MaterialIndex = h_Triangle->getMaterialIndex();
-		// material
-		DMaterial h_DMaterial;
-		const Material& h_TriangleMaterial = h_Triangle->getMaterial(); 
-		
-		h_DMaterial.m_Diffuse           = h_TriangleMaterial.getDiffuseColor();
-		h_DMaterial.m_Specular          = h_TriangleMaterial.getSpecularColor();
-		h_DMaterial.m_AmbientIntensity  = h_TriangleMaterial.getAmbientIntensity();
-		h_DMaterial.m_Reflectivity      = h_TriangleMaterial.getReflectiveIntensity();
-		h_DMaterial.m_shininess         = h_TriangleMaterial.getShininess();
-
-		h_DTriangles[i].m_Material = h_DMaterial;  
+		h_DTriangles[i].m_MaterialIndex = h_Triangle->getMaterialIndex(); 
 	}
 
 	cudaErrorCheck( cudaMalloc((void**)&d_TriangleArray, sizeof(DTriangle) * numTriangles));

@@ -53,6 +53,7 @@ HOST void DeviceRenderer::renderToGLPixelBuffer(GLuint pbo)const {
 }
 
 HOST void DeviceRenderer::renderSceneToGLPixelBuffer(DScene* h_Dscene, DRayIntersection* intersectionBuffer, int bufferSize, GLuint pbo) const{
+	/*
 	Camera* d_camera;
 	DRayTracer* d_tracer;
 	void* d_pbo = NULL;
@@ -95,6 +96,7 @@ HOST void DeviceRenderer::renderSceneToGLPixelBuffer(DScene* h_Dscene, DRayInter
 
 	cudaErrorCheck( cudaDeviceSynchronize());
 	cudaErrorCheck( cudaGraphicsUnmapResources( 1, &cudaResourcePBO, 0));
+	*/
 }
 
 HOST void DeviceRenderer::renderToCudaBuffer(void* d_buffer, unsigned int buffer_len)const{
@@ -141,7 +143,7 @@ HOST void  DeviceRenderer::renderToHostBuffer(void* h_buffer, unsigned int buffe
 }
 
 
-HOST void DeviceRenderer::renderSceneToHostBuffer(DScene* h_Dscene, DRayIntersection* intersectionBuffer, int bufferSize, void* imageBuffer, int imageBufferSize){
+HOST void DeviceRenderer::renderSceneToHostBuffer(DScene* h_Dscene, cudaIntersection_t* intersectionBuffer, int bufferSize, void* imageBuffer, int imageBufferSize){
 	Camera* d_camera;
 	DRayTracer* d_tracer;
 	void* d_image;
@@ -162,8 +164,14 @@ HOST void DeviceRenderer::renderSceneToHostBuffer(DScene* h_Dscene, DRayIntersec
 
 	d_camera = this->getDeviceCamera();
 
-	cudaErrorCheck( cudaMemset(intersectionBuffer, 0, bufferSize * sizeof(DRayIntersection)));
-	calculateIntersections(d_camera, intersectionBuffer, bufferSize, h_Dscene->m_Triangles, h_Dscene->m_NumTriangles,
+	// reset intersections
+
+	//cudaErrorCheck( cudaMemset(intersectionBuffer, 0, bufferSize * sizeof(DRayIntersection)));
+	cudaErrorCheck( cudaMemset(m_CudaHostIntersection->points, 0, sizeof(glm::vec4) * width * height));
+	cudaErrorCheck( cudaMemset(m_CudaHostIntersection->normals, 0, sizeof(glm::vec4) * width * height));
+	cudaErrorCheck( cudaMemset(m_CudaHostIntersection->materialsIndices, 0, sizeof(int) * width * height));
+
+	calculateIntersections(d_camera, m_CudaDeviceIntersection, bufferSize, h_Dscene->m_Triangles, h_Dscene->m_NumTriangles,
 						   h_Dscene->m_BvhBuffer, width, height, blockdim, threadPerBlock);
 
 	d_tracer = this->getDeviceRayTracer();
@@ -171,7 +179,7 @@ HOST void DeviceRenderer::renderSceneToHostBuffer(DScene* h_Dscene, DRayIntersec
 	cudaErrorCheck( cudaDeviceSynchronize());
 
 		// shadeIntersections
-	shadeIntersectionsToBuffer((uchar4*)d_image, imageBufferSize, d_tracer, d_camera, h_Dscene->m_Lights, h_Dscene->m_NumLights, intersectionBuffer, bufferSize, 
+	shadeIntersectionsToBuffer((uchar4*)d_image, imageBufferSize, d_tracer, d_camera, h_Dscene->m_Lights, h_Dscene->m_NumLights, m_CudaDeviceIntersection, bufferSize, 
 										h_Dscene->m_Materials, h_Dscene->m_NumMaterials, width, height, blockdim, threadPerBlock);
 
 	cudaErrorCheck( cudaDeviceSynchronize());
@@ -184,3 +192,35 @@ HOST void DeviceRenderer::setCamera(Camera* d_camera){
 	m_Camera = d_camera;
 }
 
+HOST void DeviceRenderer::allocateCudaIntersectionBuffer(){
+	// allocate cudaIntersection		
+	glm::vec4* d_pointsVec4;
+	glm::vec4* d_normalsVec4;
+	int* d_materialIndices;
+	int width;
+	int height;
+
+	width = this->getWidth();
+	height = this->getHeight();
+
+	cudaErrorCheck( cudaMalloc((void**) &d_pointsVec4, sizeof(glm::vec4) * width * height));
+	cudaErrorCheck( cudaMalloc((void**) &d_normalsVec4, sizeof(glm::vec4) * width * height));
+	cudaErrorCheck( cudaMalloc((void**) &d_materialIndices, sizeof(int) * width * height));
+
+	cudaErrorCheck( cudaMemset(d_pointsVec4, 0, sizeof(glm::vec4) * width * height));
+	cudaErrorCheck( cudaMemset(d_normalsVec4, 0, sizeof(glm::vec4) * width * height));
+	cudaErrorCheck( cudaMemset(d_materialIndices, 0, sizeof(int) * width * height));
+
+	
+	cudaIntersection_t* deviceIntersection;
+
+	m_CudaHostIntersection = new cudaIntersection_t;
+	m_CudaHostIntersection->points  = d_pointsVec4 ;
+	m_CudaHostIntersection->normals = d_normalsVec4;
+	m_CudaHostIntersection->materialsIndices = d_materialIndices;
+
+	cudaErrorCheck( cudaMalloc((void**) &deviceIntersection, sizeof(cudaIntersection_t)));
+	cudaErrorCheck( cudaMemcpy( deviceIntersection, m_CudaHostIntersection, sizeof(cudaIntersection_t), cudaMemcpyHostToDevice));
+
+	m_CudaDeviceIntersection = deviceIntersection;
+}

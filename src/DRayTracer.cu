@@ -81,7 +81,7 @@ DEVICE glm::vec4 DRayTracer::calcPhongWithMaterials(Camera* camera, DLightSource
 	float dot = glm::dot( glm::normalize(cameraPosVec4 - intersectionPointInWorld), reflectedVector);
 	if( dot > 0.0f){
 		float specularTerm = glm::pow(dot, (float)intersectionMaterial.getShininess());
-		color += specularTerm * lightSource->getColor() * intersection.getIntersectionMaterial().getSpecularColor();
+		color += specularTerm * lightSource->getColor() * intersectionMaterial.getSpecularColor();
 	}
 
 	return this->findDiffuseColorWithMaterials(lightSource, glm::normalize(lightSource->getPosition() - intersectionPointInWorld), intersection, materials, numMaterials) + color;
@@ -89,6 +89,7 @@ DEVICE glm::vec4 DRayTracer::calcPhongWithMaterials(Camera* camera, DLightSource
 }
 
 DEVICE glm::vec4 DRayTracer::calcPhong(Camera* camera, DLightSource* lightSource, DRayIntersection& intersection){
+/*
 	glm::vec4 color(0.0f, 0.0f, 0.0f, 0.0f);
 	//glm::vec4 specularColor(0.0f, 0.0f, 0.0f, 0.0f);
 	//glm::vec4 intersectionToLight;
@@ -112,7 +113,8 @@ DEVICE glm::vec4 DRayTracer::calcPhong(Camera* camera, DLightSource* lightSource
 	}
 
 	return this->findDiffuseColor(lightSource, glm::normalize(lightSource->getPosition() - intersectionPointInWorld), intersection) + color;
-
+*/
+	return glm::vec4(0.0f);
 }
 
 DEVICE glm::vec4 DRayTracer::findDiffuseColorWithMaterials(DLightSource* lightSource, const glm::vec4& intersectionToLight, DRayIntersection& intersection,
@@ -125,9 +127,11 @@ DEVICE glm::vec4 DRayTracer::findDiffuseColorWithMaterials(DLightSource* lightSo
 }
 
 DEVICE glm::vec4 DRayTracer::findDiffuseColor(DLightSource* lightSource, const glm::vec4& intersectionToLight, DRayIntersection& intersection){
-	
+/*	
 	const DMaterial& material = intersection.getIntersectionMaterial();
 	float dot = glm::dot(intersectionToLight, intersection.getIntersectionNormal());
 	dot = glm::max(0.0f, dot);
 	return glm::vec4( dot * material.getDiffuseColor() * lightSource->getColor());
+*/
+	return glm::vec4(0.0f);
 }
