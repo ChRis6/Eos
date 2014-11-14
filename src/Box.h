@@ -34,7 +34,7 @@ class Box{
 
 public:
 	Box(): m_MinVertex(0.0f), m_MaxVertex(0.0f){ m_Bounds[0] = m_MinVertex; m_Bounds[1] = m_MaxVertex;}
-	Box(const glm::vec3& minVertex, const glm::vec3& maxVertex): m_MinVertex(minVertex), m_MaxVertex(maxVertex){ m_Bounds[0] = m_MinVertex; m_Bounds[1] = m_MaxVertex;}
+	Box(const glm::vec3& minVertex, const glm::vec3& maxVertex): m_MinVertex(minVertex), m_MaxVertex(maxVertex){ m_Bounds[0] = m_MinVertex; m_Bounds[1] = m_MaxVertex; }
 	Box(const glm::vec3& vertex): m_MinVertex(vertex), m_MaxVertex(vertex){ m_Bounds[0] = m_MinVertex; m_Bounds[1] = m_MaxVertex;}
 	Box(const Box& other) {m_MinVertex = other.getMinVertex(); m_MaxVertex = other.getMaxVertex();}
 
@@ -51,12 +51,12 @@ public:
 	void expandToIncludeBox(const Box& newBox);
 	void expandToIncludeVertex(const glm::vec3& vertex);
 	HOST DEVICE bool intersectWithRay(const Ray& ray, float& distance) const;
+	HOST DEVICE bool intersectWithRayNew(const Ray& ray);
 	HOST DEVICE bool intersectWithRayOptimized(const Ray& ray, float t0, float t1) const;
 	void transformBoundingBox(const glm::mat4& transformation);
 	bool isPointInBox(glm::vec3& point);
 
 private:
-
 	glm::vec3 m_Bounds[2];
 
 	glm::vec3 m_MinVertex;

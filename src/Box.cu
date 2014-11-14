@@ -27,11 +27,13 @@
 void Box::setMinVertex(const glm::vec3& min){
 	m_MinVertex = min;
 	m_Bounds[0] = min;
+	
 }
 
 void Box::setMaxVertex(const glm::vec3& max){
 	m_MaxVertex = max;
 	m_Bounds[1] = max;
+	
 }
 
 const glm::vec3& Box::getMinVertex() const{
@@ -56,6 +58,7 @@ void Box::expandToIncludeBox(const Box& newBox){
 
 	m_Bounds[0] = m_MinVertex;
 	m_Bounds[1] = m_MaxVertex;
+
 }
 
 HOST DEVICE bool Box::intersectWithRay(const Ray& ray, float& distance) const{
@@ -126,9 +129,11 @@ void Box::transformBoundingBox(const glm::mat4& transformation){
 	newMax = glm::max(transformedMax, transformedMin);
 
 	m_MaxVertex = glm::vec3(newMax);
-	m_MinVertex = glm::vec3(newMin); 
+	m_MinVertex = glm::vec3(newMin);
+
 	m_Bounds[0] = m_MinVertex;
-	m_Bounds[1] = m_MaxVertex;
+	m_Bounds[1] = m_MaxVertex; 
+
 }
 
 float Box::computeVolume(){
@@ -157,9 +162,11 @@ void Box::expandToIncludeVertex(const glm::vec3& vertex){
 	m_MaxVertex.x = glm::max(m_MaxVertex.x, vertex.x);
 	m_MaxVertex.y = glm::max(m_MaxVertex.y, vertex.y);
 	m_MaxVertex.z = glm::max(m_MaxVertex.z, vertex.z);
-
+	
 	m_Bounds[0] = m_MinVertex;
 	m_Bounds[1] = m_MaxVertex;
+
+
 }
 
 int Box::getBiggestDimension() const{
@@ -202,15 +209,30 @@ bool Box::isPointInBox(glm::vec3& point){
 	return false;
 }
 
-HOST DEVICE bool Box::intersectWithRayOptimized(const Ray& ray, float t0, float t1) const{
 
+
+HOST DEVICE bool Box::intersectWithRayNew(const Ray& ray){
+
+   glm::vec3 tmin = (m_MinVertex - ray.getOrigin()) * ray.getInvDirection();
+   glm::vec3 tmax = (m_MaxVertex - ray.getOrigin()) * ray.getInvDirection();
+   
+   glm::vec3 real_min = glm::min(tmin, tmax);
+   glm::vec3 real_max = glm::max(tmin, tmax);
+   
+   float minmax = fminf( fminf(real_max.x, real_max.y), real_max.z);
+   float maxmin = fmaxf( fmaxf(real_min.x, real_min.y), real_min.z);
+   	
+   return ( minmax >= maxmin);
+}
+
+HOST DEVICE bool Box::intersectWithRayOptimized(const Ray& ray, float t0, float t1) const{
 	float tmin,tmax,tymin,tymax,tzmin,tzmax;
+	
 	const glm::vec3& rayOrigin = ray.getOrigin();
 	const glm::vec3& rayInvDirection = ray.getInvDirection();
-
+	
 	tmin = ( m_Bounds[ray.m_sign[0]].x - rayOrigin.x ) * rayInvDirection.x;
 	tmax = ( m_Bounds[1 - ray.m_sign[0]].x - rayOrigin.x) * rayInvDirection.x;
-
 	tymin = ( m_Bounds[ray.m_sign[1]].y - rayOrigin.y ) * rayInvDirection.y;
 	tymax = ( m_Bounds[1 - ray.m_sign[1]].y - rayOrigin.y) * rayInvDirection.y;
 
@@ -218,18 +240,17 @@ HOST DEVICE bool Box::intersectWithRayOptimized(const Ray& ray, float t0, float 
 		return false;
 	if( tymin > tmin )
 		tmin = tymin;
-	if( tymax < tmax)
-		tmax = tymax;
+		if( tymax < tmax)
 
+	tmax = tymax;
 	tzmin = ( m_Bounds[ray.m_sign[2]].z - rayOrigin.z) * rayInvDirection.z ;
 	tzmax = ( m_Bounds[1- ray.m_sign[2]].z - rayOrigin.z) * rayInvDirection.z;
-
 	if( (tmin > tzmax) || (tzmin > tmax))
 		return false;
 	if( tzmin > tmin)
 		tmin = tzmin;
 	if( tzmax < tmax)
 		tmax = tzmax;
-
-	return ( (tmin < t1) && (tmax > t0)); 
+	
+	return ( (tmin < t1) && (tmax > t0));
 }

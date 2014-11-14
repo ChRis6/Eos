@@ -29,7 +29,7 @@
 #include "RayIntersection.h"
 #include <vector>
 
-#define SURFACES_PER_LEAF 6
+#define SURFACES_PER_LEAF 8
 
 enum{
 	BVH_NODE,
@@ -37,7 +37,7 @@ enum{
 };
 
 typedef struct bvhNode_t{
-	char type;
+	int type;
 	Box aabb;
 	int numSurfacesEncapulated;
 	struct bvhNode_t *rightChild;
@@ -45,11 +45,23 @@ typedef struct bvhNode_t{
 	int leftChildIndex;
 	int rightChildIndex;
 	int surfacesIndices[SURFACES_PER_LEAF];
+	int splitAxis;
 }BvhNode;
+
+typedef struct cudaBvhNode{
+	int* type;
+	Box* aabb;
+	int* numSurfacesEncapulated;
+	int* rightChildIndex;
+	int* leftChildIndex;
+
+	// surface Indices  size ??????
+	int* surfacesIndices;
+}cudaBvhNode_t;
 
 /*
  * Bounding Volume Hierarchy
- * One surface per leaf
+ * 
  */
 class BVH{
 public:
@@ -64,9 +76,10 @@ public:
 	int getNodesBufferSize() const 	{ return m_FlatTreePointers.size();}
 private:
 	Box computeBoxWithSurfaces(Surface** surfaces, int start , int end);
+	Box computeBoxWithCentroids(Surface** surfaces, int start , int end);
 
 	void buildTopDown(BvhNode** tree, Surface** surfaces, int start, int end);
-	int topDownSplitIndex(Surface** surfaces, Box parentBox, int start, int end);
+	int topDownSplitIndex(Surface** surfaces, Box parentBox, int start, int end, int* splitAxis);
 
 	Surface* intersectRecursiveNearestHit(const Ray& ray, BvhNode* node, float& minDistance, RayIntersection& intersection, Surface** surfaces, int depth) const;
 	bool 	 intersectRayVisibilityTest(const Ray& ray, BvhNode* node, Surface** surfaces) const;
@@ -75,7 +88,7 @@ private:
 
 	// SAH
 	void buildTopDownSAH(BvhNode** tree, Surface** surfaces, int start, int end);
-	int topDownSplitIndexSAH(Surface** surfaces, Box& parentBox, float& splitCost, int start, int end);	// returns best split index, sets splitCost - cost of split index returned
+	int topDownSplitIndexSAH(Surface** surfaces, Box& parentBox, float& splitCost, int start, int end, int* splitAxis);	// returns best split index, sets splitCost - cost of split index returned
 	void createLeaf(BvhNode* newNode, Surface** surfaces, int start, int end);
 	bool intersectRayWithLeaf(const Ray& ray, BvhNode* leaf, RayIntersection& intersection, float& distance, int& leafSurfaceIndex, Surface** surfaces) const;
 

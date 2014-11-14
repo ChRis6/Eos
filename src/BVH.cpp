@@ -25,7 +25,7 @@
 #include <cfloat>
 #include "BVH.h"
 
-#define SAH_SURFACE_CEIL  800
+#define SAH_SURFACE_CEIL  2000
 #define COST_TRAVERSAL    5
 #define COST_INTERSECTION 10
 
@@ -69,6 +69,24 @@ bool by_Z_compareSurfaces(Surface* a, Surface* b){
 	return aCentroid.z < bCentroid.z;
 }
 
+Box BVH::computeBoxWithCentroids(Surface** surfaces, int start , int end){
+
+	glm::vec4 surfaceCentroid = surfaces[start]->transformation() * glm::vec4( surfaces[start]->getCentroid() ,1.0f);
+	glm::vec3 vec3Centroid = glm::vec3(surfaceCentroid);
+	Box computedBox( vec3Centroid);
+
+	for( int i = start + 1 ; i < end; i++){
+
+		Surface* surface = surfaces[i];
+
+		glm::vec4 surfaceCentroid = surface->transformation() * glm::vec4(surface->getCentroid(), 1.0f);
+		glm::vec3 vec3Centroid = glm::vec3(surfaceCentroid);
+		// expand resulting bounding box
+		computedBox.expandToIncludeVertex(vec3Centroid);
+	}
+	return computedBox;
+
+}
 
 
 
@@ -89,7 +107,7 @@ void BVH::buildTopDown(BvhNode** tree, Surface** surfaces, int start, int end){
 
 	BvhNode* node = new BvhNode;
 	*tree = node;
-
+	int axis;
 	// find bounding box of surfaces
 	node->aabb = this->computeBoxWithSurfaces(surfaces, start, end);
 	node->numSurfacesEncapulated = end - start;
@@ -103,11 +121,12 @@ void BVH::buildTopDown(BvhNode** tree, Surface** surfaces, int start, int end){
 		node->tracedObject = surfaces[0]; 	// get the first surface
 		*/
 		createLeaf(node, surfaces, start, end );
+		node->splitAxis = axis;
 	}
 	else{
 
 		node->type = BVH_NODE;
-		int splitIndex = this->topDownSplitIndex(surfaces, node->aabb, start, end);
+		int splitIndex = this->topDownSplitIndex(surfaces, node->aabb, start, end, &axis);
 
 		// recursion
 		buildTopDown( &(node->leftChild), surfaces, start, splitIndex );
@@ -132,7 +151,7 @@ Box BVH::computeBoxWithSurfaces(Surface** surfaces, int start, int end){
 	return computedBox;
 }
 
-int BVH::topDownSplitIndex(Surface** surfaces, Box parentBox, int start, int end){
+int BVH::topDownSplitIndex(Surface** surfaces, Box parentBox, int start, int end, int* splitAxis){
 
 	int split = 0;
 	int biggestIndex;
@@ -169,6 +188,7 @@ int BVH::topDownSplitIndex(Surface** surfaces, Box parentBox, int start, int end
 	else if( biggestIndex == 2)
 		std::sort(surfaces + start, surfaces + end, by_Z_compareSurfaces);
 
+	*splitAxis = biggestIndex;
 
 	// find mid split
 	for(i = start ; i < end; i++){
@@ -215,7 +235,7 @@ Surface* BVH::intersectRecursiveNearestHit(const Ray& ray, BvhNode* node, float&
 		maxDepthFound = depth;
 	}
 
-	if( node->aabb.intersectWithRayOptimized(ray, 0.0001f, 999999.0f) == true)
+	if( node->aabb.intersectWithRayNew(ray) == true)
 		rayIntersectsBox = true;
 
 	if(rayIntersectsBox){
@@ -267,7 +287,7 @@ bool BVH::intersectRayVisibilityTest(const Ray& ray, BvhNode* node, Surface** su
 	bool leftChildSurfaceIntersected = false;
 	bool rightChildSurfaceIntersected = false;
 
-	intersectsCurrent = node->aabb.intersectWithRayOptimized(ray, 0.0001f, 999999.0f);
+	intersectsCurrent = node->aabb.intersectWithRayNew(ray);
 	if( intersectsCurrent){
 		if( node->type == BVH_LEAF ){
 			RayIntersection dummyIntersection;
@@ -360,15 +380,17 @@ void BVH::buildTopDownSAH(BvhNode** tree, Surface** surfaces, int start, int end
 	float costSplit;
 	BvhNode* node = new BvhNode;
 	*tree = node;
+	int splitAxis;
 
 	node->aabb = this->computeBoxWithSurfaces(surfaces, start, end);
 	node->numSurfacesEncapulated = end - start;
 
-	splitIndex = topDownSplitIndexSAH(surfaces, node->aabb, costSplit, start, end);
+	splitIndex = topDownSplitIndexSAH(surfaces, node->aabb, costSplit, start, end, &splitAxis);
 	
 	if( costSplit > node->numSurfacesEncapulated * COST_INTERSECTION){
 		// create leaf.It's cheaper to intersect all surfaces than to make a split
 		createLeaf(node, surfaces, start, end);
+		node->splitAxis = splitAxis;
 	}
 	else{
 
@@ -380,13 +402,14 @@ void BVH::buildTopDownSAH(BvhNode** tree, Surface** surfaces, int start, int end
 	}
 }
 
-int BVH::topDownSplitIndexSAH(Surface** surfaces,  Box& parentBox, float& splitCost, int start, int end){
+int BVH::topDownSplitIndexSAH(Surface** surfaces,  Box& parentBox, float& splitCost, int start, int end, int* splitAxis){
 
 	float computedCost;
 	float parentSurfaceArea;
 	float minCost = FLT_MAX;
 	int minCostSplit = 1;
 	int dim;
+	int minCostAxis = 0;
 	int nl,nr;	// left count children,right count children
 	int i;
 	Box leftChildBox;
@@ -408,8 +431,8 @@ int BVH::topDownSplitIndexSAH(Surface** surfaces,  Box& parentBox, float& splitC
 		for(i = start ; i < end - 1; i++){
 			nl = i + 1;
 			
-			leftChildBox  = this->computeBoxWithSurfaces(surfaces, start, nl);
-			rightChildBox = this->computeBoxWithSurfaces(surfaces, nl, end);
+			leftChildBox  = this->computeBoxWithCentroids(surfaces, start, nl);
+			rightChildBox = this->computeBoxWithCentroids(surfaces, nl, end);
 
 			leftChildSurfaceArea  = leftChildBox.computeSurfaceArea();
 			rightChildSurfaceArea = rightChildBox.computeSurfaceArea();
@@ -419,6 +442,7 @@ int BVH::topDownSplitIndexSAH(Surface** surfaces,  Box& parentBox, float& splitC
 			if(computedCost < minCost){
 				minCost = computedCost;
 				minCostSplit = nl;
+				*splitAxis = dim;
 			}
 		}
 	}
@@ -426,7 +450,7 @@ int BVH::topDownSplitIndexSAH(Surface** surfaces,  Box& parentBox, float& splitC
 
 	splitCost = minCost;
 
-	if( minCostSplit == start)
+	if( minCostSplit == start + 1 || minCostSplit == end - 1)
 		splitCost = FLT_MAX;	// create leaf
 
 	return minCostSplit;
@@ -436,6 +460,7 @@ void BVH::buildTopDownHybrid(BvhNode** tree, Surface** surfaces, int start, int 
 
 	int splitIndex;
 	float costSplit;
+	int axis;
 	BvhNode* node = new BvhNode;
 	*tree = node;
 
@@ -444,16 +469,17 @@ void BVH::buildTopDownHybrid(BvhNode** tree, Surface** surfaces, int start, int 
 
 	if( end - start > SAH_SURFACE_CEIL ){
 
+		splitIndex = this->topDownSplitIndex(surfaces, node->aabb, start, end, &axis);
+		node->splitAxis = axis;
 		// is it a leaf ? Only one surface per leaf 
 		if( end - start < SURFACES_PER_LEAF ){
 			createLeaf(node, surfaces, start, end);
+			
 		}
 		else{
 
 			node->type = BVH_NODE;
-			splitIndex = this->topDownSplitIndex(surfaces, node->aabb, start, end);
-
-			//std::cout << "median surface index = " << splitIndex << " Start = " << start << " End = " << end<< std::endl;
+			//splitIndex = this->topDownSplitIndex(surfaces, node->aabb, start, end, &splitAxis);
 
 			// recursion
 			buildTopDownHybrid( &(node->leftChild), surfaces, start, splitIndex);
@@ -463,14 +489,16 @@ void BVH::buildTopDownHybrid(BvhNode** tree, Surface** surfaces, int start, int 
 	else{
 		// use SAH
 
-		if( end - start < SURFACES_PER_LEAF){		
+		splitIndex = topDownSplitIndexSAH(surfaces, node->aabb, costSplit, start, end, &axis);
+		node->splitAxis = axis;
+		if( end - start <= SURFACES_PER_LEAF){		
 			createLeaf(node, surfaces, start, end);
+			
 		}
 		else{
 			node->type = BVH_NODE;
-			splitIndex = topDownSplitIndexSAH(surfaces, node->aabb, costSplit, start, end);
-			//std::cout << "SAH split index = " << splitIndex  << " Start = " << start << " End = " << end << std::endl;
 
+			
 			// recursion
 			buildTopDownHybrid(&(node->leftChild), surfaces, start, splitIndex);
 			buildTopDownHybrid(&(node->rightChild), surfaces, splitIndex, end);
@@ -487,45 +515,32 @@ bool BVH::intersectStackNearest(const Ray& ray, BvhNode* root, RayIntersection& 
 	float minDistace = FLT_MAX;
 	bool surfaceIntersectionFound = false;
 	BvhNode* currNode = &m_NodesBuffer[0];
-
-	if( currNode->aabb.intersectWithRayOptimized(ray, 0.0001f, 999999.0f) == false )
-		return false;
-
+	float dummy;
 	// push null
 	*stack_ptr++ = NULL;
 
 	while(currNode != NULL){
 
 		if( currNode->type == BVH_NODE ){
-			//BvhNode* leftChild  = currNode->leftChild;
-			//BvhNode* rightChild = currNode->rightChild;
+			if( currNode->aabb.intersectWithRayOptimized(ray, 0.001f, 999.0f) ){
 
-			int leftIndex = currNode->leftChildIndex;
-			int rightIndex = currNode->rightChildIndex;
-
-			//BvhNode* leftChild  = m_FlatTreePointers[leftIndex];	
-			//BvhNode* rightChild = m_FlatTreePointers[rightIndex];
-
-			BvhNode* leftChild  = &m_NodesBuffer[leftIndex];	
-			BvhNode* rightChild = &m_NodesBuffer[rightIndex];
-
-			bool leftChildIntersected = leftChild->aabb.intersectWithRayOptimized(ray, 0.0001f, 999999.0f);
-			bool rightChildIntersected = rightChild->aabb.intersectWithRayOptimized(ray, 0.0001f, 999999.0f);
-
-			if(leftChildIntersected){
-				currNode = leftChild;
-				if( rightChildIntersected){
-
-					// push right child to stack
-					*stack_ptr++ = rightChild;
+				
+				if( ray.m_sign[currNode->splitAxis] ){
+					//push left child
+					*stack_ptr++ = &m_NodesBuffer[currNode->leftChildIndex];
+					currNode = &m_NodesBuffer[currNode->rightChildIndex];
 				}
+				else{
+					*stack_ptr++ = &m_NodesBuffer[currNode->rightChildIndex];
+					currNode = &m_NodesBuffer[currNode->leftChildIndex];
+				}
+
 			}
-			else if(rightChildIntersected){
-				currNode = rightChild;
-			} 
-			else{ // none of  the children hit the ray. POP stack
+			else{
+				// pop
 				currNode = *--stack_ptr;
 			}
+
 		}
 		else{
 
@@ -551,7 +566,7 @@ bool BVH::intersectStackVisibility(const Ray& ray, BvhNode* root, Surface** surf
 	BvhNode* currNode;
 
 	currNode = &m_NodesBuffer[0];
-	if( currNode->aabb.intersectWithRayOptimized(ray, 0.0001f, 999999.0f) == false )
+	if( currNode->aabb.intersectWithRayOptimized(ray, 0.001f, 999.0f) == false )
 		return false;
 
 	// push null
@@ -561,11 +576,12 @@ bool BVH::intersectStackVisibility(const Ray& ray, BvhNode* root, Surface** surf
 
 		if( currNode->type == BVH_NODE ){
 
+			
 			BvhNode* leftChild  =  &m_NodesBuffer[currNode->leftChildIndex];
 			BvhNode* rightChild =  &m_NodesBuffer[currNode->rightChildIndex];
 
-			bool leftChildIntersected = leftChild->aabb.intersectWithRayOptimized(ray, 0.0001f, 999999.0f);
-			bool rightChildIntersected = rightChild->aabb.intersectWithRayOptimized(ray, 0.0001f, 999999.0f);
+			bool leftChildIntersected = leftChild->aabb.intersectWithRayOptimized(ray, 0.001f, 9999.0f);
+			bool rightChildIntersected = rightChild->aabb.intersectWithRayOptimized(ray, 0.001f, 999.0f);
 
 			if(leftChildIntersected){
 				currNode = leftChild;
