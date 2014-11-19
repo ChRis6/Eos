@@ -48,17 +48,6 @@ typedef struct bvhNode_t{
 	int splitAxis;
 }BvhNode;
 
-typedef struct cudaBvhNode{
-	int* type;
-	Box* aabb;
-	int* numSurfacesEncapulated;
-	int* rightChildIndex;
-	int* leftChildIndex;
-
-	// surface Indices  size ??????
-	int* surfacesIndices;
-}cudaBvhNode_t;
-
 /*
  * Bounding Volume Hierarchy
  * 

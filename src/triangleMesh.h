@@ -48,6 +48,9 @@ public:
 	void setMaterialIndex(int index) { m_MaterialIndex = index;}
 	int getMaterialIndex(int index)const { return m_MaterialIndex;}
 
+	void setTransformationIndex(int index) { m_TransformationIndex = index;}
+	int getTransformationIndex()const 	   { return m_TransformationIndex; }
+
 private:
 	bool RayTriangleIntersection(glm::vec3 v1, glm::vec3 v2, glm::vec3 v3, const Ray& ray, glm::vec3& barycetricCoords);
 	bool RayBoxIntersection(const Ray& ray, const Box& box);
@@ -55,9 +58,11 @@ private:
 
 	Triangle** m_Triangles;
 	unsigned int m_NumTriangles;
+	
 	glm::mat4 m_LocalToWorldTransformation;
 	glm::mat4 m_Inverse;
 	glm::mat4 m_InverseTranspose;
+	int m_TransformationIndex;
 
 	Material m_Material;
 	int m_MaterialIndex;

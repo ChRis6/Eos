@@ -48,10 +48,6 @@ private:
 	glm::vec4 m_Color;
 };
 
-typedef struct cudaLightSource{
-	glm::vec4* positions;
-	glm::vec4* colors;
-}cudaLightSource_t;
 
 
 #endif

@@ -20,8 +20,12 @@
  * 3. This notice may not be removed or altered from any source distribution.
  */
 
+#ifndef _TRIANGLE_H
+#define _TRIANGLE_H
+
 #include <glm/glm.hpp>
 #include "surface.h"
+
 
 class DeviceSceneHandler;
 
@@ -51,6 +55,18 @@ public:
 	virtual int getMaterialIndex();    
 	virtual void setMaterialIndex(int index); 
 
+
+	void setTransformationIndex(int index) { m_TransformationIndex = index;}
+	int getTransformationIndex() const     { return m_TransformationIndex;}
+
+	const glm::vec3& getV1() { return m_V1;}
+	const glm::vec3& getV2() { return m_V2;}
+	const glm::vec3& getV3() { return m_V3;}
+
+	const glm::vec3& getN1() { return m_N1;}
+	const glm::vec3& getN2() { return m_N2;}
+	const glm::vec3& getN3() { return m_N3;}
+
 	void setInverseTransformation(glm::mat4& inverse);
 	void setInverseTransposeTransformation(glm::mat4& inverseTranspose);
 
@@ -79,4 +95,7 @@ public:
   	glm::mat4* m_InverseTranspose;
 
   	int m_MaterialIndex;
+  	int m_TransformationIndex;
 };
+
+#endif

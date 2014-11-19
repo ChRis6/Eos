@@ -78,6 +78,18 @@ const Material& Scene::getMaterialAtIndex(int index) const {
 	return m_Materials[index];
 }
 
+int Scene::addTransformation(const glm::mat4& trans){
+
+	int transIndex;
+
+	m_Transformations.push_back(trans);
+	transIndex = m_Transformations.size() - 1;
+
+	m_Transformations.push_back( glm::inverse( trans));
+	m_Transformations.push_back( glm::inverse( glm::transpose(trans)));
+	return transIndex;
+}
+
 
 int Scene::getNumSurfaces() const{
 	return m_SurfaceObjects.size();

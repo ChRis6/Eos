@@ -47,10 +47,13 @@ public:
 	bool addTriangleMesh(TriangleMesh* mesh);			
 	bool addLightSource(LightSource* light);
 	int addMaterial(Material material);
+	int addTransformation(const glm::mat4& trans);
 	const Material& getMaterialAtIndex(int index) const;
+	const glm::mat4& getTransformationAtIndex(int index)const { return m_Transformations[index];}
 	int getNumMaterials() const { return m_Materials.size();}
 
 	int getNumSurfaces() const;
+	int getNumTransformations()const{ return m_Transformations.size();} // 3 transformations: local->world, inverse, inverse-transpose
 	int getNumLightSources() const;
 	float getAmbientRefractiveIndex() const;
 	void setAASamples(int samples){ m_AASamples = samples; }
@@ -97,6 +100,7 @@ private:
 	std::vector<Surface*> m_SurfaceObjects;
 	std::vector<LightSource*> m_LightSources;
 	std::vector<Material>    m_Materials;
+	std::vector<glm::mat4>   m_Transformations;
 	int m_MaxTracedDepth;
 	float m_AmbientRefractiveIndex; 
 
