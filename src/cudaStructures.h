@@ -90,8 +90,8 @@ typedef struct cudaScene{
 
 
 
-// create a cuda scene object.The returned pointer points to host memory.
-// DO NOT DEREFERENCE cudaScene_t pointers on host
+// create a cuda scene object.The returned pointer points to gpu memory.
+// DO NOT DEREFERENCE on host
 HOST cudaScene_t* createCudaScene(Scene* h_scene);
 
 #endif
