@@ -660,5 +660,5 @@ void BVH::deallocateTreePointers(BvhNode* node){
 	deallocateTreePointers(node->leftChild);
 	deallocateTreePointers(node->rightChild);
 
-	delete(node);
+	delete node;
 }

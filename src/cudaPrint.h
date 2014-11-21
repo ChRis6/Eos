@@ -26,8 +26,10 @@
 #include <stdio.h>
 #include "Ray.h"
 #include "DScene.h"
-
+#include "cudaStructures.h"
+ 
 __global__ void printHelloFromGPUKernel();
 __global__ void printDeviceSceneGPUKernel(DScene* d_scene);
+__global__ void __debug_printCudaScene_kernel(cudaScene_t* deviceScene);
 
 #endif

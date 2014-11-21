@@ -39,12 +39,13 @@
 #include "DeviceRayIntersectionHandler.h"
 #include "cudaStructures.h"
 
+
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stb_image_write.h"
 
 
-#define WINDOW_WIDTH   1280  // in pixels
-#define WINDOW_HEIGHT  720 // in pixels
+#define WINDOW_WIDTH   640  // in pixels
+#define WINDOW_HEIGHT  480 // in pixels
 #define FOV            70
 
 #ifndef EPSILON
@@ -441,7 +442,8 @@ int main(int argc, char **argv)
 
 
    // cudaScene
-   //cudaScene_t* cudaDeviceScene = createCudaScene(&scene);
+   cudaScene_t* cudaDeviceScene = createCudaScene(&scene);
+   //debug_printCudaScene(cudaDeviceScene);
 
    // copy camera
    DeviceCameraHandler cameraHandler(&camera);
@@ -465,7 +467,8 @@ int main(int argc, char **argv)
       
       start = getRealTime();
       //deviceRenderer.renderToHostBuffer(imageBuffer, WINDOW_WIDTH * WINDOW_HEIGHT * 4);
-      deviceRenderer.renderSceneToHostBuffer(h_DScene, NULL, dRayIntersectionBufferSize, imageBuffer, WINDOW_WIDTH * WINDOW_HEIGHT * 4);
+      //deviceRenderer.renderSceneToHostBuffer(h_DScene, NULL, dRayIntersectionBufferSize, imageBuffer, WINDOW_WIDTH * WINDOW_HEIGHT * 4);
+      deviceRenderer.renderCudaSceneToHostBuffer( cudaDeviceScene, imageBuffer);
       end = getRealTime();
 
       diff = end - start;

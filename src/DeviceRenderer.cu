@@ -207,9 +207,9 @@ HOST void DeviceRenderer::allocateCudaIntersectionBuffer(){
 	cudaErrorCheck( cudaMalloc((void**) &d_normalsVec4, sizeof(glm::vec4) * width * height));
 	cudaErrorCheck( cudaMalloc((void**) &d_materialIndices, sizeof(int) * width * height));
 
-	cudaErrorCheck( cudaMemset(d_pointsVec4, 0, sizeof(glm::vec4) * width * height));
-	cudaErrorCheck( cudaMemset(d_normalsVec4, 0, sizeof(glm::vec4) * width * height));
-	cudaErrorCheck( cudaMemset(d_materialIndices, 0, sizeof(int) * width * height));
+	//cudaErrorCheck( cudaMemset(d_pointsVec4, 0, sizeof(glm::vec4) * width * height));
+	//cudaErrorCheck( cudaMemset(d_normalsVec4, 0, sizeof(glm::vec4) * width * height));
+	//cudaErrorCheck( cudaMemset(d_materialIndices, 0, sizeof(int) * width * height));
 
 	
 	cudaIntersection_t* deviceIntersection;
@@ -223,4 +223,51 @@ HOST void DeviceRenderer::allocateCudaIntersectionBuffer(){
 	cudaErrorCheck( cudaMemcpy( deviceIntersection, m_CudaHostIntersection, sizeof(cudaIntersection_t), cudaMemcpyHostToDevice));
 
 	m_CudaDeviceIntersection = deviceIntersection;
+}
+
+HOST void DeviceRenderer::renderCudaSceneToHostBuffer(cudaScene_t* deviceScene, void* imageBuffer){
+
+	void* d_image;
+	Camera* d_camera;
+	int width;
+	int height;
+	int blockdim[2];
+	int threadPerBlock[2];
+
+	width  = this->getWidth();
+	height = this->getHeight();
+
+	// 
+	cudaErrorCheck( cudaMalloc((void**) &d_image, sizeof(uchar4) * width * height ));
+	cudaErrorCheck( cudaMemset( d_image, 0, sizeof(uchar4) * width * height));
+
+	d_camera = this->getDeviceCamera();
+
+	// make sure its zero
+	cudaErrorCheck( cudaMemset(m_CudaHostIntersection->points, 0, sizeof(glm::vec4) * width * height));
+	cudaErrorCheck( cudaMemset(m_CudaHostIntersection->normals, 0, sizeof(glm::vec4) * width * height));
+	cudaErrorCheck( cudaMemset(m_CudaHostIntersection->materialsIndices, 0, sizeof(int) * width * height));
+
+
+	threadPerBlock[0] = 16;
+	threadPerBlock[1] = 16;
+
+	blockdim[0] = width / threadPerBlock[0];
+	blockdim[1] = height / threadPerBlock[1];
+
+
+	// calculate intersections.Traverse Tree on gpu
+	calculateCudaSceneIntersections( deviceScene, d_camera, m_CudaDeviceIntersection, width, height, blockdim, threadPerBlock);
+	// wait for kernel
+	cudaErrorCheck( cudaDeviceSynchronize());
+
+	// shade intersections
+	shadeCudaSceneIntersections( deviceScene, d_camera, m_CudaDeviceIntersection, width, height, (uchar4*) d_image, blockdim, threadPerBlock);
+	// wait.(no need cause there is memcpy next)
+	cudaErrorCheck( cudaDeviceSynchronize());
+
+	cudaErrorCheck( cudaMemcpy( imageBuffer, d_image, sizeof(uchar4) * width * height, cudaMemcpyDeviceToHost));
+
+	// free temp gpu buffer
+	cudaErrorCheck( cudaFree(d_image));
 }

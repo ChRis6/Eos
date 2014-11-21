@@ -28,6 +28,7 @@
 #include "DScene.h"
 #include "DRayIntersection.h"
 #include "DTriangle.h"
+#include "cudaStructures.h"
 
 extern "C" void threadPerPixel_kernel();
 extern "C" void renderToBuffer(char* buffer, unsigned int buffer_len, Camera* camera, DScene* scene, DRayTracer* rayTracer, int blockdim[], int tpblock[], int width, int height);
@@ -36,4 +37,13 @@ extern "C" void calculateIntersections(Camera* camera, cudaIntersection_t* inter
 extern "C" void shadeIntersectionsToBuffer(uchar4* imageBuffer, unsigned int imageSize, DRayTracer* rayTracer, Camera* camera, DLightSource* lights, int numLights, cudaIntersection_t* intersectionBuffer, int intersectionBufferSize,
 										 DMaterial* materialsBuffer, int materialsBufferSize, 
 										 int width, int height, int blockdim[], int tpblockp[]);
+
+// new cudaScene kernels
+extern "C" void calculateCudaSceneIntersections( cudaScene_t* deviceScene, Camera* camera, cudaIntersection_t* intersectionBuffer, int width, int height,
+												 int blockdim[], int tpblock[]);
+extern "C" void shadeCudaSceneIntersections( cudaScene_t* deviceScene, Camera* camera, cudaIntersection_t* intersectionBuffer, int width, int height, uchar4* imageBuffer,
+											 int blockdim[], int tpblock[]);
+
+
+
 #endif

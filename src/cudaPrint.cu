@@ -23,7 +23,7 @@
 #include <glm/glm.hpp>
 #include "cudaWrapper.h"
 #include "cudaPrint.h"
- #include <cuda_gl_interop.h>
+#include <cuda_gl_interop.h>
 
 __global__ void printHelloFromGPUKernel(){
 	printf("Hello from GPU.Printing a new vector\n");
@@ -94,6 +94,40 @@ __global__ void printDeviceSceneGPUKernel(DScene* d_scene){
 
 }
 
+__global__ void __debug_printCudaScene_kernel(cudaScene_t* deviceScene){
+
+    cudaBvhNode_t*         bvh;
+    cudaLightSource_t*     lights;
+    cudaTransformations_t* transformations;
+    cudaTriangle_t*        triangles;
+    cudaMaterial_t*        materials;
+
+    bvh = deviceScene->bvh;
+    lights = deviceScene->lights;
+    transformations = deviceScene->transformations;
+    triangles = deviceScene->triangles;
+
+    int numPrintableNodes = 100;
+    printf("GPU:Printing first %d BVH nodes\n\n", numPrintableNodes);
+
+    for( int i = 0; i < numPrintableNodes; i++){
+        printf("Node: %d\n",i);
+
+        printf("Type: %d\n", bvh->type[i]);
+        printf("min box vertex: ( %f, %f, %f)\n", bvh->minBoxBounds[i].x, bvh->minBoxBounds[i].y, bvh->minBoxBounds[i].z);
+        printf("max box vertex: ( %f, %f, %f)\n", bvh->maxBoxBounds[i].x, bvh->maxBoxBounds[i].y, bvh->maxBoxBounds[i].z);
+        printf("Num surfaces encapulated: %d\n", bvh->numSurfacesEncapulated[i]);
+        printf("Left child index: %d\n", bvh->leftChildIndex[i]);
+        printf("Right Child index: %d\n\n", bvh->rightChildIndex[i]);
+
+    }
+
+    printf("End of GPU bvh\n\n");
+
+}
+
+
+
 void printHelloGPU(){
 	printHelloFromGPUKernel<<<1,1>>>();
 	cudaDeviceSynchronize();
@@ -109,4 +143,9 @@ void resetDevice(){
 }
 void setGLDevice(int dev_id){
 	cudaGLSetGLDevice(dev_id);
+}
+
+void debug_printCudaScene(cudaScene_t* deviceScene){
+
+    __debug_printCudaScene_kernel<<<1,1>>>(deviceScene);
 }

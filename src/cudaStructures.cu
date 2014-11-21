@@ -135,8 +135,11 @@ HOST cudaBvhNode_t* copyBVH(Scene* h_scene){
  	delete h_surfacesIndices;
 
  	cudaBvhNode_t* h_cudaBvhNode = new cudaBvhNode_t;
+ 	memset( h_cudaBvhNode, 0, sizeof(cudaBvhNode_t));
+
  	cudaErrorCheck( cudaMalloc((void**) &d_bvh, sizeof(cudaBvhNode_t)));
- 	
+ 	cudaErrorCheck( cudaMemset(d_bvh, 0, sizeof(cudaBvhNode_t)));
+
  	h_cudaBvhNode->type = d_Bvh_type;
  	h_cudaBvhNode->minBoxBounds = d_minBoxBounds;
  	h_cudaBvhNode->maxBoxBounds = d_maxBoxBounds;
