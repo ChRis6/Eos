@@ -36,11 +36,11 @@ void Box::setMaxVertex(const glm::vec3& max){
 	
 }
 
-const glm::vec3& Box::getMinVertex() const{
+HOST DEVICE const glm::vec3& Box::getMinVertex() const{
 	return m_MinVertex;
 }
 
-const glm::vec3& Box::getMaxVertex() const{
+HOST DEVICE const glm::vec3& Box::getMaxVertex() const{
 	return m_MaxVertex;
 }
 

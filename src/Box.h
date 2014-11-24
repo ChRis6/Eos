@@ -36,7 +36,7 @@ public:
 	Box(): m_MinVertex(0.0f), m_MaxVertex(0.0f){ m_Bounds[0] = m_MinVertex; m_Bounds[1] = m_MaxVertex;}
 	Box(const glm::vec3& minVertex, const glm::vec3& maxVertex): m_MinVertex(minVertex), m_MaxVertex(maxVertex){ m_Bounds[0] = m_MinVertex; m_Bounds[1] = m_MaxVertex; }
 	Box(const glm::vec3& vertex): m_MinVertex(vertex), m_MaxVertex(vertex){ m_Bounds[0] = m_MinVertex; m_Bounds[1] = m_MaxVertex;}
-	Box(const Box& other) {m_MinVertex = other.getMinVertex(); m_MaxVertex = other.getMaxVertex();}
+	//Box(const Box& other) {m_MinVertex = other.getMinVertex(); m_MaxVertex = other.getMaxVertex();}
 
 	void setMinVertex(const glm::vec3& min);
 	void setMaxVertex(const glm::vec3& max);

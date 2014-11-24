@@ -50,6 +50,8 @@ public:
 	int addTransformation(const glm::mat4& trans);
 	const Material& getMaterialAtIndex(int index) const;
 	const glm::mat4& getTransformationAtIndex(int index)const { return m_Transformations[index];}
+	const glm::mat4& getInverseTransformationAtIndex(int index)const { return m_InverseTransformations[index];}
+	const glm::mat4& getInverseTransposeTransformationAtIndex(int index)const { return m_InverseTransposeTransformations[index];}
 	int getNumMaterials() const { return m_Materials.size();}
 
 	int getNumSurfaces() const;
@@ -101,6 +103,8 @@ private:
 	std::vector<LightSource*> m_LightSources;
 	std::vector<Material>    m_Materials;
 	std::vector<glm::mat4>   m_Transformations;
+	std::vector<glm::mat4>   m_InverseTransformations;
+	std::vector<glm::mat4>   m_InverseTransposeTransformations;
 	int m_MaxTracedDepth;
 	float m_AmbientRefractiveIndex; 
 
