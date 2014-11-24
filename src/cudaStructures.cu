@@ -38,8 +38,8 @@ HOST cudaBvhNode_t* copyBVH(Scene* h_scene){
 
 	int* h_Bvh_type;
 	int* d_Bvh_type;
-	glm::vec3* h_minBoxBounds, *d_minBoxBounds;
-	glm::vec3* h_maxBoxBounds, *d_maxBoxBounds;
+	glm::vec4* h_minBoxBounds, *d_minBoxBounds;
+	glm::vec4* h_maxBoxBounds, *d_maxBoxBounds;
 	int* h_numSurfacesEncapulated, *d_numSurfacesEncapulated;
 	int* h_rightChildIndex, *d_rightChildIndex;
 	int* h_leftChildIndex, *d_leftChildIndex;
@@ -57,8 +57,10 @@ HOST cudaBvhNode_t* copyBVH(Scene* h_scene){
 	
 	cudaErrorCheck( cudaMalloc((void**) &d_Bvh_type, sizeof(int) * numBvhNodes));	
 	// aabb
-	cudaErrorCheck( cudaMalloc((void**)&d_minBoxBounds, sizeof(glm::vec3) * numBvhNodes));
-	cudaErrorCheck( cudaMalloc((void**)&d_maxBoxBounds, sizeof(glm::vec3) * numBvhNodes));
+	cudaErrorCheck( cudaMalloc((void**)&d_minBoxBounds, sizeof(glm::vec4) * numBvhNodes));
+	cudaErrorCheck( cudaMalloc((void**)&d_maxBoxBounds, sizeof(glm::vec4) * numBvhNodes));
+	//cudaErrorCheck( cudaMalloc((void**) &d_aabb, sizeof(Box) * numBvhNodes));
+
 	// numSurfaces per node
 	cudaErrorCheck( cudaMalloc((void**)&d_numSurfacesEncapulated, sizeof(int) * numBvhNodes));
 	// left child
@@ -71,8 +73,9 @@ HOST cudaBvhNode_t* copyBVH(Scene* h_scene){
 
 	// set to zero
 	cudaErrorCheck( cudaMemset( d_Bvh_type, 0, sizeof(int) * numBvhNodes));
-	cudaErrorCheck( cudaMemset( d_minBoxBounds, 0, sizeof(glm::vec3) * numBvhNodes));
-	cudaErrorCheck( cudaMemset( d_maxBoxBounds, 0, sizeof(glm::vec3) * numBvhNodes));
+	cudaErrorCheck( cudaMemset( d_minBoxBounds, 0, sizeof(glm::vec4) * numBvhNodes));
+	cudaErrorCheck( cudaMemset( d_maxBoxBounds, 0, sizeof(glm::vec4) * numBvhNodes));
+	//cudaErrorCheck( cudaMemset(d_aabb, 0, sizeof(Box) * numBvhNodes));
 	cudaErrorCheck( cudaMemset( d_numSurfacesEncapulated, 0, sizeof(int) * numBvhNodes));
 	cudaErrorCheck( cudaMemset( d_leftChildIndex, 0, sizeof(int) * numBvhNodes));
 	cudaErrorCheck( cudaMemset( d_rightChildIndex, 0, sizeof(int) * numBvhNodes));
@@ -81,16 +84,18 @@ HOST cudaBvhNode_t* copyBVH(Scene* h_scene){
 
 	// create temp buffers on host
  	h_Bvh_type = new int[numBvhNodes];
- 	h_minBoxBounds = new glm::vec3[numBvhNodes];
- 	h_maxBoxBounds = new glm::vec3[numBvhNodes];
+ 	h_minBoxBounds = new glm::vec4[numBvhNodes];
+ 	h_maxBoxBounds = new glm::vec4[numBvhNodes];
+ 	//h_aabb = new Box[numBvhNodes];
  	h_numSurfacesEncapulated = new int[numBvhNodes];
  	h_leftChildIndex = new int[numBvhNodes];
  	h_rightChildIndex = new int[numBvhNodes];
  	h_surfacesIndices = new int[ numBvhNodes * SURFACES_PER_LEAF];
 
  	memset( h_Bvh_type, 0, sizeof(int) * numBvhNodes);
- 	memset( h_minBoxBounds, 0, sizeof(glm::vec3) * numBvhNodes);
- 	memset( h_maxBoxBounds, 0, sizeof(glm::vec3) * numBvhNodes);
+ 	memset( h_minBoxBounds, 0, sizeof(glm::vec4) * numBvhNodes);
+ 	memset( h_maxBoxBounds, 0, sizeof(glm::vec4) * numBvhNodes);
+ 	//memset(h_aabb, 0, sizeof(Box) * numBvhNodes);
  	memset( h_numSurfacesEncapulated, 0, sizeof(int) * numBvhNodes);
  	memset( h_leftChildIndex, 0, sizeof(int) * numBvhNodes);
  	memset( h_rightChildIndex, 0, sizeof(int) * numBvhNodes);
@@ -100,8 +105,9 @@ HOST cudaBvhNode_t* copyBVH(Scene* h_scene){
  	for( int i = 0; i < numBvhNodes; i++){
 
  		h_Bvh_type[i]     = h_bvhTree[i].type;
- 		h_minBoxBounds[i] = h_bvhTree[i].aabb.getMinVertex();
- 		h_maxBoxBounds[i] = h_bvhTree[i].aabb.getMaxVertex();
+ 		h_minBoxBounds[i] = glm::vec4(h_bvhTree[i].aabb.getMinVertex(), 1.0f);
+ 		h_maxBoxBounds[i] = glm::vec4(h_bvhTree[i].aabb.getMaxVertex(), 1.0f);
+ 		//h_aabb[i]         = h_bvhTree[i].aabb;
  		h_numSurfacesEncapulated[i] = h_bvhTree[i].numSurfacesEncapulated;
  		h_leftChildIndex[i] = h_bvhTree[i].leftChildIndex;
  		h_rightChildIndex[i] = h_bvhTree[i].rightChildIndex;
@@ -114,8 +120,9 @@ HOST cudaBvhNode_t* copyBVH(Scene* h_scene){
  	// types
  	cudaErrorCheck( cudaMemcpy(d_Bvh_type, h_Bvh_type, sizeof(int) * numBvhNodes, cudaMemcpyHostToDevice));
  	// aabb
- 	cudaErrorCheck( cudaMemcpy(d_minBoxBounds, h_minBoxBounds, sizeof(glm::vec3) * numBvhNodes, cudaMemcpyHostToDevice));
- 	cudaErrorCheck( cudaMemcpy(d_maxBoxBounds, h_maxBoxBounds, sizeof(glm::vec3) * numBvhNodes, cudaMemcpyHostToDevice));
+ 	cudaErrorCheck( cudaMemcpy(d_minBoxBounds, h_minBoxBounds, sizeof(glm::vec4) * numBvhNodes, cudaMemcpyHostToDevice));
+ 	cudaErrorCheck( cudaMemcpy(d_maxBoxBounds, h_maxBoxBounds, sizeof(glm::vec4) * numBvhNodes, cudaMemcpyHostToDevice));
+ 	//cudaErrorCheck( cudaMemcpy(d_aabb, h_aabb, sizeof(Box) * numBvhNodes, cudaMemcpyHostToDevice));
  	// surfaces encapulated
  	cudaErrorCheck( cudaMemcpy(d_numSurfacesEncapulated, h_numSurfacesEncapulated, sizeof(int) * numBvhNodes, cudaMemcpyHostToDevice));
  	// left child
@@ -129,6 +136,7 @@ HOST cudaBvhNode_t* copyBVH(Scene* h_scene){
  	delete h_Bvh_type;
  	delete h_minBoxBounds;
  	delete h_maxBoxBounds;
+ 	//delete h_aabb;
  	delete h_numSurfacesEncapulated;
  	delete h_leftChildIndex;
  	delete h_rightChildIndex;
@@ -143,6 +151,7 @@ HOST cudaBvhNode_t* copyBVH(Scene* h_scene){
  	h_cudaBvhNode->type = d_Bvh_type;
  	h_cudaBvhNode->minBoxBounds = d_minBoxBounds;
  	h_cudaBvhNode->maxBoxBounds = d_maxBoxBounds;
+ 	//h_cudaBvhNode->aabb = d_aabb;
  	h_cudaBvhNode->numSurfacesEncapulated = d_numSurfacesEncapulated;
  	h_cudaBvhNode->rightChildIndex = d_rightChildIndex;
  	h_cudaBvhNode->leftChildIndex  = d_leftChildIndex;
@@ -206,33 +215,33 @@ HOST cudaTransformations_t* copyTransformations(Scene* h_scene){
 	cudaTransformations_t* h_cudaTransformation, *d_cudaTransformation;
 
 	int numTransformations = h_scene->getNumTransformations();
-	int numInverseTrans    = numTransformations / 3;
-	int numInverseTransposeTras = numTransformations / 3;
-	numTransformations     = numTransformations / 3;
+	//int numInverseTrans    = numTransformations / 3;
+	//int numInverseTransposeTras = numTransformations / 3;
+	//numTransformations     = numTransformations / 3;
 
 	// allocate memory on device
 	cudaErrorCheck( cudaMalloc((void**) &d_transformation, sizeof(glm::mat4) * numTransformations));
-	cudaErrorCheck( cudaMalloc((void**) & d_inverseTransformation, sizeof(glm::mat4) * numInverseTrans));
-	cudaErrorCheck( cudaMalloc((void**) &d_inverseTransposeTransformation, sizeof(glm::mat4) * numInverseTransposeTras));
+	cudaErrorCheck( cudaMalloc((void**) & d_inverseTransformation, sizeof(glm::mat4) * numTransformations));
+	cudaErrorCheck( cudaMalloc((void**) &d_inverseTransposeTransformation, sizeof(glm::mat4) * numTransformations));
 
 	cudaErrorCheck( cudaMemset( d_transformation, 0, sizeof(glm::mat4) * numTransformations));
-	cudaErrorCheck( cudaMemset( d_inverseTransformation, 0, sizeof(glm::mat4) * numInverseTrans));
-	cudaErrorCheck( cudaMemset( d_inverseTransposeTransformation, 0, sizeof(glm::mat4) * numInverseTransposeTras));
+	cudaErrorCheck( cudaMemset( d_inverseTransformation, 0, sizeof(glm::mat4) * numTransformations));
+	cudaErrorCheck( cudaMemset( d_inverseTransposeTransformation, 0, sizeof(glm::mat4) * numTransformations));
 
 	h_transformation = new glm::mat4[numTransformations];
-	h_inverseTransformation = new glm::mat4[numInverseTrans];
-	h_inverseTransposeTransformation = new glm::mat4[numInverseTransposeTras];
+	h_inverseTransformation = new glm::mat4[numTransformations];
+	h_inverseTransposeTransformation = new glm::mat4[numTransformations];
 
-	int k = 0;
-	for( int i = 0; k < numTransformations; i += 3, k++){
-		h_transformation[k]                  = h_scene->getTransformationAtIndex(i);
-		h_inverseTransformation[k]           = h_scene->getTransformationAtIndex(i+1);
-		h_inverseTransposeTransformation[k]  = h_scene->getTransformationAtIndex(i+2); 
+	
+	for( int i = 0; i < numTransformations; i++){
+		h_transformation[i]                  = h_scene->getTransformationAtIndex(i);
+		h_inverseTransformation[i]           = h_scene->getInverseTransformationAtIndex(i);
+		h_inverseTransposeTransformation[i]  = h_scene->getInverseTransposeTransformationAtIndex(i); 
 	}
 
 	cudaErrorCheck( cudaMemcpy( d_transformation, h_transformation, sizeof(glm::mat4) * numTransformations, cudaMemcpyHostToDevice));
-	cudaErrorCheck( cudaMemcpy( d_inverseTransformation, h_inverseTransformation, sizeof(glm::mat4) * numInverseTrans, cudaMemcpyHostToDevice));
-	cudaErrorCheck( cudaMemcpy( d_inverseTransposeTransformation, h_inverseTransposeTransformation, sizeof(glm::mat4) * numInverseTransposeTras, cudaMemcpyHostToDevice));
+	cudaErrorCheck( cudaMemcpy( d_inverseTransformation, h_inverseTransformation, sizeof(glm::mat4) * numTransformations, cudaMemcpyHostToDevice));
+	cudaErrorCheck( cudaMemcpy( d_inverseTransposeTransformation, h_inverseTransposeTransformation, sizeof(glm::mat4) * numTransformations, cudaMemcpyHostToDevice));
 
 	h_cudaTransformation = new cudaTransformations_t;
 	h_cudaTransformation->transformation                 = d_transformation;

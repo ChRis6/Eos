@@ -149,7 +149,7 @@ __global__ void __shadeIntersectionsToBuffer_kernel(uchar4* imageBuffer, unsigne
 /**
  * NEW cudaScene kernels.
  *
- * cudaScene_t* is memory friendly for gpu's 
+ * cudaScene_t* is memory friendly for gpus
  *
  */
 
@@ -225,9 +225,6 @@ __global__ void __shadeCudaSceneIntersections_kernel( cudaScene_t* deviceScene, 
         ucharColor.w = 255;
 
         imageBuffer[threadID] = ucharColor;
-
-
-
     }
 
 }
@@ -251,10 +248,9 @@ DEVICE void traverseCudaTreeAndStore( cudaScene_t* deviceScene, const Ray& ray, 
 
 
     // check root
-    if( rayIntersectsCudaAABB(ray, bvh->minBoxBounds[currentBvhNodeIndex], bvh->maxBoxBounds[currentBvhNodeIndex]) == false )
+    if( ( rayIntersectsCudaAABB(ray, bvh->minBoxBounds[currentBvhNodeIndex], bvh->maxBoxBounds[currentBvhNodeIndex]) ) == false )
         return;
 
-    
     // push -1
     *stack_ptr++ = -1;
 
@@ -287,15 +283,19 @@ DEVICE void traverseCudaTreeAndStore( cudaScene_t* deviceScene, const Ray& ray, 
                 currentBvhNodeIndex = *--stack_ptr;
 
             }
+            //__syncthreads();
 
         }
-        else{
+        else if(bvh->type[currentBvhNodeIndex] == BVH_LEAF) {
             // reached a leaf
+           
             intersectRayWithCudaLeaf( ray, deviceScene, currentBvhNodeIndex, &minDistace, intersectionBuffer, threadID);
-
+            
+            // pop 
+            currentBvhNodeIndex = *--stack_ptr;
+            //__syncthreads();
         }
     }
-
 }
 
 
@@ -306,7 +306,7 @@ DEVICE void intersectRayWithCudaLeaf( const Ray& ray, cudaScene_t* deviceScene, 
     cudaBvhNode_t* bvh;
     cudaTransformations_t* transformations;
     cudaTriangle_t*        triangles;
-    glm::vec3 baryCoords;
+    
     glm::vec4 localIntersectionPoint;
     glm::vec4 localIntersectionNormal;
     int minTriangleIndex;
@@ -319,7 +319,9 @@ DEVICE void intersectRayWithCudaLeaf( const Ray& ray, cudaScene_t* deviceScene, 
     numTrianglesInLeaf = bvh->numSurfacesEncapulated[bvhLeafIndex];
     minTriangleIndex = -1;
 
+    #pragma unroll 4
     for( int i = 0; i < numTrianglesInLeaf; i++){
+        glm::vec3 baryCoords(0.0f);
 
         /*
          * transform Ray to local Triangle Coordinates
@@ -343,13 +345,14 @@ DEVICE void intersectRayWithCudaLeaf( const Ray& ray, cudaScene_t* deviceScene, 
          */
         bool triangleIntersected = rayIntersectsCudaTriangle( localRay, triangles->v1[triangleIndex], triangles->v2[triangleIndex], triangles->v3[triangleIndex], baryCoords);
         
-        if( triangleIntersected && *minDistace > baryCoords.x){
+        if( triangleIntersected && baryCoords.x < *minDistace){
             // intersection is found
             minTriangleIndex = triangleIndex;
             *minDistace = baryCoords.x;
 
             localIntersectionPoint  = glm::vec4(localRay.getOrigin() + baryCoords.x * localRay.getDirection(), 1.0f);
             localIntersectionNormal = glm::vec4(glm::normalize(triangles->n1[triangleIndex] * ( 1.0f - baryCoords.y - baryCoords.z) + (triangles->n2[triangleIndex] * baryCoords.y) + (triangles->n3[triangleIndex] * baryCoords.z)), 0.0f);             
+            
         }// endif
 
     }// end for
@@ -357,15 +360,16 @@ DEVICE void intersectRayWithCudaLeaf( const Ray& ray, cudaScene_t* deviceScene, 
 
     if( minTriangleIndex != -1){
 
+        int triangleTransformationIndex = triangles->transformationIndex[ minTriangleIndex];
+
         // intersection found.Store pointa and normal in worldCoordinates
-        intersectionBuffer->points[threadID]  = transformations->transformation[ minTriangleIndex] * localIntersectionPoint;
-        intersectionBuffer->normals[threadID] = transformations->inverseTransposeTransformation[ minTriangleIndex] * localIntersectionNormal;
+        intersectionBuffer->points[threadID]  = transformations->transformation[ triangleTransformationIndex] * localIntersectionPoint;
+        intersectionBuffer->normals[threadID] = transformations->inverseTransposeTransformation[ triangleTransformationIndex] * localIntersectionNormal;
         intersectionBuffer->materialsIndices[threadID] = triangles->materialIndex[minTriangleIndex];
-        
     }
 }
 
-DEVICE bool rayIntersectsCudaTriangle( const Ray& ray, const glm::vec3& v1, const glm::vec3& v2, const glm::vec3& v3, glm::vec3 baryCoords){
+DEVICE bool rayIntersectsCudaTriangle( const Ray& ray, const glm::vec3& v1, const glm::vec3& v2, const glm::vec3& v3, glm::vec3& baryCoords){
 
 
     const glm::vec3& P = glm::cross(ray.getDirection(), v3 - v1);
@@ -388,35 +392,18 @@ DEVICE bool rayIntersectsCudaTriangle( const Ray& ray, const glm::vec3& v1, cons
 
 }
 
-DEVICE bool rayIntersectsCudaAABB(const Ray& ray, const glm::vec3& minBoxBounds, const glm::vec3& maxBoxBounds){
+DEVICE bool rayIntersectsCudaAABB(const Ray& ray, const glm::vec4& minBoxBounds, const glm::vec4& maxBoxBounds){
     
-    /*
-    glm::vec3 tmin = (minBoxBounds - ray.getOrigin()) * ray.getInvDirection();
-    glm::vec3 tmax = (maxBoxBounds - ray.getOrigin()) * ray.getInvDirection();
+   glm::vec4 tmin = (minBoxBounds - glm::vec4(ray.getOrigin(), 1.0f)) * glm::vec4( ray.getInvDirection(), 0.0f);
+   glm::vec4 tmax = (maxBoxBounds - glm::vec4(ray.getOrigin(), 1.0f)) * glm::vec4( ray.getInvDirection(), 0.0f);
    
-    glm::vec3 real_min = glm::min(tmin, tmax);
-    glm::vec3 real_max = glm::max(tmin, tmax);
+   glm::vec4 real_min = glm::min(tmin, tmax);
+   glm::vec4 real_max = glm::max(tmin, tmax);
    
-    float minmax = fminf( fminf(real_max.x, real_max.y), real_max.z);
-    float maxmin = fmaxf( fmaxf(real_min.x, real_min.y), real_min.z);
+   float minmax = fminf( fminf(real_max.x, real_max.y), real_max.z);
+   float maxmin = fmaxf( fmaxf(real_min.x, real_min.y), real_min.z);
     
-    return ( minmax >= maxmin);
-    */
-
-    // lb is the corner of AABB with minimal coordinates - left bottom, rt is maximal corner
-    const glm::vec3& lb = minBoxBounds;
-    const glm::vec3& rt = maxBoxBounds;
-
-    const glm::vec3& rayOrigin = ray.getOrigin();
-    const glm::vec3& rayInvDirection = ray.getInvDirection();
-
-    float tmin = fmaxf(fmaxf(fminf(((lb.x - rayOrigin.x) * rayInvDirection.x), ((rt.x - rayOrigin.x) * rayInvDirection.x)), fminf(((lb.y - rayOrigin.y) * rayInvDirection.y), ((rt.y - rayOrigin.y) * rayInvDirection.y))), fminf(((lb.z - rayOrigin.z) * rayInvDirection.z), ((rt.z - rayOrigin.z) * rayInvDirection.z)));
-    float tmax = fminf(fminf(fmaxf(((lb.x - rayOrigin.x) * rayInvDirection.x), ((rt.x - rayOrigin.x) * rayInvDirection.x)), fmaxf(((lb.y - rayOrigin.y) * rayInvDirection.y), ((rt.y - rayOrigin.y) * rayInvDirection.y))), fmaxf(((lb.z - rayOrigin.z) * rayInvDirection.z), ((rt.z - rayOrigin.z) * rayInvDirection.z)));
-
-    if (tmax < 0 || tmin > tmax)
-        return false;
-    return true;
-
+   return ( minmax >= maxmin);
 }
 
 
@@ -430,8 +417,15 @@ DEVICE void traverseTreeAndStore(const Ray& ray, cudaIntersection_t* intersectio
     float minBoxDistance = 0.0f;
     BvhNode* currNode = &bvh[0];    // bvh
 
-    //if( currNode->aabb.intersectWithRayNew(ray) == false )
-    //    return;
+    if( threadID == 0){
+
+        printf("min: ( %f, %f, %f)\n", currNode->aabb.getMinVertex().x, currNode->aabb.getMinVertex().y, currNode->aabb.getMinVertex().z );
+        printf("Ray: ( %f, %f, %f)\n", ray.getDirection().x, ray.getDirection().y, ray.getDirection().z);
+    }
+
+
+    if( currNode->aabb.intersectWithRayNew(ray) == false )
+        return;
 
     minDistace = 9999.0f;
     // push null
@@ -444,7 +438,7 @@ DEVICE void traverseTreeAndStore(const Ray& ray, cudaIntersection_t* intersectio
             //float leftDistance = 9999.0f;
             //float rightDistance = 9999.0f;
 
-            /*
+            
             BvhNode* leftChild  = &bvh[currNode->leftChildIndex];   
             BvhNode* rightChild = &bvh[currNode->rightChildIndex];
 
@@ -465,8 +459,9 @@ DEVICE void traverseTreeAndStore(const Ray& ray, cudaIntersection_t* intersectio
             else{ // none of  the children hit the ray. POP stack
                 currNode = *--stack_ptr;
             }
-            */
+            
 
+            /*
             if( currNode->aabb.intersectWithRayOptimized(ray, 0.001, 999.0f) ){
 
                 
@@ -485,6 +480,7 @@ DEVICE void traverseTreeAndStore(const Ray& ray, cudaIntersection_t* intersectio
                 // pop
                 currNode = *--stack_ptr;
             }
+            */
         }
         else{
             intersectRayWithLeafNode(ray, currNode, intersectionBuffer, minDistace, trianglesBuffer, threadID);
@@ -600,8 +596,8 @@ void calculateCudaSceneIntersections( cudaScene_t* deviceScene, Camera* camera, 
     threadsPerBlock.x = tpblock[0];
     threadsPerBlock.y = tpblock[1];
 
-    numBlocks = blockdim[0];
-    numBlocks = blockdim[1];
+    numBlocks.x = blockdim[0];
+    numBlocks.y = blockdim[1];
 
     __calculateCudaSceneIntersections_kernel<<< numBlocks, threadsPerBlock>>>( deviceScene, camera, intersectionBuffer, width, height);
 

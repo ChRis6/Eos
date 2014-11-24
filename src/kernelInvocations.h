@@ -49,7 +49,7 @@ DEVICE bool intersectRayWithLeafNode(const Ray& ray, BvhNode* node, cudaIntersec
 
 // new cudaScene device functions
 DEVICE void traverseCudaTreeAndStore( cudaScene_t* deviceScene, const Ray& ray, cudaIntersection_t* intersectionBuffer, int threadID);
-DEVICE bool rayIntersectsCudaAABB(const Ray& ray, const glm::vec3& minBoxBounds, const glm::vec3& maxBoxBounds);
+DEVICE bool rayIntersectsCudaAABB(const Ray& ray, const glm::vec4& minBoxBounds, const glm::vec4& maxBoxBounds);
 DEVICE void intersectRayWithCudaLeaf( const Ray& ray, cudaScene_t* deviceScene, int bvhLeafIndex, float* minDistace, cudaIntersection_t* intersectionBuffer, int threadID);
-DEVICE bool rayIntersectsCudaTriangle( const Ray& ray, const glm::vec3& v1, const glm::vec3& v2, const glm::vec3& v3, glm::vec3 baryCoords);
+DEVICE bool rayIntersectsCudaTriangle( const Ray& ray, const glm::vec3& v1, const glm::vec3& v2, const glm::vec3& v3, glm::vec3& baryCoords);
 #endif

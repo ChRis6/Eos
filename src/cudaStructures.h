@@ -32,8 +32,8 @@
 // Bounding volume hierachy
 typedef struct cudaBvh{
 	int* type;
-	glm::vec3* minBoxBounds;
-	glm::vec3* maxBoxBounds;
+	glm::vec4* minBoxBounds;
+	glm::vec4* maxBoxBounds;
 	int* numSurfacesEncapulated;
 	int* rightChildIndex;
 	int* leftChildIndex;

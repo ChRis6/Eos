@@ -44,8 +44,8 @@
 #include "stb_image_write.h"
 
 
-#define WINDOW_WIDTH   640  // in pixels
-#define WINDOW_HEIGHT  480 // in pixels
+#define WINDOW_WIDTH   1280  // in pixels
+#define WINDOW_HEIGHT  720 // in pixels
 #define FOV            70
 
 #ifndef EPSILON
@@ -383,9 +383,9 @@ int main(int argc, char **argv)
    //LightSource* lightSource2 = new LightSource(glm::vec4(2000.0f, 0.0f, 40.0f, 1.0f), glm::vec4(1.0f));
 
  
-   char* triangleMeshFileName = "objmodels/monkey.obj";
+   char* triangleMeshFileName = "objmodels/bunny.obj";
    TriangleMesh* mesh = new TriangleMesh();
-   glm::mat4 meshTransformation = glm::translate(glm::mat4(1.0f), glm::vec3(2.0f, 0.0f, -1.0f));
+   glm::mat4 meshTransformation = glm::translate(glm::mat4(1.0f), glm::vec3(2.0f, 0.0f, -2.0f));
    int meshTransformationIndex = scene.addTransformation(meshTransformation);
 
 
@@ -436,9 +436,9 @@ int main(int argc, char **argv)
 
    // copy scene 
    std::cout << "Attemping to copy scene to device" << std::endl;
-   DeviceSceneHandler sceneImporter(&scene);
-   DScene* d_scene = sceneImporter.getDeviceSceneDevicePointer();
-   DScene* h_DScene = sceneImporter.getDeviceSceneHostPointer();
+   //DeviceSceneHandler sceneImporter(&scene);
+   //DScene* d_scene = sceneImporter.getDeviceSceneDevicePointer();
+   //DScene* h_DScene = sceneImporter.getDeviceSceneHostPointer();
 
 
    // cudaScene
@@ -449,15 +449,15 @@ int main(int argc, char **argv)
    DeviceCameraHandler cameraHandler(&camera);
    Camera* d_camera = cameraHandler.getDeviceCamera();
 
-   DeviceRayTracerHandler tracerHandler(&rayTracer);
-   DRayTracer* d_tracer = tracerHandler.getDeviceTracer();
+   //DeviceRayTracerHandler tracerHandler(&rayTracer);
+   //DRayTracer* d_tracer = tracerHandler.getDeviceTracer();
 
-   DeviceRenderer deviceRenderer(d_scene, d_tracer, d_camera, WINDOW_WIDTH, WINDOW_HEIGHT);
+   DeviceRenderer deviceRenderer(NULL, NULL, d_camera, WINDOW_WIDTH, WINDOW_HEIGHT);
    deviceRenderer.allocateCudaIntersectionBuffer();
 
-   DeviceRayIntersectionHandler intersectionHandler;
-   DRayIntersection* d_IntersectionBuffer = intersectionHandler.createDRayIntersectionBuffer( WINDOW_WIDTH * WINDOW_HEIGHT);
-   int dRayIntersectionBufferSize = intersectionHandler.getBufferSize();   
+   //DeviceRayIntersectionHandler intersectionHandler;
+   //DRayIntersection* d_IntersectionBuffer = intersectionHandler.createDRayIntersectionBuffer( WINDOW_WIDTH * WINDOW_HEIGHT);
+   //int dRayIntersectionBufferSize = intersectionHandler.getBufferSize();   
 
    if( renderOnce && useDeviceRenderer){
       std::cout << "Rendering Once to Image file (GPU)..." << std::endl;
@@ -587,7 +587,7 @@ int main(int argc, char **argv)
          //d_camera = cameraHandler.getDeviceCamera();
 
          //deviceRenderer.renderToGLPixelBuffer(pbo);
-         deviceRenderer.renderSceneToGLPixelBuffer(h_DScene, d_IntersectionBuffer, dRayIntersectionBufferSize, pbo );
+         //deviceRenderer.renderSceneToGLPixelBuffer(h_DScene, d_IntersectionBuffer, dRayIntersectionBufferSize, pbo );
       }
       else{
          rayTracer.render(scene, camera, imageBuffer);
