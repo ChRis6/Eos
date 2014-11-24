@@ -107,19 +107,43 @@ __global__ void __debug_printCudaScene_kernel(cudaScene_t* deviceScene){
     transformations = deviceScene->transformations;
     triangles = deviceScene->triangles;
 
-    int numPrintableNodes = 100;
+    int numPrintableNodes = 15;
     printf("GPU:Printing first %d BVH nodes\n\n", numPrintableNodes);
 
     for( int i = 0; i < numPrintableNodes; i++){
         printf("Node: %d\n",i);
 
-        printf("Type: %d\n", bvh->type[i]);
-        printf("min box vertex: ( %f, %f, %f)\n", bvh->minBoxBounds[i].x, bvh->minBoxBounds[i].y, bvh->minBoxBounds[i].z);
-        printf("max box vertex: ( %f, %f, %f)\n", bvh->maxBoxBounds[i].x, bvh->maxBoxBounds[i].y, bvh->maxBoxBounds[i].z);
-        printf("Num surfaces encapulated: %d\n", bvh->numSurfacesEncapulated[i]);
-        printf("Left child index: %d\n", bvh->leftChildIndex[i]);
-        printf("Right Child index: %d\n\n", bvh->rightChildIndex[i]);
+        if( bvh->type[i] == BVH_NODE){
+        	printf("Type: %d, a.k.a BVH NODE\n", bvh->type[i]);
+        	printf("min box vertex: ( %f, %f, %f)\n", bvh->minBoxBounds[i].x, bvh->minBoxBounds[i].y, bvh->minBoxBounds[i].z);
+        	printf("max box vertex: ( %f, %f, %f)\n", bvh->maxBoxBounds[i].x, bvh->maxBoxBounds[i].y, bvh->maxBoxBounds[i].z);
+        	printf("Num surfaces encapulated: %d\n", bvh->numSurfacesEncapulated[i]);
+        	printf("Left child index: %d\n", bvh->leftChildIndex[i]);
+        	printf("Right Child index: %d\n\n", bvh->rightChildIndex[i]);
+        }
+        else if( bvh->type[i] == BVH_LEAF) {
+        	// this is a leaf
+        	printf("Type: %d, a.k.a BVH Leaf\n", bvh->type[i]);
+        	int numTriangles = bvh->numSurfacesEncapulated[i];
+        	printf("This leaf has %d triangles.Printing triangles\n\n", numTriangles);
 
+        	for( int j = 0; j < numTriangles; j++){
+        		int triangleIndex = bvh->surfacesIndices[ i * SURFACES_PER_LEAF + j];
+        		
+        		printf("Triangle Index:%d\n", triangleIndex);
+        		printf("Triangle Transformation Index: %d\n", triangles->transformationIndex[ triangleIndex]);
+        		printf("V1: (%f, %f, %f)\n", triangles->v1[triangleIndex].x, triangles->v1[triangleIndex].y, triangles->v1[triangleIndex].z );
+        		printf("V2: (%f, %f, %f)\n", triangles->v2[triangleIndex].x, triangles->v2[triangleIndex].y, triangles->v2[triangleIndex].z );
+        		printf("V3: (%f, %f, %f)\n\n", triangles->v3[triangleIndex].x, triangles->v3[triangleIndex].y, triangles->v3[triangleIndex].z );
+
+        		printf("N1: (%f, %f, %f)\n", triangles->n1[triangleIndex].x, triangles->n1[triangleIndex].y, triangles->n1[triangleIndex].z );
+        		printf("N2: (%f, %f, %f)\n", triangles->n2[triangleIndex].x, triangles->n2[triangleIndex].y, triangles->n2[triangleIndex].z );
+        		printf("N3: (%f, %f, %f)\n\n", triangles->n3[triangleIndex].x, triangles->n3[triangleIndex].y, triangles->n3[triangleIndex].z );
+
+
+        	}
+
+        }
     }
 
     printf("End of GPU bvh\n\n");
