@@ -49,7 +49,40 @@ DEVICE bool intersectRayWithLeafNode(const Ray& ray, BvhNode* node, cudaIntersec
 
 // new cudaScene device functions
 DEVICE void traverseCudaTreeAndStore( cudaScene_t* deviceScene, const Ray& ray, cudaIntersection_t* intersectionBuffer, int threadID);
-DEVICE bool rayIntersectsCudaAABB(const Ray& ray, const glm::vec4& minBoxBounds, const glm::vec4& maxBoxBounds);
+DEVICE FORCE_INLINE bool rayIntersectsCudaAABB(const Ray& ray, const glm::vec4& minBoxBounds, const glm::vec4& maxBoxBounds){
+   glm::vec4 tmin = (minBoxBounds - glm::vec4(ray.getOrigin(), 1.0f)) * glm::vec4( ray.getInvDirection(), 0.0f);
+   glm::vec4 tmax = (maxBoxBounds - glm::vec4(ray.getOrigin(), 1.0f)) * glm::vec4( ray.getInvDirection(), 0.0f);
+   
+   glm::vec4 real_min = glm::min(tmin, tmax);
+   glm::vec4 real_max = glm::max(tmin, tmax);
+   
+   float minmax = fminf( fminf(real_max.x, real_max.y), real_max.z);
+   float maxmin = fmaxf( fmaxf(real_min.x, real_min.y), real_min.z);
+    
+   return ( minmax >= maxmin);
+
+}
 DEVICE void intersectRayWithCudaLeaf( const Ray& ray, cudaScene_t* deviceScene, int bvhLeafIndex, float* minDistace, cudaIntersection_t* intersectionBuffer, int threadID);
-DEVICE bool rayIntersectsCudaTriangle( const Ray& ray, const glm::vec3& v1, const glm::vec3& v2, const glm::vec3& v3, glm::vec3& baryCoords);
+DEVICE FORCE_INLINE bool rayIntersectsCudaTriangle( const Ray& ray, const glm::vec3& v1, const glm::vec3& v2, const glm::vec3& v3, glm::vec3& baryCoords){
+    const glm::vec3& P = glm::cross(ray.getDirection(), v3 - v1);
+    float det = glm::dot(v2 - v1, P);
+    if (det > -0.00001f && det < 0.00001f)
+        return false;
+
+    det = 1.0f / det;
+    const glm::vec3& T = ray.getOrigin() - v1;
+    const glm::vec3& Q = glm::cross(T, v2 - v1);
+    
+    baryCoords.x = glm::dot(v3 - v1, Q) * det;
+    baryCoords.y = glm::dot(T, P) * det;
+    baryCoords.z = glm::dot(ray.getDirection(), Q) * det;
+
+    if ((baryCoords.x < 0.0f) || (baryCoords.y < 0.0f || baryCoords.y > 1.0f) || ( baryCoords.z < 0.0f || baryCoords.y + baryCoords.z > 1.0f) )
+        return false;
+    
+    return true;
+
+
+
+}
 #endif

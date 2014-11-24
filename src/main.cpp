@@ -383,7 +383,7 @@ int main(int argc, char **argv)
    //LightSource* lightSource2 = new LightSource(glm::vec4(2000.0f, 0.0f, 40.0f, 1.0f), glm::vec4(1.0f));
 
  
-   char* triangleMeshFileName = "objmodels/bunny.obj";
+   char* triangleMeshFileName = "objmodels/monkey.obj";
    TriangleMesh* mesh = new TriangleMesh();
    glm::mat4 meshTransformation = glm::translate(glm::mat4(1.0f), glm::vec3(2.0f, 0.0f, -2.0f));
    int meshTransformationIndex = scene.addTransformation(meshTransformation);
