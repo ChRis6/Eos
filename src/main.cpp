@@ -44,8 +44,8 @@
 #include "stb_image_write.h"
 
 
-#define WINDOW_WIDTH   1280  // in pixels
-#define WINDOW_HEIGHT  720 // in pixels
+#define WINDOW_WIDTH   1024  // in pixels
+#define WINDOW_HEIGHT  1024 // in pixels
 #define FOV            70
 
 #ifndef EPSILON
@@ -433,6 +433,11 @@ int main(int argc, char **argv)
 
    //scene.printScene();
    //fflush(stdout);
+   //printf("Performing shuffle test.\n");
+   //fflush(stdout);
+
+   //shuffleTest();
+   //gpuSynch();
 
    // copy scene 
    std::cout << "Attemping to copy scene to device" << std::endl;

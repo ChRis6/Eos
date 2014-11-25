@@ -31,5 +31,5 @@
 __global__ void printHelloFromGPUKernel();
 __global__ void printDeviceSceneGPUKernel(DScene* d_scene);
 __global__ void __debug_printCudaScene_kernel(cudaScene_t* deviceScene);
-
+__global__ void __shuffleTest_kernel();
 #endif

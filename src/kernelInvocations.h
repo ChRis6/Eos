@@ -49,7 +49,11 @@ DEVICE bool intersectRayWithLeafNode(const Ray& ray, BvhNode* node, cudaIntersec
 
 // new cudaScene device functions
 DEVICE void traverseCudaTreeAndStore( cudaScene_t* deviceScene, const Ray& ray, cudaIntersection_t* intersectionBuffer, int threadID);
-DEVICE FORCE_INLINE bool rayIntersectsCudaAABB(const Ray& ray, const glm::vec4& minBoxBounds, const glm::vec4& maxBoxBounds){
+DEVICE void traverseCudaTreeAndStoreSharedStack( int* sharedStack, int* sharedCurrNodeIndex, int* sharedVotes,
+												cudaScene_t* deviceScene, const Ray& ray, cudaIntersection_t* intersectionBuffer, int threadID, int threadBlockID);
+
+
+DEVICE FORCE_INLINE int rayIntersectsCudaAABB(const Ray& ray, const glm::vec4& minBoxBounds, const glm::vec4& maxBoxBounds, float limit){
    glm::vec4 tmin = (minBoxBounds - glm::vec4(ray.getOrigin(), 1.0f)) * glm::vec4( ray.getInvDirection(), 0.0f);
    glm::vec4 tmax = (maxBoxBounds - glm::vec4(ray.getOrigin(), 1.0f)) * glm::vec4( ray.getInvDirection(), 0.0f);
    
@@ -59,10 +63,12 @@ DEVICE FORCE_INLINE bool rayIntersectsCudaAABB(const Ray& ray, const glm::vec4& 
    float minmax = fminf( fminf(real_max.x, real_max.y), real_max.z);
    float maxmin = fmaxf( fmaxf(real_min.x, real_min.y), real_min.z);
     
-   return ( minmax >= maxmin);
+   return (minmax >= maxmin ); //&& limit - 1e-3 <= minmax);
 
 }
 DEVICE void intersectRayWithCudaLeaf( const Ray& ray, cudaScene_t* deviceScene, int bvhLeafIndex, float* minDistace, cudaIntersection_t* intersectionBuffer, int threadID);
+
+
 DEVICE FORCE_INLINE bool rayIntersectsCudaTriangle( const Ray& ray, const glm::vec3& v1, const glm::vec3& v2, const glm::vec3& v3, glm::vec3& baryCoords){
     const glm::vec3& P = glm::cross(ray.getDirection(), v3 - v1);
     float det = glm::dot(v2 - v1, P);
@@ -81,8 +87,5 @@ DEVICE FORCE_INLINE bool rayIntersectsCudaTriangle( const Ray& ray, const glm::v
         return false;
     
     return true;
-
-
-
 }
 #endif

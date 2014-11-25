@@ -150,6 +150,23 @@ __global__ void __debug_printCudaScene_kernel(cudaScene_t* deviceScene){
 
 }
 
+__global__ void __shuffleTest_kernel(){
+
+	int i = threadIdx.x % 2;
+
+	printf("Thread id %d: i = %d ( before)\n", threadIdx.x, i);
+
+	#pragma unroll
+	for( int mask = 1 ; mask < 32 ; mask *= 2)
+		i += __shfl_xor(i, mask);
+
+
+	//i = __shfl(i, 0);
+
+	printf("Thread id %d: i = %d (after)\n", threadIdx.x, i);
+
+}
+
 
 
 void printHelloGPU(){
@@ -172,4 +189,13 @@ void setGLDevice(int dev_id){
 void debug_printCudaScene(cudaScene_t* deviceScene){
 
     __debug_printCudaScene_kernel<<<1,1>>>(deviceScene);
+}
+
+void shuffleTest(){
+
+	__shuffleTest_kernel<<<1, 32>>>();
+}
+
+void gpuSynch(){
+	cudaDeviceSynchronize();
 }

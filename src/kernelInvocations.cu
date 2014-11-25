@@ -23,6 +23,9 @@
 #include "kernelInvocations.h"
 #include "Ray.h"
 #include "BVH.h"
+
+
+
 /* ===============  KERNELS =================*/
 
 
@@ -160,10 +163,32 @@ __global__ void __shadeIntersectionsToBuffer_kernel(uchar4* imageBuffer, unsigne
 __global__ void __calculateCudaSceneIntersections_kernel( cudaScene_t* deviceScene, Camera* camera, cudaIntersection_t* intersectionBuffer, int width, int height){
 
 
-    //int pi = (blockIdx.x * blockDim.x + threadIdx.x);
-    //int pj = (blockIdx.y * blockDim.y + threadIdx.y);
+    __shared__ int sharedStack[128];
+    __shared__ int sharedBvhNodeIndex;
+    __shared__ int sharedVotes[2];
 
-    //int threadID = width * (blockIdx.y * blockDim.y + threadIdx.y) + (blockIdx.x * blockDim.x + threadIdx.x);
+
+    int pi = blockIdx.x * blockDim.x + threadIdx.x;
+    int pj = blockIdx.y * blockDim.y + threadIdx.y;
+
+
+
+    int threadID = width * pj + pi;
+
+    int threadBlockID = threadIdx.x + threadIdx.y;
+    //threadBlockID = threadBlockID / 32;
+
+    
+    if( threadBlockID == 0){
+        sharedStack[0] = -1;      // push -1 
+        sharedBvhNodeIndex = 0;   // start at root
+        sharedVotes[0] = 0;
+        sharedVotes[1] = 0;
+        //printf("Thread %d in block initialized shared memory\n", threadID);
+    }
+
+    //__syncthreads();
+
 
     if ( (blockIdx.x * blockDim.x + threadIdx.x) < width && (blockIdx.y * blockDim.y + threadIdx.y) < height){
         Ray ray;
@@ -172,8 +197,8 @@ __global__ void __calculateCudaSceneIntersections_kernel( cudaScene_t* deviceSce
         ray.setDirection( glm::normalize((((2.0f * (blockIdx.x * blockDim.x + threadIdx.x) - width) / (float) width) * camera->getRightVector() ) + ( ((2.0f * (blockIdx.y * blockDim.y + threadIdx.y) - height) / (float) height) * camera->getUpVector()) + camera->getViewingDirection()));
               
 
-        traverseCudaTreeAndStore(deviceScene, ray, intersectionBuffer, width * (blockIdx.y * blockDim.y + threadIdx.y) + (blockIdx.x * blockDim.x + threadIdx.x));
-
+        //traverseCudaTreeAndStore( deviceScene, ray, intersectionBuffer, threadID);
+        traverseCudaTreeAndStoreSharedStack( sharedStack, &sharedBvhNodeIndex, sharedVotes, deviceScene, ray, intersectionBuffer, threadID, threadBlockID);
 
     }
 
@@ -235,7 +260,159 @@ __global__ void __shadeCudaSceneIntersections_kernel( cudaScene_t* deviceScene, 
 
 }
 
+DEVICE void traverseCudaTreeAndStoreSharedStack( int* sharedStack, int* sharedCurrNodeIndex, int* sharedVotes,
+                                                cudaScene_t* deviceScene, const Ray& ray, cudaIntersection_t* intersectionBuffer, int threadID, int threadBlockID){
 
+    /*
+     * Intersect ray with bvh root.If all threads miss root's aabb then return.
+     * even if  one thread intersects root, then traverse
+     */
+    int stackLocal[128];
+    int currNodeIndex = 0;;
+    int leftChildVote;
+    int rightChildVote;
+
+    int* stack_ptr = stackLocal;
+    float minDistace = 9999.0f;
+    
+    //int intersectsRoot = rayIntersectsCudaAABB(ray, deviceScene->bvh->minBoxBounds[ currNodeIndex], deviceScene->bvh->maxBoxBounds[currNodeIndex]);
+
+    if( !(__any(rayIntersectsCudaAABB(ray, deviceScene->bvh->minBoxBounds[ currNodeIndex], deviceScene->bvh->maxBoxBounds[currNodeIndex], 0.0f))))
+        return;
+ 
+
+    *stack_ptr++ = -1;
+
+    while( currNodeIndex != -1){
+        leftChildVote = 0;
+        rightChildVote = 0;
+
+        if( deviceScene->bvh->type[ currNodeIndex] == BVH_NODE){
+
+            int leftChildIndex;
+            int rightChildIndex;
+
+            leftChildIndex  = deviceScene->bvh->leftChildIndex[currNodeIndex];
+            rightChildIndex = deviceScene->bvh->rightChildIndex[currNodeIndex];
+
+            int leftChildIntersected  = rayIntersectsCudaAABB( ray, deviceScene->bvh->minBoxBounds[leftChildIndex], deviceScene->bvh->maxBoxBounds[leftChildIndex], 0.0f);
+            int rightChildIntersected = rayIntersectsCudaAABB( ray, deviceScene->bvh->minBoxBounds[rightChildIndex], deviceScene->bvh->maxBoxBounds[rightChildIndex], 0.0f);
+
+            /*
+            // warp sum reduce
+            // sm >= 3.0
+            #pragma unroll
+            for (int mask = warpSize/2; mask > 0; mask /= 2) 
+                leftChildVote += __shfl_xor(leftChildVote, mask);
+
+            #pragma unroll
+            for (int mask = warpSize/2; mask > 0; mask /= 2) 
+                rightChildVote += __shfl_xor( rightChildVote, mask);
+
+            // broadcast to all
+            //leftChildVote  = __shfl(leftChildVote, 0);
+            //rightChildVote = __shfl(rightChildVote, 0);
+
+        
+            if( leftChildVote >= rightChildVote && leftChildVote > 0){
+                currNodeIndex = leftChildIndex;
+                if( rightChildVote)
+                    *stack_ptr++ = rightChildIndex;
+
+            }
+            else if( rightChildVote > leftChildVote && rightChildVote > 0 ){
+                currNodeIndex = rightChildIndex;
+                if( leftChildVote)
+                    *stack_ptr++ = leftChildIndex;
+            }
+            else{
+                // pop
+                currNodeIndex = *--stack_ptr;
+
+            }
+
+            */
+
+            if( __any(leftChildIntersected)){
+
+                currNodeIndex = leftChildIndex;
+                if( __any(rightChildIntersected))
+                    *stack_ptr++ = rightChildIndex;
+            }
+            else if( __any(rightChildIntersected)){
+                currNodeIndex = rightChildIndex;
+            }
+            else{
+                // pop
+                currNodeIndex = *--stack_ptr;
+            }
+
+            /* 
+             * all threads in warp votes
+             * add +1 to leftChild when ray intersects leftChild
+             * add +1 to rightChild when ray intersects rightChild
+             *
+             *
+             * Note: on kepler architecture one could use
+             * warp broadcasting to make a parallel sum
+             * within the warp
+             */
+
+            /*
+            atomicAdd( &sharedVotes[0], leftChildIntersected);
+            atomicAdd( &sharedVotes[1], rightChildIntersected);
+
+            // make sure all threads voted
+            __syncthreads();
+
+
+            if( threadBlockID == 0) {
+
+                if( sharedVotes[0] >= sharedVotes[1] && sharedVotes[0] > 0){
+                    // more  threads want to go to the left child
+                    *sharedCurrNodeIndex = leftChildIndex;
+
+                    if( sharedVotes[1] ){
+                        // a few threads want the right child
+                        *stack_ptr++ = rightChildIndex;
+                    }
+                }
+                else if( sharedVotes[1] > sharedVotes[0] ){
+
+                    *sharedCurrNodeIndex = rightChildIndex;
+                    if( sharedVotes[0])
+                        *stack_ptr++ = leftChildIndex;
+                }
+                else{
+                    // pop
+                    *sharedCurrNodeIndex = *--stack_ptr;
+
+                }
+
+                // reset votes
+                sharedVotes[0] = 0;
+                sharedVotes[1] = 0;
+            }
+
+            // make sure all threads wait 
+            __syncthreads();
+    
+            */
+
+
+        }
+        else if( deviceScene->bvh->type[ currNodeIndex] == BVH_LEAF ){
+            //printf("Warp reached leaf\n");
+            // this is a leaf
+            intersectRayWithCudaLeaf( ray, deviceScene, currNodeIndex, &minDistace, intersectionBuffer, threadID);
+           
+            // pop
+            currNodeIndex = *--stack_ptr;
+
+        }
+    }
+
+}
 
 
 
@@ -251,10 +428,11 @@ DEVICE void traverseCudaTreeAndStore( cudaScene_t* deviceScene, const Ray& ray, 
     //cudaBvhNode_t* bvh = deviceScene->bvh;
 
     currentBvhNodeIndex = 0; // start at root
+    
 
 
     // check root
-    if( ( rayIntersectsCudaAABB(ray, deviceScene->bvh->minBoxBounds[currentBvhNodeIndex], deviceScene->bvh->maxBoxBounds[currentBvhNodeIndex]) ) == false )
+    if( ( rayIntersectsCudaAABB(ray, deviceScene->bvh->minBoxBounds[currentBvhNodeIndex], deviceScene->bvh->maxBoxBounds[currentBvhNodeIndex], minDistace) ) == false )
         return;
 
     // push -1
@@ -264,15 +442,15 @@ DEVICE void traverseCudaTreeAndStore( cudaScene_t* deviceScene, const Ray& ray, 
 
         if( deviceScene->bvh->type[currentBvhNodeIndex] == BVH_NODE){
 
-            //int leftChildIndex;
+            int leftChildIndex;
             int rightChildIndex;
 
-            //leftChildIndex  = deviceScene->bvh->leftChildIndex[currentBvhNodeIndex];
+            leftChildIndex  = deviceScene->bvh->leftChildIndex[currentBvhNodeIndex];
             rightChildIndex = deviceScene->bvh->rightChildIndex[currentBvhNodeIndex];
 
             // intersect both aabbs
-            bool leftChildIntersected = rayIntersectsCudaAABB( ray, deviceScene->bvh->minBoxBounds[deviceScene->bvh->leftChildIndex[currentBvhNodeIndex]], deviceScene->bvh->maxBoxBounds[deviceScene->bvh->leftChildIndex[currentBvhNodeIndex]]);
-            bool rightChildIntersected = rayIntersectsCudaAABB( ray, deviceScene->bvh->minBoxBounds[deviceScene->bvh->rightChildIndex[currentBvhNodeIndex]], deviceScene->bvh->maxBoxBounds[deviceScene->bvh->rightChildIndex[currentBvhNodeIndex]]); 
+            int leftChildIntersected = rayIntersectsCudaAABB( ray, deviceScene->bvh->minBoxBounds[deviceScene->bvh->leftChildIndex[currentBvhNodeIndex]], deviceScene->bvh->maxBoxBounds[deviceScene->bvh->leftChildIndex[currentBvhNodeIndex]], minDistace);
+            int rightChildIntersected = rayIntersectsCudaAABB( ray, deviceScene->bvh->minBoxBounds[deviceScene->bvh->rightChildIndex[currentBvhNodeIndex]], deviceScene->bvh->maxBoxBounds[deviceScene->bvh->rightChildIndex[currentBvhNodeIndex]], minDistace); 
 
             if( leftChildIntersected){
                 // always chose left child first
