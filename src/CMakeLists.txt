@@ -15,15 +15,17 @@ include_directories(glm)
 
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wall -g")
 #set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS}; -arch=sm_20 -maxrregcount 40)
-set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS};-O3 -lineinfo -gencode arch=compute_30,code=sm_30)
+set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS};-lineinfo -O3  -gencode arch=compute_30,code=sm_30)
 SET(CUDA_SEPARABLE_COMPILATION ON)
 set(BUILD_SHARED_LIBS OFF)
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 FILE(GLOB CPPSources *.cpp)
 FILE(GLOB CUSources *.cu)
-
 include_directories(${Eos_SOURCE_DIR}/glfw-3.0.4/include)
 
-cuda_add_executable(Eos ${CPPSources} ${CUSources})
-target_link_libraries(Eos glfw ${GLFW_LIBRARIES} ${GLEW_LIBRARY} ${ASSIMP_LIBRARIES})
+cuda_add_library(cudautilities ${CUSources} STATIC OPTIONS -gencode=arch=compute_30,code=sm_30)
+
+
+cuda_add_executable(Eos ${CPPSources})
+target_link_libraries(Eos glfw cudautilities ${GLFW_LIBRARIES} ${GLEW_LIBRARY} ${ASSIMP_LIBRARIES})
