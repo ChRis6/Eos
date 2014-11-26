@@ -52,7 +52,8 @@ public:
 	HOST void renderSceneToGLPixelBuffer(DScene* h_Dscene, DRayIntersection* intersectionBuffer, int bufferSize, GLuint pbo) const; 
 	HOST void renderSceneToHostBuffer(DScene* h_Dscene, cudaIntersection_t* intersectionBuffer, int bufferSize, void* imageBuffer, int imageBufferSize);
 	HOST void renderCudaSceneToHostBuffer(cudaScene_t* deviceScene, void* imageBuffer);
-
+	HOST void renderCudaSceneToGLPixelBuffer( cudaScene_t* deviceScene, GLuint pbo);
+	
 	HOST void setCamera(Camera* d_camera);	// d_camera must point to GPU memory
 	HOST int getWidth()const	{ return m_Width;}
 	HOST int getHeight()const   {return m_Height;}

@@ -271,3 +271,50 @@ HOST void DeviceRenderer::renderCudaSceneToHostBuffer(cudaScene_t* deviceScene, 
 	// free temp gpu buffer
 	cudaErrorCheck( cudaFree(d_image));
 }
+
+HOST void DeviceRenderer::renderCudaSceneToGLPixelBuffer( cudaScene_t* deviceScene, GLuint pbo){
+
+	void* d_pbo = NULL;
+	size_t d_pboSize;
+	cudaGraphicsResource_t cudaResourcePBO;
+
+	Camera* d_camera;
+	int width;
+	int height;
+	int blockdim[2];
+	int threadPerBlock[2];
+
+	width  = this->getWidth();
+	height = this->getHeight();
+	d_camera = this->getDeviceCamera();
+
+	// bind
+	cudaErrorCheck( cudaGraphicsGLRegisterBuffer(&cudaResourcePBO, pbo, cudaGraphicsRegisterFlagsWriteDiscard));	// only write
+	cudaErrorCheck( cudaGraphicsMapResources ( 1, &cudaResourcePBO, 0));
+	// get pointer
+	cudaErrorCheck( cudaGraphicsResourceGetMappedPointer(&d_pbo, &d_pboSize, cudaResourcePBO));
+
+
+	// make sure its zero
+	cudaErrorCheck( cudaMemset(m_CudaHostIntersection->points, 0, sizeof(glm::vec4) * width * height));
+	cudaErrorCheck( cudaMemset(m_CudaHostIntersection->normals, 0, sizeof(glm::vec4) * width * height));
+	cudaErrorCheck( cudaMemset(m_CudaHostIntersection->materialsIndices, 0, sizeof(int) * width * height));
+
+	threadPerBlock[0] = 16;
+	threadPerBlock[1] = 16;
+
+	blockdim[0] = width / threadPerBlock[0];
+	blockdim[1] = height / threadPerBlock[1];
+
+	// calculate intersections.Traverse Tree on gpu
+	calculateCudaSceneIntersections( deviceScene, d_camera, m_CudaDeviceIntersection, width, height, blockdim, threadPerBlock);
+	cudaErrorCheck( cudaDeviceSynchronize());
+
+	// shade intersections
+	shadeCudaSceneIntersections( deviceScene, d_camera, m_CudaDeviceIntersection, width, height, (uchar4*) d_pbo, blockdim, threadPerBlock);
+	cudaErrorCheck( cudaDeviceSynchronize());
+
+	// unbind pbo for opengl
+	cudaErrorCheck( cudaGraphicsUnmapResources( 1, &cudaResourcePBO, 0));
+	cudaErrorCheck( cudaGraphicsUnregisterResource(cudaResourcePBO));
+}
