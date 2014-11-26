@@ -28,6 +28,12 @@
 #include "cudaStructures.h"
 #include "BVH.h"		// for SURFACES_PER_LEAF
 
+typedef struct intr{
+    int triIndex;
+    glm::vec3 baryCoords;
+}intersection_t;
+
+
 __global__ void __oneThreadPerPixel_kernel();
 __global__ void __renderToBuffer_kernel(char* buffer, unsigned int buffer_len, Camera* camera, DScene* scene, DRayTracer* rayTracer, int width, int height);
 __global__ void __calculateIntersections_kernel(Camera* camera, cudaIntersection_t* intersectionBuffer, int intersectionBufferSize, 
@@ -52,8 +58,10 @@ DEVICE void traverseCudaTreeAndStore( cudaScene_t* deviceScene, const Ray& ray, 
 DEVICE void traverseCudaTreeAndStoreSharedStack( int* sharedStack, int* sharedCurrNodeIndex, int* sharedVotes,
 												cudaScene_t* deviceScene, const Ray& ray, cudaIntersection_t* intersectionBuffer, int threadID, int threadBlockID);
 
+DEVICE void traverseCudaTreeAndStoreNew( cudaScene_t* deviceScene, const Ray& ray, cudaIntersection_t* intersectionBuffer, int threadID);
 
-DEVICE FORCE_INLINE int rayIntersectsCudaAABB(const Ray& ray, const glm::vec4& minBoxBounds, const glm::vec4& maxBoxBounds, float limit){
+DEVICE FORCE_INLINE int rayIntersectsCudaAABB(const Ray& ray, const glm::vec4& minBoxBounds, const glm::vec4& maxBoxBounds, float& dist){
+   /*
    glm::vec4 tmin = (minBoxBounds - glm::vec4(ray.getOrigin(), 1.0f)) * glm::vec4( ray.getInvDirection(), 0.0f);
    glm::vec4 tmax = (maxBoxBounds - glm::vec4(ray.getOrigin(), 1.0f)) * glm::vec4( ray.getInvDirection(), 0.0f);
    
@@ -64,10 +72,32 @@ DEVICE FORCE_INLINE int rayIntersectsCudaAABB(const Ray& ray, const glm::vec4& m
    float maxmin = fmaxf( fmaxf(real_min.x, real_min.y), real_min.z);
     
    return (minmax >= maxmin ); //&& limit - 1e-3 <= minmax);
+*/
+
+	// lb is the corner of AABB with minimal coordinates - left bottom, rt is maximal corner
+	const glm::vec4& lb = minBoxBounds;
+	const glm::vec4& rt = maxBoxBounds;
+
+	const glm::vec4& rayOrigin = glm::vec4(ray.getOrigin(), 1.0f);
+	const glm::vec4& rayInvDirection = glm::vec4(ray.getInvDirection(), 0.0f);
+
+	float tmin = fmaxf(fmaxf(fminf(((lb.x - rayOrigin.x) * rayInvDirection.x), ((rt.x - rayOrigin.x) * rayInvDirection.x)), fminf(((lb.y - rayOrigin.y) * rayInvDirection.y), ((rt.y - rayOrigin.y) * rayInvDirection.y))), fminf(((lb.z - rayOrigin.z) * rayInvDirection.z), ((rt.z - rayOrigin.z) * rayInvDirection.z)));
+	float tmax = fminf(fminf(fmaxf(((lb.x - rayOrigin.x) * rayInvDirection.x), ((rt.x - rayOrigin.x) * rayInvDirection.x)), fmaxf(((lb.y - rayOrigin.y) * rayInvDirection.y), ((rt.y - rayOrigin.y) * rayInvDirection.y))), fmaxf(((lb.z - rayOrigin.z) * rayInvDirection.z), ((rt.z - rayOrigin.z) * rayInvDirection.z)));
+
+	return (tmin < tmax && tmax > 0);
+	
+	//if( (tmax < 0 || tmin > tmax) )//|| tmin > limit)
+    //	return 0;
+	//return 1;
 
 }
-DEVICE void intersectRayWithCudaLeaf( const Ray& ray, cudaScene_t* deviceScene, int bvhLeafIndex, float* minDistace, cudaIntersection_t* intersectionBuffer, int threadID);
+DEVICE void intersectRayWithCudaLeaf( const Ray& ray, cudaScene_t* __restrict__  deviceScene, int bvhLeafIndex, float* __restrict__  minDistace, intersection_t*  __restrict__  intersection, int threadID);
 
+DEVICE void intersectRayWithCudaLeafRestricted( const Ray& ray,// ray
+                                    int bvhLeafIndex, int* __restrict__ numSurfacesEncapulated, int* __restrict__ surfacesIndices, glm::mat4* __restrict__ inverseTransformation, // bvh
+                                    glm::vec3* __restrict__ v1, glm::vec3* __restrict__ v2, glm::vec3* __restrict__ v3, // triangle vertices
+                                    int* __restrict__ triTransIndex,    // triangle transformations
+                                    float* __restrict__ minDistace, intersection_t* __restrict__ threadIntersection, int threadID );
 
 DEVICE FORCE_INLINE bool rayIntersectsCudaTriangle( const Ray& ray, const glm::vec3& v1, const glm::vec3& v2, const glm::vec3& v3, glm::vec3& baryCoords){
     const glm::vec3& P = glm::cross(ray.getDirection(), v3 - v1);

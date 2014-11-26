@@ -44,8 +44,8 @@
 #include "stb_image_write.h"
 
 
-#define WINDOW_WIDTH   1024  // in pixels
-#define WINDOW_HEIGHT  1024 // in pixels
+#define WINDOW_WIDTH   1920  // in pixels
+#define WINDOW_HEIGHT  1080 // in pixels
 #define FOV            70
 
 #ifndef EPSILON
@@ -593,6 +593,7 @@ int main(int argc, char **argv)
 
          //deviceRenderer.renderToGLPixelBuffer(pbo);
          //deviceRenderer.renderSceneToGLPixelBuffer(h_DScene, d_IntersectionBuffer, dRayIntersectionBufferSize, pbo );
+         deviceRenderer.renderCudaSceneToGLPixelBuffer( cudaDeviceScene, pbo);
       }
       else{
          rayTracer.render(scene, camera, imageBuffer);
