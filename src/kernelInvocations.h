@@ -28,7 +28,7 @@
 #include "cudaStructures.h"
 #include "BVH.h"		// for SURFACES_PER_LEAF
 
-typedef struct intr{
+typedef struct __align__(16) intr{
     int triIndex;
     glm::vec3 baryCoords;
 }intersection_t;
@@ -60,7 +60,7 @@ DEVICE void traverseCudaTreeAndStoreSharedStack( int* sharedStack, int* sharedCu
 
 DEVICE void traverseCudaTreeAndStoreNew( cudaScene_t* deviceScene, const Ray& ray, cudaIntersection_t* intersectionBuffer, int threadID);
 
-DEVICE FORCE_INLINE int rayIntersectsCudaAABB(const Ray& ray, const glm::vec4& minBoxBounds, const glm::vec4& maxBoxBounds, float& dist){
+DEVICE FORCE_INLINE int rayIntersectsCudaAABB(const Ray& ray, const glm::vec4& minBoxBounds, const glm::vec4& maxBoxBounds, float dist){
    /*
    glm::vec4 tmin = (minBoxBounds - glm::vec4(ray.getOrigin(), 1.0f)) * glm::vec4( ray.getInvDirection(), 0.0f);
    glm::vec4 tmax = (maxBoxBounds - glm::vec4(ray.getOrigin(), 1.0f)) * glm::vec4( ray.getInvDirection(), 0.0f);
@@ -84,7 +84,11 @@ DEVICE FORCE_INLINE int rayIntersectsCudaAABB(const Ray& ray, const glm::vec4& m
 	float tmin = fmaxf(fmaxf(fminf(((lb.x - rayOrigin.x) * rayInvDirection.x), ((rt.x - rayOrigin.x) * rayInvDirection.x)), fminf(((lb.y - rayOrigin.y) * rayInvDirection.y), ((rt.y - rayOrigin.y) * rayInvDirection.y))), fminf(((lb.z - rayOrigin.z) * rayInvDirection.z), ((rt.z - rayOrigin.z) * rayInvDirection.z)));
 	float tmax = fminf(fminf(fmaxf(((lb.x - rayOrigin.x) * rayInvDirection.x), ((rt.x - rayOrigin.x) * rayInvDirection.x)), fmaxf(((lb.y - rayOrigin.y) * rayInvDirection.y), ((rt.y - rayOrigin.y) * rayInvDirection.y))), fmaxf(((lb.z - rayOrigin.z) * rayInvDirection.z), ((rt.z - rayOrigin.z) * rayInvDirection.z)));
 
-	return (tmin < tmax && tmax > 0);
+
+
+	return ((tmin < tmax && tmax > 0) && dist > tmin);
+	
+	
 	
 	//if( (tmax < 0 || tmin > tmax) )//|| tmin > limit)
     //	return 0;
