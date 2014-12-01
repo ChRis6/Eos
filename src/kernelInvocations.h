@@ -117,9 +117,11 @@ DEVICE FORCE_INLINE bool rayIntersectsCudaTriangle( const Ray& ray, const glm::v
     baryCoords.y = glm::dot(T, P) * det;
     baryCoords.z = glm::dot(ray.getDirection(), Q) * det;
 
-    if ((baryCoords.x < 0.0f) || (baryCoords.y < 0.0f || baryCoords.y > 1.0f) || ( baryCoords.z < 0.0f || baryCoords.y + baryCoords.z > 1.0f) )
-        return false;
+    //if ((baryCoords.x < 0.0f) || (baryCoords.y < 0.0f || baryCoords.y > 1.0f) || ( baryCoords.z < 0.0f || baryCoords.y + baryCoords.z > 1.0f) )
+    //    return false;
     
-    return true;
+    //return true;
+
+    return !((baryCoords.x < 0.0f) || (baryCoords.y < 0.0f || baryCoords.y > 1.0f) || ( baryCoords.z < 0.0f || baryCoords.y + baryCoords.z > 1.0f)) ;
 }
 #endif
