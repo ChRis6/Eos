@@ -9,7 +9,7 @@
 
 #define GLM_MESSAGES
 #include <glm/vec3.hpp>
-#include <cstdio>
+#include <iostream>
 
 int test_compiler()
 {
@@ -19,20 +19,23 @@ int test_compiler()
 	{
 		switch(GLM_COMPILER)
 		{
-		case GLM_COMPILER_VC2010:
-			std::printf("GLM_COMPILER_VC2010\n");
+		case GLM_COMPILER_VC8:
+			std::cout << "GLM_COMPILER_VC8" << std::endl;	
 			break;
-		case GLM_COMPILER_VC2012:
-			std::printf("GLM_COMPILER_VC2012\n");
+		case GLM_COMPILER_VC9:
+			std::cout << "GLM_COMPILER_VC9" << std::endl;	
 			break;
-		case GLM_COMPILER_VC2013:
-			std::printf("GLM_COMPILER_VC2013\n");
+		case GLM_COMPILER_VC10:
+			std::cout << "GLM_COMPILER_VC10" << std::endl;	
 			break;
-		case GLM_COMPILER_VC2015:
-			std::printf("GLM_COMPILER_VC2015\n");
+		case GLM_COMPILER_VC11:
+			std::cout << "GLM_COMPILER_VC11" << std::endl;	
+			break;
+		case GLM_COMPILER_VC12:
+			std::cout << "GLM_COMPILER_VC12" << std::endl;
 			break;
 		default:
-			std::printf("Visual C++ version not detected\n");
+			std::cout << "Visual C++ version not detected" << std::endl;
 			Error += 1;
 			break;
 		}
@@ -41,113 +44,139 @@ int test_compiler()
 	{
 		switch(GLM_COMPILER)
 		{
+		case GLM_COMPILER_GCC34:
+			std::cout << "GLM_COMPILER_GCC34" << std::endl;	
+			break;
+		case GLM_COMPILER_GCC35:
+			std::cout << "GLM_COMPILER_GCC35" << std::endl;	
+			break;
+		case GLM_COMPILER_GCC40:
+			std::cout << "GLM_COMPILER_GCC40" << std::endl;	
+			break;
+		case GLM_COMPILER_GCC41:
+			std::cout << "GLM_COMPILER_GCC41" << std::endl;	
+			break;
+		case GLM_COMPILER_GCC42:
+			std::cout << "GLM_COMPILER_GCC42" << std::endl;	
+			break;
+		case GLM_COMPILER_GCC43:
+			std::cout << "GLM_COMPILER_GCC43" << std::endl;	
+			break;
 		case GLM_COMPILER_GCC44:
-			std::printf("GLM_COMPILER_GCC44\n");
+			std::cout << "GLM_COMPILER_GCC44" << std::endl;	
 			break;
 		case GLM_COMPILER_GCC45:
-			std::printf("GLM_COMPILER_GCC45\n");
+			std::cout << "GLM_COMPILER_GCC45" << std::endl;	
 			break;
 		case GLM_COMPILER_GCC46:
-			std::printf("GLM_COMPILER_GCC46\n");
+			std::cout << "GLM_COMPILER_GCC46" << std::endl;	
 			break;
 		case GLM_COMPILER_GCC47:
-			std::printf("GLM_COMPILER_GCC47\n");
+			std::cout << "GLM_COMPILER_GCC47" << std::endl;	
 			break;
 		case GLM_COMPILER_GCC48:
-			std::printf("GLM_COMPILER_GCC48\n");
+			std::cout << "GLM_COMPILER_GCC48" << std::endl;	
 			break;
 		case GLM_COMPILER_GCC49:
-			std::printf("GLM_COMPILER_GCC49\n");
-			break;
-		case GLM_COMPILER_GCC50:
-			std::printf("GLM_COMPILER_GCC50\n");
+			std::cout << "GLM_COMPILER_GCC49" << std::endl;
 			break;
 		default:
-			std::printf("GCC version not detected\n");
+			std::cout << "GCC version not detected" << std::endl;
 			Error += 1;
 			break;
 		}
 	}
 	else if(GLM_COMPILER & GLM_COMPILER_CUDA)
 	{
-		std::printf("GLM_COMPILER_CUDA\n");
+		std::cout << "GLM_COMPILER_CUDA" << std::endl;		
 	}
-	else if(GLM_COMPILER & GLM_COMPILER_APPLE_CLANG)
+	else if(GLM_COMPILER & GLM_COMPILER_CLANG)
 	{
 		switch(GLM_COMPILER)
 		{
-		case GLM_COMPILER_APPLE_CLANG40:
-			std::printf("GLM_COMPILER_APPLE_CLANG40\n");
+		case GLM_COMPILER_CLANG26:
+			std::cout << "GLM_COMPILER_CLANG26" << std::endl;		
 			break;
-		case GLM_COMPILER_APPLE_CLANG41:
-			std::printf("GLM_COMPILER_APPLE_CLANG41\n");
+		case GLM_COMPILER_CLANG27:
+			std::cout << "GLM_COMPILER_CLANG27" << std::endl;		
 			break;
-		case GLM_COMPILER_APPLE_CLANG42:
-			std::printf("GLM_COMPILER_APPLE_CLANG42\n");
+		case GLM_COMPILER_CLANG28:
+			std::cout << "GLM_COMPILER_CLANG28" << std::endl;		
 			break;
-		case GLM_COMPILER_APPLE_CLANG50:
-			std::printf("GLM_COMPILER_APPLE_CLANG50\n");
+		case GLM_COMPILER_CLANG29:
+			std::cout << "GLM_COMPILER_CLANG29" << std::endl;		
 			break;
-		case GLM_COMPILER_APPLE_CLANG51:
-			std::printf("GLM_COMPILER_APPLE_CLANG51\n");
+		case GLM_COMPILER_CLANG30:
+			std::cout << "GLM_COMPILER_CLANG30" << std::endl;		
 			break;
-		case GLM_COMPILER_APPLE_CLANG60:
-			std::printf("GLM_COMPILER_APPLE_CLANG60\n");	
+		case GLM_COMPILER_CLANG31:
+			std::cout << "GLM_COMPILER_CLANG31" << std::endl;		
+			break;
+		case GLM_COMPILER_CLANG32:
+			std::cout << "GLM_COMPILER_CLANG32" << std::endl;
+			break;
+		case GLM_COMPILER_CLANG33:
+			std::cout << "GLM_COMPILER_CLANG33" << std::endl;
+			break;
+		case GLM_COMPILER_CLANG40:
+			std::cout << "GLM_COMPILER_CLANG40" << std::endl;
+			break;
+		case GLM_COMPILER_CLANG41:
+			std::cout << "GLM_COMPILER_CLANG41" << std::endl;
+			break;
+		case GLM_COMPILER_CLANG42:
+			std::cout << "GLM_COMPILER_CLANG42" << std::endl;
+			break;
+		case GLM_COMPILER_CLANG43:
+			std::cout << "GLM_COMPILER_CLANG43" << std::endl;
+			break;
+		case GLM_COMPILER_CLANG50:
+			std::cout << "GLM_COMPILER_CLANG50" << std::endl;
 			break;
 		default:
-			std::printf("Apple Clang version not detected\n");
+			std::cout << "Clang version not detected" << std::endl;
 			break;
 		}
 	}
-	else if(GLM_COMPILER & GLM_COMPILER_LLVM)
+	else if(GLM_COMPILER & GLM_COMPILER_LLVM_GCC)
 	{
-		switch(GLM_COMPILER)
-		{
-		case GLM_COMPILER_LLVM32:
-			std::printf("GLM_COMPILER_LLVM32\n");
-			break;
-		case GLM_COMPILER_LLVM33:
-			std::printf("GLM_COMPILER_LLVM33\n");
-			break;
-		case GLM_COMPILER_LLVM34:
-			std::printf("GLM_COMPILER_LLVM34\n");
-			break;
-		case GLM_COMPILER_LLVM35:
-			std::printf("GLM_COMPILER_LLVM35\n");
-			break;
-		default:
-			std::printf("LLVM version not detected\n");
-			break;
-		}
+		std::cout << "GLM_COMPILER_LLVM_GCC" << std::endl;
+
 	}
 	else if(GLM_COMPILER & GLM_COMPILER_INTEL)
 	{
 		switch(GLM_COMPILER)
 		{
-		case GLM_COMPILER_INTEL12:
-			std::printf("GLM_COMPILER_INTEL12\n");
+		case GLM_COMPILER_INTEL9:
+			std::cout << "GLM_COMPILER_INTEL9" << std::endl;
+			break;
+		case GLM_COMPILER_INTEL10_0:
+			std::cout << "GLM_COMPILER_INTEL10_0" << std::endl;
+			break;
+		case GLM_COMPILER_INTEL10_1:
+			std::cout << "GLM_COMPILER_INTEL10_1" << std::endl;
+			break;
+		case GLM_COMPILER_INTEL11_0:
+			std::cout << "GLM_COMPILER_INTEL11_0" << std::endl;
+			break;
+		case GLM_COMPILER_INTEL11_1:
+			std::cout << "GLM_COMPILER_INTEL11_1" << std::endl;
 			break;
 		case GLM_COMPILER_INTEL12_1:
-			std::printf("GLM_COMPILER_INTEL12_1\n");
+			std::cout << "GLM_COMPILER_INTEL12_1" << std::endl;
 			break;
-		case GLM_COMPILER_INTEL13:
-			std::printf("GLM_COMPILER_INTEL13\n");
-			break;
-		case GLM_COMPILER_INTEL14:
-			std::printf("GLM_COMPILER_INTEL14\n");
-			break;
-		case GLM_COMPILER_INTEL15:
-			std::printf("GLM_COMPILER_INTEL15\n");
+		case GLM_COMPILER_INTEL13_0:
+			std::cout << "GLM_COMPILER_INTEL13_0" << std::endl;
 			break;
 		default:
-			std::printf("Intel compiler version not detected\n");
+			std::cout << "Intel compiler version not detected" << std::endl;
 			Error += 1;
 			break;
 		}
 	}
 	else
 	{
-		std::printf("Undetected compiler\n");
+		std::cout << "Undetected compiler" << std::endl;
 		Error += 1;
 	}
 	
@@ -161,9 +190,9 @@ int test_model()
 	Error += ((sizeof(void*) == 4) && (GLM_MODEL == GLM_MODEL_32)) || ((sizeof(void*) == 8) && (GLM_MODEL == GLM_MODEL_64)) ? 0 : 1;
 	
 	if(GLM_MODEL == GLM_MODEL_32)
-		std::printf("GLM_MODEL_32\n");
+		std::cout << "GLM_MODEL_32" << std::endl;
 	else if(GLM_MODEL == GLM_MODEL_64)
-		std::printf("GLM_MODEL_64\n");
+		std::cout << "GLM_MODEL_64" << std::endl;
 	
 	return Error;
 }
@@ -172,29 +201,29 @@ int test_instruction_set()
 {
 	int Error = 0;
 
-	std::printf("GLM_ARCH: ");
+	std::cout << "GLM_ARCH: ";
 
 	if(GLM_ARCH == GLM_ARCH_PURE)
-		std::printf("GLM_ARCH_PURE ");
+		std::cout << "GLM_ARCH_PURE ";
 	if(GLM_ARCH & GLM_ARCH_AVX2)
-		std::printf("GLM_ARCH_AVX2 ");
+		std::cout << "GLM_ARCH_AVX2 ";
 	if(GLM_ARCH & GLM_ARCH_AVX)
-		std::printf("GLM_ARCH_AVX ");
+		std::cout << "GLM_ARCH_AVX ";
 	if(GLM_ARCH & GLM_ARCH_AVX)
-		std::printf("GLM_ARCH_SSE4 ");
+		std::cout << "GLM_ARCH_SSE4 ";
 	if(GLM_ARCH & GLM_ARCH_SSE3)
-		std::printf("GLM_ARCH_SSE3 ");
+		std::cout << "GLM_ARCH_SSE3 ";
 	if(GLM_ARCH & GLM_ARCH_SSE2)
-		std::printf("GLM_ARCH_SSE2 ");
+		std::cout << "GLM_ARCH_SSE2 ";
 
-	std::printf("\n");
+	std::cout << std::endl;
 
 	return Error;
 }
 
 int test_cpp_version()
 {
-	std::printf("__cplusplus: %d\n", __cplusplus);
+	std::cout << "__cplusplus: " << __cplusplus << std::endl;
 	
 	return 0;
 }
