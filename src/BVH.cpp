@@ -19,15 +19,18 @@
  *
  * 3. This notice may not be removed or altered from any source distribution.
  */
+#include <string.h>
+#include <stdlib.h>
+
 #include <iostream>
 #include <algorithm>
  #include <stack>
 #include <cfloat>
 #include "BVH.h"
 
-#define SAH_SURFACE_CEIL  2000
-#define COST_TRAVERSAL    5
-#define COST_INTERSECTION 10
+#define SAH_SURFACE_CEIL  3000
+#define COST_TRAVERSAL    0.5f
+#define COST_INTERSECTION 1.0f
 
 
 bool by_X_compareSurfaces(Surface* a, Surface* b){
@@ -97,7 +100,9 @@ void BVH::buildHierarchy(Surface** surfaces, int numSurfaces){
 	
 	m_FlatTreePointers.reserve(1000);
 	m_FlatTreePointers.push_back(m_Root);
-	this->makeTreeFlat(m_Root, 0, m_FlatTreePointers);
+	//this->makeTreeFlat(m_Root, 0, m_FlatTreePointers);
+	this->treeToArrayPreorder(m_Root, m_FlatTreePointers);
+
 	this->copyFlatToBuffer();
 
 	this->deallocateTreePointers(this->getRoot());
@@ -157,14 +162,16 @@ int BVH::topDownSplitIndex(Surface** surfaces, Box parentBox, int start, int end
 	int biggestIndex;
 	int i;
 	float midAxisCoord;
-	Box centroidsBox;
+	
 
+	/*
 	for( i = start ; i < end; i++){
 		glm::vec4 surfaceCentroidWorldCoords = surfaces[i]->transformation() * glm::vec4(surfaces[i]->getCentroid(), 1.0f);
 		glm::vec3 surfaceCentroid = glm::vec3(surfaceCentroidWorldCoords.x, surfaceCentroidWorldCoords.y, surfaceCentroidWorldCoords.z);
 		centroidsBox.expandToIncludeVertex(surfaceCentroid);
 	}
-	
+	*/
+	Box centroidsBox = computeBoxWithSurfaces( surfaces, start, end);
 
 	biggestIndex = centroidsBox.getBiggestDimension();
 
@@ -176,8 +183,8 @@ int BVH::topDownSplitIndex(Surface** surfaces, Box parentBox, int start, int end
 		biggestIndex = 2;
 	*/
 
-	glm::vec3 boxMinVertex = centroidsBox.getMinVertex();
-	glm::vec3 boxMaxVertex = centroidsBox.getMaxVertex();
+	const glm::vec3& boxMinVertex = centroidsBox.getMinVertex();
+	const glm::vec3& boxMaxVertex = centroidsBox.getMaxVertex();
 	midAxisCoord = (boxMaxVertex[biggestIndex] + boxMinVertex[biggestIndex] ) * 0.5f;
 
 	// sort surfaces along axis ( in world coords)
@@ -194,8 +201,7 @@ int BVH::topDownSplitIndex(Surface** surfaces, Box parentBox, int start, int end
 	for(i = start ; i < end; i++){
 		glm::vec4 surfaceCentroid = glm::vec4(surfaces[i]->getCentroid(),1.0f);
 		surfaceCentroid = surfaces[i]->transformation() * surfaceCentroid;
-		//std::cout << "X = " << surfaceCentroid.x << std::endl;
-
+		
 		if( surfaceCentroid[biggestIndex] > midAxisCoord  ){
 			
 			break;
@@ -407,46 +413,79 @@ int BVH::topDownSplitIndexSAH(Surface** surfaces,  Box& parentBox, float& splitC
 	float computedCost;
 	float parentSurfaceArea;
 	float minCost = FLT_MAX;
-	int minCostSplit = 1;
+	int minCostSplit = start + 1;
 	int dim;
 	int minCostAxis = 0;
-	int nl,nr;	// left count children,right count children
+		// left count children,right count children
 	int i;
 	Box leftChildBox;
 	Box rightChildBox;
 	float leftChildSurfaceArea,rightChildSurfaceArea;
 
 	parentSurfaceArea = parentBox.computeSurfaceArea();
+
+	Surface** tmpSurfaces = (Surface**) malloc( sizeof( Surface*) * ( end - start));
+
+
+
 	for( dim = 0 ; dim < 3; dim++){
 
+		memcpy( tmpSurfaces, surfaces + start, sizeof(Surface*) * ( end - start));
 		
+		/*
 		if( dim == 0)
 			std::sort(surfaces + start, surfaces + end , by_X_compareSurfaces);
 		else if( dim == 1)
 			std::sort(surfaces + start, surfaces + end , by_Y_compareSurfaces);
 		else
 			std::sort(surfaces + start, surfaces + end , by_Z_compareSurfaces);
+		*/
+
+		if( dim == 0)
+			std::sort(tmpSurfaces, tmpSurfaces + end - start , by_X_compareSurfaces);
+		else if( dim == 1)
+			std::sort(tmpSurfaces, tmpSurfaces + end - start , by_Y_compareSurfaces);
+		else
+			std::sort(tmpSurfaces, tmpSurfaces + end - start , by_Z_compareSurfaces);
 
 
+		#pragma omp parallel for
 		for(i = start ; i < end - 1; i++){
+			int nl,nr;
 			nl = i + 1;
 			
-			leftChildBox  = this->computeBoxWithCentroids(surfaces, start, nl);
-			rightChildBox = this->computeBoxWithCentroids(surfaces, nl, end);
+			//leftChildBox  = this->computeBoxWithCentroids(surfaces, start, nl);
+			//rightChildBox = this->computeBoxWithCentroids(surfaces, nl, end);
+			//leftChildBox  = this->computeBoxWithSurfaces(surfaces, start, nl);
+			//rightChildBox = this->computeBoxWithSurfaces(surfaces, nl, end);
+
+			leftChildBox  = this->computeBoxWithSurfaces(tmpSurfaces, 0, nl - start);
+			rightChildBox = this->computeBoxWithSurfaces(tmpSurfaces, nl - start, end - start);
 
 			leftChildSurfaceArea  = leftChildBox.computeSurfaceArea();
 			rightChildSurfaceArea = rightChildBox.computeSurfaceArea();
 
 			// SAH: C = CT + nl*CI* (S(Bl) / S(Bp)) + nr* CI * (S(Br) / S(Bp))  
 			computedCost = COST_TRAVERSAL + (nl - start) * COST_INTERSECTION * leftChildSurfaceArea / parentSurfaceArea + (end - nl) * COST_INTERSECTION * rightChildSurfaceArea / parentSurfaceArea;
-			if(computedCost < minCost){
-				minCost = computedCost;
-				minCostSplit = nl;
-				*splitAxis = dim;
+			#pragma omp critical
+			{
+				if(computedCost < minCost){
+					minCost = computedCost;
+					minCostSplit = nl;
+					*splitAxis = dim;
+				}
 			}
 		}
 	}
- 
+ 	
+ 	if( *splitAxis == 0)
+ 		std::sort(surfaces + start, surfaces + end , by_X_compareSurfaces);
+ 	else if( *splitAxis == 1)
+ 		std::sort(surfaces + start, surfaces + end , by_Y_compareSurfaces);
+ 	else
+ 		std::sort(surfaces + start, surfaces + end , by_Z_compareSurfaces);
+
+ 	free( tmpSurfaces);
 
 	splitCost = minCost;
 
@@ -617,6 +656,7 @@ bool BVH::intersectStackVisibility(const Ray& ray, BvhNode* root, Surface** surf
 }
 
 void BVH::makeTreeFlat(BvhNode* node, int nodeIndex, std::vector<BvhNode*>& array){
+
 	int left;
 	int right;
 	if(node == NULL)
@@ -637,6 +677,27 @@ void BVH::makeTreeFlat(BvhNode* node, int nodeIndex, std::vector<BvhNode*>& arra
 	makeTreeFlat(node->leftChild, left, array);
 	makeTreeFlat(node->rightChild, right, array);
 
+}
+
+int BVH::treeToArrayPreorder(BvhNode* node, std::vector<BvhNode*>& array){
+
+	int leftChildIdx;
+	int rightChildIdx;
+	int my_id;
+
+	if( node == NULL)
+		return -1;
+
+	array.push_back(node);
+	my_id = array.size() - 1;
+
+	leftChildIdx  = treeToArrayPreorder( node->leftChild, array);
+	rightChildIdx = treeToArrayPreorder( node->rightChild, array);
+
+	array[my_id]->leftChildIndex  = leftChildIdx;
+	array[my_id]->rightChildIndex = rightChildIdx;
+
+	return my_id; 
 }
 
 void BVH::copyFlatToBuffer(){

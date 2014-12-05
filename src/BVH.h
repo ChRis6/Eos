@@ -29,7 +29,7 @@
 #include "RayIntersection.h"
 #include <vector>
 
-#define SURFACES_PER_LEAF 4
+#define SURFACES_PER_LEAF 5
 
 enum{
 	BVH_NODE = 0,
@@ -88,7 +88,9 @@ private:
 	
 	void makeTreeFlat(BvhNode* node, int nodeIndex, std::vector<BvhNode*>& array);
 	void copyFlatToBuffer();
+	int  treeToArrayPreorder(BvhNode* node, std::vector<BvhNode*>& array);
 	void deallocateTreePointers(BvhNode* node);
+
 private:
 	BvhNode* m_Root;
 	std::vector<BvhNode*> m_FlatTreePointers;
