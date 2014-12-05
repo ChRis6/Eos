@@ -22,6 +22,7 @@
 
 #include "Ray.h"
 
+/*
 DEVICE HOST void Ray::setOrigin(const glm::vec3& origin){
 	m_Origin = origin;
 }
@@ -46,3 +47,4 @@ DEVICE HOST const glm::vec3& Ray::getDirection() const{
 DEVICE HOST const glm::vec3& Ray::getInvDirection() const{
 	return m_InvDirection;
 }
+*/

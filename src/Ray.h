@@ -39,12 +39,19 @@ public:
 		m_sign[2] = m_InvDirection.z < 0.0f;
 	}
 
-	DEVICE HOST void setOrigin(const glm::vec3& origin);
-	DEVICE HOST void setDirection(const glm::vec3& direction);
+	DEVICE HOST inline void setOrigin(const glm::vec3& origin) { m_Origin = origin; }
+	DEVICE HOST inline void setDirection(const glm::vec3& direction) {
+		m_Direction = direction;
+		m_InvDirection = glm::vec3( 1.0f/ direction.x, 1.0f/direction.y, 1.0/direction.z);
 
-	DEVICE HOST const glm::vec3& getOrigin() const;
-	DEVICE HOST const glm::vec3& getDirection() const;
-	DEVICE HOST const glm::vec3& getInvDirection() const;
+		m_sign[0] = m_InvDirection.x < 0.0f;
+		m_sign[1] = m_InvDirection.y < 0.0f;
+		m_sign[2] = m_InvDirection.z < 0.0f;
+	}
+
+	DEVICE HOST inline const glm::vec3& getOrigin() const { return m_Origin;}
+	DEVICE HOST inline const glm::vec3& getDirection() const { return m_Direction;}
+	DEVICE HOST inline const glm::vec3& getInvDirection() const { return m_InvDirection;}
 
 private:
 	glm::vec3 m_Origin;
