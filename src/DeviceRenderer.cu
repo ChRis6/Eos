@@ -22,7 +22,11 @@
 
 #include "DeviceRenderer.h"
 #include "kernelWrapper.h"
+#include "getTime.h"
 #include <cuda_gl_interop.h>
+#include <iostream>
+
+//#define PRINT_GPU_RENDER_TIME
 
 HOST void DeviceRenderer::renderToGLPixelBuffer(GLuint pbo)const {
 
@@ -255,6 +259,14 @@ HOST void DeviceRenderer::renderCudaSceneToHostBuffer(cudaScene_t* deviceScene, 
 	blockdim[0] = width / threadPerBlock[0];
 	blockdim[1] = height / threadPerBlock[1];
 
+#ifdef PRINT_GPU_RENDER_TIME
+	std::cout << "Rendering Once to Image file (GPU)..." << std::endl;
+    double start,end,diff;
+    double msecs;
+    int hours,minutes,seconds;
+
+    start = getRealTime();
+#endif
 
 	// calculate intersections.Traverse Tree on gpu
 	calculateCudaSceneIntersections( deviceScene, d_camera, m_CudaDeviceIntersection, width, height, blockdim, threadPerBlock);
@@ -265,6 +277,18 @@ HOST void DeviceRenderer::renderCudaSceneToHostBuffer(cudaScene_t* deviceScene, 
 	shadeCudaSceneIntersections( deviceScene, d_camera, m_CudaDeviceIntersection, width, height, (uchar4*) d_image, blockdim, threadPerBlock);
 	// wait.(no need cause there is memcpy next)
 	cudaErrorCheck( cudaDeviceSynchronize());
+
+#ifdef PRINT_GPU_RENDER_TIME
+	end = getRealTime();
+
+    diff = end - start;
+    minutes = diff / 60;
+    seconds = ((int)diff) % 60;
+    msecs = diff * 1000;
+
+    std::cout << "Rendering Once: Completed in " << minutes << "minutes, " << seconds << "sec " << std::endl;
+    std::cout << "That's About " << msecs << "ms" << std::endl;
+#endif
 
 	cudaErrorCheck( cudaMemcpy( imageBuffer, d_image, sizeof(uchar4) * width * height, cudaMemcpyDeviceToHost));
 
@@ -317,4 +341,59 @@ HOST void DeviceRenderer::renderCudaSceneToGLPixelBuffer( cudaScene_t* deviceSce
 	// unbind pbo for opengl
 	cudaErrorCheck( cudaGraphicsUnmapResources( 1, &cudaResourcePBO, 0));
 	cudaErrorCheck( cudaGraphicsUnregisterResource(cudaResourcePBO));
+}
+
+
+HOST void DeviceRenderer::renderCudaSceneToHostBufferMegaKernel( cudaScene_t* deviceScene, void* imageBuffer){
+
+
+	cudaEvent_t start, stop;
+
+
+	void* d_image;
+	Camera* d_camera;
+	int width;
+	int height;
+	int blockdim[2];
+	int threadPerBlock[2];
+
+	width  = this->getWidth();
+	height = this->getHeight();
+
+	// 
+	cudaErrorCheck( cudaMalloc((void**) &d_image, sizeof(uchar4) * width * height ));
+	cudaErrorCheck( cudaMemset( d_image, 0, sizeof(uchar4) * width * height));
+
+	d_camera = this->getDeviceCamera();
+
+
+	threadPerBlock[0] = 16;
+	threadPerBlock[1] = 16;
+
+	blockdim[0] = width / threadPerBlock[0];
+	blockdim[1] = height / threadPerBlock[1];
+
+	cudaErrorCheck( cudaEventCreate(&start));
+	cudaErrorCheck( cudaEventCreate(&stop));
+
+	cudaEventRecord(start);
+	rayTrace_MegaKernel( deviceScene, d_camera, width, height, (uchar4*) d_image, blockdim, threadPerBlock);
+	cudaDeviceSynchronize();
+	cudaEventRecord(stop);
+	cudaEventSynchronize(stop);
+	
+
+	cudaErrorCheck( cudaMemcpy( imageBuffer, d_image, sizeof(uchar4) * width * height, cudaMemcpyDeviceToHost));
+	
+
+	float milliseconds = 0.0f;
+	cudaEventElapsedTime(&milliseconds, start, stop);
+	printf("Cuda Mega Kernel finished in %f milliseconds\n", milliseconds );
+
+	// free temp gpu buffer
+	cudaErrorCheck( cudaFree(d_image));
+
+
+
+
 }

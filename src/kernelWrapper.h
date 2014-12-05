@@ -43,7 +43,7 @@ extern "C" void calculateCudaSceneIntersections( cudaScene_t* deviceScene, Camer
 												 int blockdim[], int tpblock[]);
 extern "C" void shadeCudaSceneIntersections( cudaScene_t* deviceScene, Camera* camera, cudaIntersection_t* intersectionBuffer, int width, int height, uchar4* imageBuffer,
 											 int blockdim[], int tpblock[]);
-
+extern "C" void rayTrace_MegaKernel( cudaScene_t* deviceScene, Camera* camera, int width, int height, uchar4* imageBuffer, int blockdim[], int tpblock[]);
 
 
 #endif

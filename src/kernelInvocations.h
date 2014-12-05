@@ -48,6 +48,7 @@ __global__ void __shadeIntersectionsToBuffer_kernel(char* imageBuffer, unsigned 
 __global__ void __calculateCudaSceneIntersections_kernel( cudaScene_t* deviceScene, Camera* camera, cudaIntersection_t* intersectionBuffer, int width, int height);
 __global__ void __shadeCudaSceneIntersections_kernel( cudaScene_t* deviceScene, Camera* camera, cudaIntersection_t* intersectionBuffer, int width, int height, uchar4* imageBuffer);
 
+__global__ void __rayTrace_MegaKernel( cudaScene_t* deviceScene, Camera* camera, int width, int height, uchar4* imageBuffer);
 
 DEVICE void traverseTreeAndStore(const Ray& ray, cudaIntersection_t* intersectionBuffer, int intersectionBufferSize, DTriangle* trianglesBuffer, int trianglesBufferSize, BvhNode* bvh, int threadID );
 DEVICE bool intersectRayWithLeafNode(const Ray& ray, BvhNode* node, cudaIntersection_t* intersection, float& distance, DTriangle* triangles, int threadID);
@@ -86,7 +87,7 @@ DEVICE FORCE_INLINE int rayIntersectsCudaAABB(const Ray& ray, const glm::vec4& m
 
 
 
-	return ((tmin < tmax && tmax > 0) && dist > tmin);
+	return ((tmin < tmax && tmax > 0) && dist >= tmin);
 	
 	
 	
@@ -97,7 +98,7 @@ DEVICE FORCE_INLINE int rayIntersectsCudaAABB(const Ray& ray, const glm::vec4& m
 }
 DEVICE void intersectRayWithCudaLeaf( const Ray& ray, cudaScene_t* __restrict__  deviceScene, int bvhLeafIndex, float* __restrict__  minDistace, intersection_t*  __restrict__  intersection, int threadID);
 
-DEVICE void intersectRayWithCudaLeafRestricted( const Ray& ray,// ray
+DEVICE FORCE_INLINE void  intersectRayWithCudaLeafRestricted( const Ray& ray,// ray
                                     int bvhLeafIndex, int* __restrict__ numSurfacesEncapulated, int* __restrict__ surfacesIndices, glm::mat4* __restrict__ inverseTransformation, // bvh
                                     glm::vec3* __restrict__ v1, glm::vec3* __restrict__ v2, glm::vec3* __restrict__ v3, // triangle vertices
                                     int* __restrict__ triTransIndex,    // triangle transformations
