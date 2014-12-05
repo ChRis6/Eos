@@ -28,6 +28,21 @@
 
 //#define PRINT_PROGRESS
 
+void Scene::printFirstTriangles(int n){
+
+	for( int i = 0; i < n; i++){
+
+		Surface* surface = this->getSurface(i);
+		Triangle* tri = dynamic_cast<Triangle*>(surface);
+		if( tri){
+			printf("Tri: %d\n",i );
+			printf("v1: %f %f %f\n", tri->getV1().x, tri->getV1().y, tri->getV1().z );
+			printf("v2: %f %f %f\n", tri->getV2().x, tri->getV2().y, tri->getV2().z );
+			printf("v3: %f %f %f\n", tri->getV3().x, tri->getV3().y, tri->getV3().z );
+		}
+		printf("\n");
+	}
+}
 
 bool Scene::addSurface(Surface* surface){
 	if( surface != NULL){

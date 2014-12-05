@@ -43,9 +43,12 @@
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stb_image_write.h"
 
+// 8K 7680 x 4320
+// 4K 4096 x 2160
+// 2K 2048 × 1556 
 
-#define WINDOW_WIDTH   1280  // in pixels
-#define WINDOW_HEIGHT  720 // in pixels
+#define WINDOW_WIDTH   1024  // in pixels
+#define WINDOW_HEIGHT  1024  // in pixels
 #define FOV            70
 
 #ifndef EPSILON
@@ -383,9 +386,10 @@ int main(int argc, char **argv)
    //LightSource* lightSource2 = new LightSource(glm::vec4(2000.0f, 0.0f, 40.0f, 1.0f), glm::vec4(1.0f));
 
  
-   char* triangleMeshFileName = "objmodels/monkey.obj";
+   char* triangleMeshFileName = "objmodels/bunny.obj";
    TriangleMesh* mesh = new TriangleMesh();
-   glm::mat4 meshTransformation = glm::translate(glm::mat4(1.0f), glm::vec3(2.0f, 0.0f, -2.0f));
+   glm::mat4 meshTransformation = glm::translate(glm::mat4(1.0f), glm::vec3(2.0f, -2.0f, -2.0f));
+   //glm::mat4 meshTransformation = glm::translate(glm::mat4(1.0f), glm::vec3(1.5f, -1.8f, 3.0f));
    int meshTransformationIndex = scene.addTransformation(meshTransformation);
 
 
@@ -404,6 +408,7 @@ int main(int argc, char **argv)
 
    std::cout << "Triangle Mesh (" << triangleMeshFileName << ") has " << mesh->getNumTriangles() << " Triangles." << std::endl;
 
+ 
 
    scene.addLightSource(lightSource);
    scene.addLightSource(lightSource1);
@@ -444,7 +449,7 @@ int main(int argc, char **argv)
    //DeviceSceneHandler sceneImporter(&scene);
    //DScene* d_scene = sceneImporter.getDeviceSceneDevicePointer();
    //DScene* h_DScene = sceneImporter.getDeviceSceneHostPointer();
-
+   cudaPreferL1Cache();
 
    // cudaScene
    cudaScene_t* cudaDeviceScene = createCudaScene(&scene);
@@ -473,7 +478,9 @@ int main(int argc, char **argv)
       start = getRealTime();
       //deviceRenderer.renderToHostBuffer(imageBuffer, WINDOW_WIDTH * WINDOW_HEIGHT * 4);
       //deviceRenderer.renderSceneToHostBuffer(h_DScene, NULL, dRayIntersectionBufferSize, imageBuffer, WINDOW_WIDTH * WINDOW_HEIGHT * 4);
-      deviceRenderer.renderCudaSceneToHostBuffer( cudaDeviceScene, imageBuffer);
+      //deviceRenderer.renderCudaSceneToHostBuffer( cudaDeviceScene, imageBuffer);
+      deviceRenderer.renderCudaSceneToHostBufferMegaKernel( cudaDeviceScene, imageBuffer);
+
       end = getRealTime();
 
       diff = end - start;

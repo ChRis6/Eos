@@ -199,3 +199,7 @@ void shuffleTest(){
 void gpuSynch(){
 	cudaDeviceSynchronize();
 }
+
+void cudaPreferL1Cache(){
+	cudaDeviceSetCacheConfig( cudaFuncCachePreferL1);
+}

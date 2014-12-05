@@ -44,7 +44,7 @@ public:
 	HOST DEVICE const glm::vec3& getMinVertex() const;
 	HOST DEVICE const glm::vec3& getMaxVertex() const;
 	int getBiggestDimension() const;
-	glm::vec3 getBoxCentroid();
+	glm::vec3 getBoxCentroid() const;
 
 	float computeVolume();
 	float computeSurfaceArea();

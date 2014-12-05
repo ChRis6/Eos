@@ -41,5 +41,6 @@ extern "C" void setGLDevice(int dev_id);
 extern "C" void debug_printCudaScene(cudaScene_t* deviceScene);
 extern "C" void shuffleTest();
 extern "C" void gpuSynch();
+extern "C" void cudaPreferL1Cache();
 
 #endif

@@ -24,6 +24,8 @@
 #define _CUDA_STRUCTURES_H
 
 #include <glm/glm.hpp>
+
+
 #include "cudaQualifiers.h"
 #include "Scene.h"
 #include "Triangle.h"

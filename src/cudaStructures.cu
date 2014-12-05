@@ -22,6 +22,7 @@
 
 #include "cudaStructures.h"
 
+
 #include <stdio.h>
 #include <string.h>
 

@@ -11,11 +11,11 @@ find_package(CUDA REQUIRED)
 find_package(ASSIMP REQUIRED)
 include_directories(${GLEW_INLUDE_PATH})
 include_directories(${ASSIMP_INCLUDE_DIR})
-include_directories(glm)
+include_directories(glm/glm)
 
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wall -g")
 #set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS}; -arch=sm_20 -maxrregcount 40)
-set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS};-lineinfo -O3  -gencode arch=compute_30,code=sm_30)
+set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS}; -std=c++11 -lineinfo -O3  -gencode arch=compute_30,code=sm_30)
 SET(CUDA_SEPARABLE_COMPILATION ON)
 set(BUILD_SHARED_LIBS OFF)
 

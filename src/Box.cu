@@ -179,15 +179,15 @@ int Box::getBiggestDimension() const{
 
 	// assume X
 	biggest = 0;
-	if(diffY > diffX) 
-		biggest = 1; // Y
-	if(diffZ > diffY && diffZ > diffX)
-		biggest = 2; // Z
+	if( diffY > diffX)
+		biggest = 1;
+	if( diffZ > diffY && diffZ > diffX)
+		biggest = 2;
 
 	return biggest;
 }
 
-glm::vec3 Box::getBoxCentroid(){
+glm::vec3 Box::getBoxCentroid() const{
 
 	float midX;
 	float midY;

@@ -43,6 +43,8 @@ class Scene{
 
 public:
 
+	void printFirstTriangles(int n);
+
 	bool addSurface(Surface* surface);
 	bool addTriangleMesh(TriangleMesh* mesh);			
 	bool addLightSource(LightSource* light);
