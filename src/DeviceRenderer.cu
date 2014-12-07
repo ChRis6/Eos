@@ -392,8 +392,54 @@ HOST void DeviceRenderer::renderCudaSceneToHostBufferMegaKernel( cudaScene_t* de
 
 	// free temp gpu buffer
 	cudaErrorCheck( cudaFree(d_image));
+}
+
+HOST void DeviceRenderer::renderCudaSceneToHostBufferWarpShuffleMegaKernel( cudaScene_t* deviceScene, void* imageBuffer){
+
+	cudaEvent_t start, stop;
 
 
+	void* d_image;
+	Camera* d_camera;
+	int width;
+	int height;
+	int blockdim[2];
+	int threadPerBlock;
+
+	width  = this->getWidth();
+	height = this->getHeight();
+
+	// 
+	cudaErrorCheck( cudaMalloc((void**) &d_image, sizeof(uchar4) * width * height ));
+	cudaErrorCheck( cudaMemset( d_image, 0, sizeof(uchar4) * width * height));
+
+	d_camera = this->getDeviceCamera();
+
+
+	threadPerBlock = 256;
+
+	blockdim[0] = width / threadPerBlock;
+	blockdim[1] = height;
+
+	cudaErrorCheck( cudaEventCreate(&start));
+	cudaErrorCheck( cudaEventCreate(&stop));
+
+	cudaErrorCheck( cudaEventRecord(start));
+	rayTrace_WarpShuffle_MegaKernel( deviceScene, d_camera, width, height, (uchar4*) d_image, blockdim, threadPerBlock);
+	cudaErrorCheck( cudaDeviceSynchronize());
+	cudaEventRecord(stop);
+	cudaEventSynchronize(stop);
+	
+
+	cudaErrorCheck( cudaMemcpy( imageBuffer, d_image, sizeof(uchar4) * width * height, cudaMemcpyDeviceToHost));
+	
+
+	float milliseconds = 0.0f;
+	cudaEventElapsedTime(&milliseconds, start, stop);
+	printf("Cuda Mega Kernel finished in %f milliseconds\n", milliseconds );
+
+	// free temp gpu buffer
+	cudaErrorCheck( cudaFree(d_image));
 
 
 }

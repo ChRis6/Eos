@@ -47,8 +47,8 @@
 // 4K 4096 x 2160
 // 2K 2048 × 1556 
 
-#define WINDOW_WIDTH   1024  // in pixels
-#define WINDOW_HEIGHT  1024  // in pixels
+#define WINDOW_WIDTH   1280  // in pixels
+#define WINDOW_HEIGHT  720  // in pixels
 #define FOV            70
 
 #ifndef EPSILON
@@ -480,6 +480,7 @@ int main(int argc, char **argv)
       //deviceRenderer.renderSceneToHostBuffer(h_DScene, NULL, dRayIntersectionBufferSize, imageBuffer, WINDOW_WIDTH * WINDOW_HEIGHT * 4);
       //deviceRenderer.renderCudaSceneToHostBuffer( cudaDeviceScene, imageBuffer);
       deviceRenderer.renderCudaSceneToHostBufferMegaKernel( cudaDeviceScene, imageBuffer);
+      //deviceRenderer.renderCudaSceneToHostBufferWarpShuffleMegaKernel( cudaDeviceScene, imageBuffer);
 
       end = getRealTime();
 

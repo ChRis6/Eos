@@ -58,7 +58,7 @@ __global__ void __rayTrace_MegaKernel( cudaScene_t* deviceScene, Camera* camera,
 
 
     intersection.triIndex = -1;
-    intersection.baryCoords = glm::vec3(0.0f);
+    //intersection.baryCoords = glm::vec3(0.0f);
 
     /*
      *
@@ -89,8 +89,6 @@ __global__ void __rayTrace_MegaKernel( cudaScene_t* deviceScene, Camera* camera,
 
         if( deviceScene->bvh->type[ currNodeIndex] == BVH_NODE){
 
-
-
             const int leftChildIndex  = deviceScene->bvh->leftChildIndex[currNodeIndex];
             const int rightChildIndex = deviceScene->bvh->rightChildIndex[currNodeIndex];
 
@@ -108,6 +106,7 @@ __global__ void __rayTrace_MegaKernel( cudaScene_t* deviceScene, Camera* camera,
                 //pop
                 currNodeIndex = *--stack_ptr;
             }
+
         }
         else if( deviceScene->bvh->type[ currNodeIndex] == BVH_LEAF ){
 
@@ -126,7 +125,7 @@ __global__ void __rayTrace_MegaKernel( cudaScene_t* deviceScene, Camera* camera,
     float intersectionFound = ( (float) ( (int)intersection.triIndex != -1)); 
 
     //if( threadIntersection.triIndex != -1){
-    glm::vec4 intersectionPoint = intersectionFound * glm::vec4(ray.getOrigin() + intersection.baryCoords.x * ray.getDirection(), 1.0f); 
+    const glm::vec4 intersectionPoint = intersectionFound * glm::vec4(ray.getOrigin() + intersection.baryCoords.x * ray.getDirection(), 1.0f); 
     const int materialIndex = deviceScene->triangles->materialIndex[ ((int) intersection.triIndex != -1) * intersection.triIndex];
     
     // find triangle normal.Interpolate vertex normals
@@ -174,6 +173,175 @@ __global__ void __rayTrace_MegaKernel( cudaScene_t* deviceScene, Camera* camera,
     ucharColor.w = 255;
 
     imageBuffer[threadID] = ucharColor;    
+}
+
+/**** NOT WORKING *****/
+__global__ void __rayTrace_WarpShuffle_MegaKernel( cudaScene_t* deviceScene, Camera* camera, int width, int height, uchar4* imageBuffer){
+
+
+    int stack[128];
+    intersection_t intersection;
+    cudaLightSource_t*     lights;
+    cudaMaterial_t*        materials;
+    glm::vec4 color(0.0f);
+
+
+    lights = deviceScene->lights;
+    materials = deviceScene->materials;
+
+    const int y = blockIdx.y;
+    const int x = blockIdx.x * blockDim.x + threadIdx.x;
+    const int threadID = y * width + x; 
+
+
+    float minDistace = 99999.0f;
+
+    
+    const Ray ray( camera->getPosition(),
+        glm::normalize((((2.0f * x - width) / (float) width) * camera->getRightVector() ) +
+                        ( ((2.0f * y - height) / (float) height) * camera->getUpVector())
+                        + camera->getViewingDirection()));
+
+    intersection.triIndex = -1;
+    intersection.baryCoords = glm::vec3(0.0f);
+
+    /*
+     *
+     * Tranverse BVH
+     *
+     */
+
+    int currNodeIndex = 0;
+
+    int* stack_ptr = stack;
+
+    int leftVotes;
+    int rightVotes;
+
+    if( __all(! (rayIntersectsCudaAABB(ray, deviceScene->bvh->minBoxBounds[ currNodeIndex], deviceScene->bvh->maxBoxBounds[currNodeIndex], minDistace)) )){
+            //write to color to global memory
+        uchar4 ucharColor;
+        ucharColor.x = 0;
+        ucharColor.y = 0;
+        ucharColor.z = 0;
+        ucharColor.w = 255;
+
+        imageBuffer[threadID] = ucharColor;
+        return;
+    }
+
+    // push -1
+    *stack_ptr++ = -1;
+
+    while( currNodeIndex != -1){
+
+        if( deviceScene->bvh->type[ currNodeIndex] == BVH_NODE){
+
+            const int leftChildIndex  = deviceScene->bvh->leftChildIndex[currNodeIndex];
+            const int rightChildIndex = deviceScene->bvh->rightChildIndex[currNodeIndex];
+
+            leftVotes  = rayIntersectsCudaAABB( ray, deviceScene->bvh->minBoxBounds[leftChildIndex], deviceScene->bvh->maxBoxBounds[leftChildIndex], minDistace);
+            rightVotes = rayIntersectsCudaAABB( ray, deviceScene->bvh->minBoxBounds[rightChildIndex], deviceScene->bvh->maxBoxBounds[rightChildIndex], minDistace);
+
+
+            // warp votes for left and  right bvh children
+            for( int i = 1; i < warpSize; i *=2)
+                leftVotes += __shfl_xor( leftVotes, i);
+
+            for( int i = 1; i < warpSize; i *=2)
+                rightVotes += __shfl_xor( rightVotes, i);
+
+            /*
+             * Choose next bvh node
+             *
+             * Note that all threads have the same values
+             * in variables leftVotes and rightVotes,which means that
+             * they will all choose the same next node.As a result
+             * there is no divergence.
+             */
+            if( leftVotes > rightVotes){
+                currNodeIndex = leftChildIndex;
+                if( rightVotes > 0)
+                    *stack_ptr++ = rightChildIndex;
+            }
+            else if( rightVotes > 0){
+                currNodeIndex = rightChildIndex;
+            }
+            else {
+                currNodeIndex = *--stack_ptr;
+
+            }
+
+            leftVotes = 0;
+            rightVotes = 0;
+        }
+        else if( deviceScene->bvh->type[ currNodeIndex] == BVH_LEAF ){
+
+            intersectRayWithCudaLeafRestricted(ray,// ray
+                                    currNodeIndex ,
+                                    deviceScene->bvh->numSurfacesEncapulated, deviceScene->bvh->surfacesIndices, deviceScene->transformations->inverseTransformation, // bvh
+                                    deviceScene->triangles->v1,deviceScene->triangles->v2, deviceScene->triangles->v3, // triangle vertices
+                                    deviceScene->triangles->transformationIndex,    // triangle transformations
+                                    &minDistace, &intersection, threadID );
+            // pop
+            currNodeIndex = *--stack_ptr;
+        }
+    }
+
+    // store intersection
+    float intersectionFound = ( (float) ( (int)intersection.triIndex != -1)); 
+
+    //if( threadIntersection.triIndex != -1){
+    const glm::vec4 intersectionPoint = intersectionFound * glm::vec4(ray.getOrigin() + intersection.baryCoords.x * ray.getDirection(), 1.0f); 
+    const int materialIndex = deviceScene->triangles->materialIndex[ ((int) intersection.triIndex != -1) * intersection.triIndex];
+    
+    // find triangle normal.Interpolate vertex normals
+    glm::vec4 normal = intersectionFound * glm::vec4(glm::normalize(deviceScene->triangles->n1[intersection.triIndex] * ( 1.0f - intersection.baryCoords.y - intersection.baryCoords.z) + (deviceScene->triangles->n2[intersection.triIndex] * intersection.baryCoords.y) + (deviceScene->triangles->n3[intersection.triIndex] * intersection.baryCoords.z)), 0.0f);
+    // transform normal
+    normal = deviceScene->transformations->inverseTransposeTransformation[ deviceScene->triangles->transformationIndex[ ((int) intersection.triIndex != -1) * intersection.triIndex]] * normal; 
+
+
+    /*
+     *
+     * Shade intersection
+     *
+     */
+
+
+    const glm::vec4& cameraPosVec4 = glm::vec4(camera->getPosition(), 1.0f);
+    const glm::vec4& intersectionPointInWorld  = intersectionPoint;
+    const glm::vec4& intersectionNormalInWorld = normal;
+
+    float dot;
+    const int numLights = lights->numLights;
+    for( int i = 0; i < numLights; i++){
+            
+        const glm::vec4& intersectionToLight = glm::normalize(lights->positions[i] - intersectionPointInWorld);
+        const glm::vec4& reflectedVector     = glm::reflect( -intersectionToLight, intersectionNormalInWorld );
+
+        dot = glm::dot(intersectionToLight, intersectionNormalInWorld);
+        if( dot > 0.0f){
+            color += dot * materials->diffuse[materialIndex] * lights->colors[i];
+        }
+
+        dot = glm::dot( glm::normalize(cameraPosVec4 - intersectionPointInWorld), reflectedVector);
+        if( dot > 0.0f){
+            float specularTerm = glm::pow(dot, (float)materials->shininess[materialIndex]);
+            color += specularTerm * lights->colors[i] * materials->specular[materialIndex];
+        }
+    }
+
+
+    //write to color to global memory
+    uchar4 ucharColor;
+    ucharColor.x = floor(color.x == 1.0 ? 255 : fminf(color.x * 256.0f, 255.0f));
+    ucharColor.y = floor(color.y == 1.0 ? 255 : fminf(color.y * 256.0f, 255.0f));
+    ucharColor.z = floor(color.z == 1.0 ? 255 : fminf(color.z * 256.0f, 255.0f));
+    ucharColor.w = 255;
+
+    imageBuffer[threadID] = ucharColor; 
+
+
 }
 
 
@@ -1099,4 +1267,19 @@ void rayTrace_MegaKernel( cudaScene_t* deviceScene, Camera* camera, int width, i
     numBlocks.y = blockdim[1];
 
     __rayTrace_MegaKernel<<<numBlocks, threadsPerBlock>>>( deviceScene, camera, width, height, imageBuffer);
+}
+
+
+void rayTrace_WarpShuffle_MegaKernel( cudaScene_t* deviceScene, Camera* camera, int width, int height, uchar4* imageBuffer, int blockdim[], int tpblock){
+
+    int threadsPerBlock;
+    dim3 numBlocks;
+
+    threadsPerBlock = tpblock;
+
+    numBlocks.x = blockdim[0];
+    numBlocks.y = blockdim[1];
+
+
+    __rayTrace_WarpShuffle_MegaKernel<<<numBlocks, threadsPerBlock>>>( deviceScene, camera, width, height, imageBuffer);
 }
