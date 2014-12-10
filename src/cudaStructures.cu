@@ -134,14 +134,14 @@ HOST cudaBvhNode_t* copyBVH(Scene* h_scene){
  	cudaErrorCheck( cudaMemcpy(d_surfacesIndices, h_surfacesIndices, sizeof(int) * numBvhNodes * SURFACES_PER_LEAF, cudaMemcpyHostToDevice));
 
  	// deallocate temp
- 	delete h_Bvh_type;
- 	delete h_minBoxBounds;
- 	delete h_maxBoxBounds;
+ 	delete[] h_Bvh_type;
+ 	delete[] h_minBoxBounds;
+ 	delete[] h_maxBoxBounds;
  	//delete h_aabb;
- 	delete h_numSurfacesEncapulated;
- 	delete h_leftChildIndex;
- 	delete h_rightChildIndex;
- 	delete h_surfacesIndices;
+ 	delete[] h_numSurfacesEncapulated;
+ 	delete[] h_leftChildIndex;
+ 	delete[] h_rightChildIndex;
+ 	delete[] h_surfacesIndices;
 
  	cudaBvhNode_t* h_cudaBvhNode = new cudaBvhNode_t;
  	memset( h_cudaBvhNode, 0, sizeof(cudaBvhNode_t));
@@ -201,8 +201,8 @@ HOST cudaLightSource_t* copyLights(Scene* h_scene){
 	cudaErrorCheck( cudaMalloc((void**) &d_light, sizeof(cudaLightSource_t)));
 	cudaErrorCheck( cudaMemcpy( d_light, h_light, sizeof(cudaLightSource_t), cudaMemcpyHostToDevice));
 
-	delete h_positions;
-	delete h_colors;
+	delete[] h_positions;
+	delete[] h_colors;
 	delete h_light;
 
 	return d_light;
@@ -254,9 +254,9 @@ HOST cudaTransformations_t* copyTransformations(Scene* h_scene){
 	cudaErrorCheck( cudaMemset(d_cudaTransformation, 0, sizeof(cudaTransformations_t)));
 	cudaErrorCheck( cudaMemcpy(d_cudaTransformation, h_cudaTransformation, sizeof(cudaTransformations_t), cudaMemcpyHostToDevice));
 
-	delete h_transformation;
-	delete h_inverseTransformation;
-	delete h_inverseTransposeTransformation;
+	delete[] h_transformation;
+	delete[] h_inverseTransformation;
+	delete[] h_inverseTransposeTransformation;
 	delete h_cudaTransformation;
 
 	return d_cudaTransformation;
@@ -380,16 +380,17 @@ HOST cudaTriangle_t* copyTriangles(Scene* h_scene){
 	cudaErrorCheck( cudaMemcpy(d_cudaTriangles, h_cudaTriangles, sizeof(cudaTriangle_t), cudaMemcpyHostToDevice));
 
 
-	delete h_v1;
-	delete h_v2;
-	delete h_v3;
+	delete[] h_v1;
+	delete[] h_v2;
+	delete[] h_v3;
 
-	delete h_n1;
-	delete h_n2;
-	delete h_n3;
+	delete[] h_n1;
+	delete[] h_n2;
+	delete[] h_n3;
 
-	delete h_materialIndex;
-	delete h_transformationIndex;
+	delete[] h_materialIndex;
+	delete[] h_transformationIndex;
+	delete h_cudaTriangles;
 
 	return d_cudaTriangles; 
 }
@@ -460,11 +461,11 @@ HOST cudaMaterial_t* copyMaterials(Scene* h_scene){
 	cudaErrorCheck( cudaMalloc((void**) &d_material, sizeof(cudaMaterial_t)));
 	cudaErrorCheck( cudaMemcpy(d_material, h_materal, sizeof(cudaMaterial_t), cudaMemcpyHostToDevice));
 
-	delete h_diffuse;
-	delete h_specular;
-	delete h_ambientIntensity;
-	delete h_reflectivity;
-	delete h_shininess;
+	delete[] h_diffuse;
+	delete[] h_specular;
+	delete[] h_ambientIntensity;
+	delete[] h_reflectivity;
+	delete[] h_shininess;
 	delete h_materal;
 
 	return d_material;
