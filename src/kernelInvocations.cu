@@ -232,7 +232,7 @@ __global__ void __rayTrace_WarpShuffle_MegaKernel( cudaScene_t* deviceScene, Cam
 
     // push -1
     *stack_ptr++ = -1;
-
+    
     while( currNodeIndex != -1){
 
         if( deviceScene->bvh->type[ currNodeIndex] == BVH_NODE){

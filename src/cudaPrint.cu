@@ -156,6 +156,7 @@ __global__ void __shuffleTest_kernel(){
 
 	printf("Thread id %d: i = %d ( before)\n", threadIdx.x, i);
 
+/*
 	#pragma unroll
 	for( int mask = 1 ; mask < 32 ; mask *= 2)
 		i += __shfl_xor(i, mask);
@@ -164,7 +165,7 @@ __global__ void __shuffleTest_kernel(){
 	//i = __shfl(i, 0);
 
 	printf("Thread id %d: i = %d (after)\n", threadIdx.x, i);
-
+*/
 }
 
 
