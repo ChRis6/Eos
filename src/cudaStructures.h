@@ -24,7 +24,7 @@
 #define _CUDA_STRUCTURES_H
 
 #include <glm/glm.hpp>
-
+#include <glm/gtx/type_aligned.hpp>
 
 #include "cudaQualifiers.h"
 #include "Scene.h"
@@ -34,8 +34,8 @@
 // Bounding volume hierachy
 typedef struct cudaBvh{
 	int* type;
-	glm::vec4* minBoxBounds;
-	glm::vec4* maxBoxBounds;
+	glm::aligned_vec4* minBoxBounds;
+	glm::aligned_vec4* maxBoxBounds;
 	int* numSurfacesEncapulated;
 	int* rightChildIndex;
 	int* leftChildIndex;
@@ -45,8 +45,8 @@ typedef struct cudaBvh{
 
 // lights
 typedef struct cudaLightSource{
-	glm::vec4* positions;
-	glm::vec4* colors;
+	glm::aligned_vec4* positions;
+	glm::aligned_vec4* colors;
 	int        numLights;
 }cudaLightSource_t;
 
@@ -61,13 +61,13 @@ typedef struct cudaTransformation{
 // triangles
 typedef struct cudaTriangle{
 	// vertices
-	glm::vec3* v1;
-	glm::vec3* v2;
-	glm::vec3* v3;
+	glm::aligned_vec3* v1;
+	glm::aligned_vec3* v2;
+	glm::aligned_vec3* v3;
 	// normals
-	glm::vec3* n1;
-	glm::vec3* n2;
-	glm::vec3* n3;
+	glm::aligned_vec3* n1;
+	glm::aligned_vec3* n2;
+	glm::aligned_vec3* n3;
 	//materials
 	int* materialIndex;
 	// transformations
@@ -75,8 +75,8 @@ typedef struct cudaTriangle{
 }cudaTriangle_t;
 
 typedef struct cudaMaterial{
-	glm::vec4* diffuse;
-	glm::vec4* specular;
+	glm::aligned_vec4* diffuse;
+	glm::aligned_vec4* specular;
 	float*     ambientIntensity;
 	float*     reflectivity;
 	int*       shininess;

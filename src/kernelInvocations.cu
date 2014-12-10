@@ -47,10 +47,10 @@ __global__ void __rayTrace_MegaKernel( cudaScene_t* deviceScene, Camera* camera,
     float minDistace = 99999.0f;
 
     
-    const Ray ray( camera->getPosition(),
-        glm::normalize((((2.0f * (blockIdx.x * blockDim.x + threadIdx.x) - width) / (float) width) * camera->getRightVector() ) +
+    const cudaRay ray( glm::aligned_vec3(camera->getPosition()),
+        glm::aligned_vec3(glm::normalize((((2.0f * (blockIdx.x * blockDim.x + threadIdx.x) - width) / (float) width) * camera->getRightVector() ) +
                         ( ((2.0f * (blockIdx.y * blockDim.y + threadIdx.y) - height) / (float) height) * camera->getUpVector())
-                        + camera->getViewingDirection()));
+                        + camera->getViewingDirection())));
     
     //Ray ray;
     //ray.setOrigin(camera->getPosition());
@@ -110,7 +110,7 @@ __global__ void __rayTrace_MegaKernel( cudaScene_t* deviceScene, Camera* camera,
         }
         else if( deviceScene->bvh->type[ currNodeIndex] == BVH_LEAF ){
 
-            intersectRayWithCudaLeafRestricted(ray,// ray
+            intersectCudaRayWithCudaLeafRestricted(ray,// ray
                                     currNodeIndex ,
                                     deviceScene->bvh->numSurfacesEncapulated, deviceScene->bvh->surfacesIndices, deviceScene->transformations->inverseTransformation, // bvh
                                     deviceScene->triangles->v1,deviceScene->triangles->v2, deviceScene->triangles->v3, // triangle vertices
@@ -232,7 +232,7 @@ __global__ void __rayTrace_WarpShuffle_MegaKernel( cudaScene_t* deviceScene, Cam
 
     // push -1
     *stack_ptr++ = -1;
-    
+
     while( currNodeIndex != -1){
 
         if( deviceScene->bvh->type[ currNodeIndex] == BVH_NODE){
@@ -878,6 +878,74 @@ DEVICE void traverseCudaTreeAndStore( cudaScene_t* deviceScene, const Ray& ray, 
     //intersectionBuffer->normals[threadID] = deviceScene->transformations->inverseTransposeTransformation[ deviceScene->triangles->transformationIndex[ minTriangleIndex]] * localIntersectionNormal;
     //intersectionBuffer->materialsIndices[threadID] = deviceScene->triangles->materialIndex[minTriangleIndex];
 }
+DEVICE FORCE_INLINE void  intersectCudaRayWithCudaLeafRestricted( const cudaRay& ray,// ray
+                                    int bvhLeafIndex, int* __restrict__ numSurfacesEncapulated, int* __restrict__ surfacesIndices, glm::mat4* __restrict__ inverseTransformation, // bvh
+                                    glm::aligned_vec3* __restrict__ v1, glm::aligned_vec3* __restrict__ v2, glm::aligned_vec3* __restrict__ v3, // triangle vertices
+                                    int* __restrict__ triTransIndex,    // triangle transformations
+                                    float* __restrict__ minDistace, intersection_t* __restrict__ threadIntersection, int threadID ){
+
+    cudaRay localRay;
+    glm::vec3 baryCoords(0.0f);
+    //cudaBvhNode_t* bvh;
+    //cudaTransformations_t* transformations;
+    //cudaTriangle_t*        triangles;
+    
+    //glm::vec4 localIntersectionPoint;
+    //glm::vec4 localIntersectionNormal;
+    int minTriangleIndex;
+    int i;
+    //bvh = deviceScene->bvh;
+    //transformations = deviceScene->transformations;
+    //triangles = deviceScene->triangles;
+
+
+    //numTrianglesInLeaf = bvh->numSurfacesEncapulated[bvhLeafIndex];
+    minTriangleIndex = -1;
+
+    #pragma unroll 2
+    for( i = 0; i < numSurfacesEncapulated[bvhLeafIndex]; i++){
+        
+
+        /*
+         * transform Ray to local Triangle Coordinates
+         */
+
+        // first get triangle index in the triangle buffer
+        // every leaf has SURFACES_PER_LEAF(look at BVH.h) triangles
+        // get triangle i
+        int triangleIndex = surfacesIndices[ bvhLeafIndex * SURFACES_PER_LEAF + i];
+
+        // get Transformation index
+        //int triangleTransformationIndex = deviceScene->triangles->transformationIndex[ triangleIndex];
+
+        // transform ray origin and direction
+        localRay.setOrigin( glm::aligned_vec3( inverseTransformation[ triTransIndex[ triangleIndex]] * glm::vec4(ray.getOrigin(), 1.0f)));
+        localRay.setDirection( glm::aligned_vec3( inverseTransformation[ triTransIndex[ triangleIndex]] * glm::vec4(ray.getDirection(), 0.0f)));
+
+
+        /*
+         * Now intersect Triangle with local ray
+         */
+        //bool triangleIntersected = rayIntersectsCudaTriangle( localRay, triangles->v1[triangleIndex], triangles->v2[triangleIndex], triangles->v3[triangleIndex], baryCoords);
+        
+        if( rayIntersectsCudaTriangle( localRay, v1[triangleIndex], v2[triangleIndex], v3[triangleIndex], baryCoords) && baryCoords.x < *minDistace){
+            // intersection is found
+            minTriangleIndex = triangleIndex;
+            *minDistace = baryCoords.x;
+
+            //localIntersectionPoint  = glm::vec4(localRay.getOrigin() + baryCoords.x * localRay.getDirection(), 1.0f);
+            //localIntersectionNormal = glm::vec4(glm::normalize(deviceScene->triangles->n1[triangleIndex] * ( 1.0f - baryCoords.y - baryCoords.z) + (deviceScene->triangles->n2[triangleIndex] * baryCoords.y) + (deviceScene->triangles->n3[triangleIndex] * baryCoords.z)), 0.0f);             
+            threadIntersection->triIndex = minTriangleIndex;
+            threadIntersection->baryCoords = baryCoords;
+        }// endif
+
+    }// end for
+
+
+
+
+}
+
 
 
 DEVICE FORCE_INLINE void intersectRayWithCudaLeafRestricted( const Ray& ray,// ray

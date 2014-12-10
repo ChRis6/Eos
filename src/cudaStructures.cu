@@ -39,8 +39,8 @@ HOST cudaBvhNode_t* copyBVH(Scene* h_scene){
 
 	int* h_Bvh_type;
 	int* d_Bvh_type;
-	glm::vec4* h_minBoxBounds, *d_minBoxBounds;
-	glm::vec4* h_maxBoxBounds, *d_maxBoxBounds;
+	glm::aligned_vec4* h_minBoxBounds, *d_minBoxBounds;
+	glm::aligned_vec4* h_maxBoxBounds, *d_maxBoxBounds;
 	int* h_numSurfacesEncapulated, *d_numSurfacesEncapulated;
 	int* h_rightChildIndex, *d_rightChildIndex;
 	int* h_leftChildIndex, *d_leftChildIndex;
@@ -58,8 +58,8 @@ HOST cudaBvhNode_t* copyBVH(Scene* h_scene){
 	
 	cudaErrorCheck( cudaMalloc((void**) &d_Bvh_type, sizeof(int) * numBvhNodes));	
 	// aabb
-	cudaErrorCheck( cudaMalloc((void**)&d_minBoxBounds, sizeof(glm::vec4) * numBvhNodes));
-	cudaErrorCheck( cudaMalloc((void**)&d_maxBoxBounds, sizeof(glm::vec4) * numBvhNodes));
+	cudaErrorCheck( cudaMalloc((void**)&d_minBoxBounds, sizeof(glm::aligned_vec4) * numBvhNodes));
+	cudaErrorCheck( cudaMalloc((void**)&d_maxBoxBounds, sizeof(glm::aligned_vec4) * numBvhNodes));
 	//cudaErrorCheck( cudaMalloc((void**) &d_aabb, sizeof(Box) * numBvhNodes));
 
 	// numSurfaces per node
@@ -74,8 +74,8 @@ HOST cudaBvhNode_t* copyBVH(Scene* h_scene){
 
 	// set to zero
 	cudaErrorCheck( cudaMemset( d_Bvh_type, 0, sizeof(int) * numBvhNodes));
-	cudaErrorCheck( cudaMemset( d_minBoxBounds, 0, sizeof(glm::vec4) * numBvhNodes));
-	cudaErrorCheck( cudaMemset( d_maxBoxBounds, 0, sizeof(glm::vec4) * numBvhNodes));
+	cudaErrorCheck( cudaMemset( d_minBoxBounds, 0, sizeof(glm::aligned_vec4) * numBvhNodes));
+	cudaErrorCheck( cudaMemset( d_maxBoxBounds, 0, sizeof(glm::aligned_vec4) * numBvhNodes));
 	//cudaErrorCheck( cudaMemset(d_aabb, 0, sizeof(Box) * numBvhNodes));
 	cudaErrorCheck( cudaMemset( d_numSurfacesEncapulated, 0, sizeof(int) * numBvhNodes));
 	cudaErrorCheck( cudaMemset( d_leftChildIndex, 0, sizeof(int) * numBvhNodes));
@@ -85,8 +85,8 @@ HOST cudaBvhNode_t* copyBVH(Scene* h_scene){
 
 	// create temp buffers on host
  	h_Bvh_type = new int[numBvhNodes];
- 	h_minBoxBounds = new glm::vec4[numBvhNodes];
- 	h_maxBoxBounds = new glm::vec4[numBvhNodes];
+ 	h_minBoxBounds = new glm::aligned_vec4[numBvhNodes];
+ 	h_maxBoxBounds = new glm::aligned_vec4[numBvhNodes];
  	//h_aabb = new Box[numBvhNodes];
  	h_numSurfacesEncapulated = new int[numBvhNodes];
  	h_leftChildIndex = new int[numBvhNodes];
@@ -94,8 +94,8 @@ HOST cudaBvhNode_t* copyBVH(Scene* h_scene){
  	h_surfacesIndices = new int[ numBvhNodes * SURFACES_PER_LEAF];
 
  	memset( h_Bvh_type, 0, sizeof(int) * numBvhNodes);
- 	memset( h_minBoxBounds, 0, sizeof(glm::vec4) * numBvhNodes);
- 	memset( h_maxBoxBounds, 0, sizeof(glm::vec4) * numBvhNodes);
+ 	memset( h_minBoxBounds, 0, sizeof(glm::aligned_vec4) * numBvhNodes);
+ 	memset( h_maxBoxBounds, 0, sizeof(glm::aligned_vec4) * numBvhNodes);
  	//memset(h_aabb, 0, sizeof(Box) * numBvhNodes);
  	memset( h_numSurfacesEncapulated, 0, sizeof(int) * numBvhNodes);
  	memset( h_leftChildIndex, 0, sizeof(int) * numBvhNodes);
@@ -106,8 +106,8 @@ HOST cudaBvhNode_t* copyBVH(Scene* h_scene){
  	for( int i = 0; i < numBvhNodes; i++){
 
  		h_Bvh_type[i]     = h_bvhTree[i].type;
- 		h_minBoxBounds[i] = glm::vec4(h_bvhTree[i].aabb.getMinVertex(), 1.0f);
- 		h_maxBoxBounds[i] = glm::vec4(h_bvhTree[i].aabb.getMaxVertex(), 1.0f);
+ 		h_minBoxBounds[i] = glm::aligned_vec4(h_bvhTree[i].aabb.getMinVertex(), 1.0f);
+ 		h_maxBoxBounds[i] = glm::aligned_vec4(h_bvhTree[i].aabb.getMaxVertex(), 1.0f);
  		//h_aabb[i]         = h_bvhTree[i].aabb;
  		h_numSurfacesEncapulated[i] = h_bvhTree[i].numSurfacesEncapulated;
  		h_leftChildIndex[i] = h_bvhTree[i].leftChildIndex;
@@ -121,8 +121,8 @@ HOST cudaBvhNode_t* copyBVH(Scene* h_scene){
  	// types
  	cudaErrorCheck( cudaMemcpy(d_Bvh_type, h_Bvh_type, sizeof(int) * numBvhNodes, cudaMemcpyHostToDevice));
  	// aabb
- 	cudaErrorCheck( cudaMemcpy(d_minBoxBounds, h_minBoxBounds, sizeof(glm::vec4) * numBvhNodes, cudaMemcpyHostToDevice));
- 	cudaErrorCheck( cudaMemcpy(d_maxBoxBounds, h_maxBoxBounds, sizeof(glm::vec4) * numBvhNodes, cudaMemcpyHostToDevice));
+ 	cudaErrorCheck( cudaMemcpy(d_minBoxBounds, h_minBoxBounds, sizeof(glm::aligned_vec4) * numBvhNodes, cudaMemcpyHostToDevice));
+ 	cudaErrorCheck( cudaMemcpy(d_maxBoxBounds, h_maxBoxBounds, sizeof(glm::aligned_vec4) * numBvhNodes, cudaMemcpyHostToDevice));
  	//cudaErrorCheck( cudaMemcpy(d_aabb, h_aabb, sizeof(Box) * numBvhNodes, cudaMemcpyHostToDevice));
  	// surfaces encapulated
  	cudaErrorCheck( cudaMemcpy(d_numSurfacesEncapulated, h_numSurfacesEncapulated, sizeof(int) * numBvhNodes, cudaMemcpyHostToDevice));
@@ -167,31 +167,31 @@ HOST cudaBvhNode_t* copyBVH(Scene* h_scene){
 
 HOST cudaLightSource_t* copyLights(Scene* h_scene){
 
-	glm::vec4* h_positions, *d_positions;
-	glm::vec4* h_colors, *d_colors;
+	glm::aligned_vec4* h_positions, *d_positions;
+	glm::aligned_vec4* h_colors, *d_colors;
 	cudaLightSource_t* h_light, *d_light;
 
 	int numSceneLights = h_scene->getNumLightSources();
 
 	// allocate device mem
-	cudaErrorCheck( cudaMalloc((void**) &d_positions, sizeof(glm::vec4) * numSceneLights));
-	cudaErrorCheck( cudaMalloc((void**) &d_colors, sizeof(glm::vec4) * numSceneLights));
+	cudaErrorCheck( cudaMalloc((void**) &d_positions, sizeof(glm::aligned_vec4) * numSceneLights));
+	cudaErrorCheck( cudaMalloc((void**) &d_colors, sizeof(glm::aligned_vec4) * numSceneLights));
 	// set zero
-	cudaErrorCheck( cudaMemset( d_positions, 0, sizeof(glm::vec4) * numSceneLights));
-	cudaErrorCheck( cudaMemset( d_colors, 0, sizeof(glm::vec4) * numSceneLights));
+	cudaErrorCheck( cudaMemset( d_positions, 0, sizeof(glm::aligned_vec4) * numSceneLights));
+	cudaErrorCheck( cudaMemset( d_colors, 0, sizeof(glm::aligned_vec4) * numSceneLights));
 
-	h_positions = new glm::vec4[numSceneLights];
-	h_colors = new glm::vec4[numSceneLights];
-	memset(h_positions, 0 , sizeof(glm::vec4) * numSceneLights);
-	memset(h_colors, 0, sizeof(glm::vec4) * numSceneLights);
+	h_positions = new glm::aligned_vec4[numSceneLights];
+	h_colors = new glm::aligned_vec4[numSceneLights];
+	memset(h_positions, 0 , sizeof(glm::aligned_vec4) * numSceneLights);
+	memset(h_colors, 0, sizeof(glm::aligned_vec4) * numSceneLights);
 
 	for( int i = 0; i < numSceneLights; i++){
-		h_positions[i] = h_scene->getLightSource(i)->getPosition();
-		h_colors[i]    = h_scene->getLightSource(i)->getLightColor();
+		h_positions[i] = glm::aligned_vec4(h_scene->getLightSource(i)->getPosition());
+		h_colors[i]    = glm::aligned_vec4(h_scene->getLightSource(i)->getLightColor());
 	}
 
-	cudaErrorCheck( cudaMemcpy( d_positions, h_positions, sizeof(glm::vec4) * numSceneLights, cudaMemcpyHostToDevice));
-	cudaErrorCheck( cudaMemcpy( d_colors, h_colors, sizeof(glm::vec4) * numSceneLights, cudaMemcpyHostToDevice));
+	cudaErrorCheck( cudaMemcpy( d_positions, h_positions, sizeof(glm::aligned_vec4) * numSceneLights, cudaMemcpyHostToDevice));
+	cudaErrorCheck( cudaMemcpy( d_colors, h_colors, sizeof(glm::aligned_vec4) * numSceneLights, cudaMemcpyHostToDevice));
 
 	h_light = new cudaLightSource_t;
 	h_light->positions = d_positions;
@@ -265,13 +265,13 @@ HOST cudaTransformations_t* copyTransformations(Scene* h_scene){
 HOST cudaTriangle_t* copyTriangles(Scene* h_scene){
 
 	
-	glm::vec3* h_v1, *d_v1;
-	glm::vec3* h_v2, *d_v2;
-	glm::vec3* h_v3, *d_v3;
+	glm::aligned_vec3* h_v1, *d_v1;
+	glm::aligned_vec3* h_v2, *d_v2;
+	glm::aligned_vec3* h_v3, *d_v3;
 
-	glm::vec3* h_n1, *d_n1;
-	glm::vec3* h_n2, *d_n2;
-	glm::vec3* h_n3, *d_n3;
+	glm::aligned_vec3* h_n1, *d_n1;
+	glm::aligned_vec3* h_n2, *d_n2;
+	glm::aligned_vec3* h_n3, *d_n3;
 	int* h_materialIndex, *d_materialIndex;
 	int* h_transformationIndex, *d_transformationIndex;
 
@@ -279,48 +279,48 @@ HOST cudaTriangle_t* copyTriangles(Scene* h_scene){
 	int numTriangles = h_scene->getNumSurfaces();
 
 	// allocate gpu memory
-	cudaErrorCheck( cudaMalloc((void**) &d_v1, sizeof(glm::vec3) * numTriangles));
-	cudaErrorCheck( cudaMalloc((void**) &d_v2, sizeof(glm::vec3) * numTriangles));
-	cudaErrorCheck( cudaMalloc((void**) &d_v3, sizeof(glm::vec3) * numTriangles));
+	cudaErrorCheck( cudaMalloc((void**) &d_v1, sizeof(glm::aligned_vec3) * numTriangles));
+	cudaErrorCheck( cudaMalloc((void**) &d_v2, sizeof(glm::aligned_vec3) * numTriangles));
+	cudaErrorCheck( cudaMalloc((void**) &d_v3, sizeof(glm::aligned_vec3) * numTriangles));
 
-	cudaErrorCheck( cudaMalloc((void**) &d_n1, sizeof(glm::vec3) * numTriangles));
-	cudaErrorCheck( cudaMalloc((void**) &d_n2, sizeof(glm::vec3) * numTriangles));
-	cudaErrorCheck( cudaMalloc((void**) &d_n3, sizeof(glm::vec3) * numTriangles));
+	cudaErrorCheck( cudaMalloc((void**) &d_n1, sizeof(glm::aligned_vec3) * numTriangles));
+	cudaErrorCheck( cudaMalloc((void**) &d_n2, sizeof(glm::aligned_vec3) * numTriangles));
+	cudaErrorCheck( cudaMalloc((void**) &d_n3, sizeof(glm::aligned_vec3) * numTriangles));
 
 	cudaErrorCheck( cudaMalloc((void**) &d_materialIndex, sizeof(int) * numTriangles));
 	cudaErrorCheck( cudaMalloc((void**) &d_transformationIndex, sizeof(int) * numTriangles));
 
 	// set to zero
-	cudaErrorCheck( cudaMemset(d_v1, 0, sizeof(glm::vec3) * numTriangles));
-	cudaErrorCheck( cudaMemset(d_v2, 0, sizeof(glm::vec3) * numTriangles));
-	cudaErrorCheck( cudaMemset(d_v3, 0, sizeof(glm::vec3) * numTriangles));
+	cudaErrorCheck( cudaMemset(d_v1, 0, sizeof(glm::aligned_vec3) * numTriangles));
+	cudaErrorCheck( cudaMemset(d_v2, 0, sizeof(glm::aligned_vec3) * numTriangles));
+	cudaErrorCheck( cudaMemset(d_v3, 0, sizeof(glm::aligned_vec3) * numTriangles));
 
-	cudaErrorCheck( cudaMemset(d_n1, 0, sizeof(glm::vec3) * numTriangles));
-	cudaErrorCheck( cudaMemset(d_n2, 0, sizeof(glm::vec3) * numTriangles));
-	cudaErrorCheck( cudaMemset(d_n3, 0, sizeof(glm::vec3) * numTriangles));
+	cudaErrorCheck( cudaMemset(d_n1, 0, sizeof(glm::aligned_vec3) * numTriangles));
+	cudaErrorCheck( cudaMemset(d_n2, 0, sizeof(glm::aligned_vec3) * numTriangles));
+	cudaErrorCheck( cudaMemset(d_n3, 0, sizeof(glm::aligned_vec3) * numTriangles));
 
 	cudaErrorCheck( cudaMemset(d_materialIndex, 0, sizeof(int) * numTriangles));
 	cudaErrorCheck( cudaMemset(d_transformationIndex, 0, sizeof(int) * numTriangles));
 
 	// allocate temp host buffers
-	h_v1 = new glm::vec3[numTriangles];
-	h_v2 = new glm::vec3[numTriangles];
-	h_v3 = new glm::vec3[numTriangles];
+	h_v1 = new glm::aligned_vec3[numTriangles];
+	h_v2 = new glm::aligned_vec3[numTriangles];
+	h_v3 = new glm::aligned_vec3[numTriangles];
 
-	h_n1 = new glm::vec3[numTriangles];
-	h_n2 = new glm::vec3[numTriangles];
-	h_n3 = new glm::vec3[numTriangles];
+	h_n1 = new glm::aligned_vec3[numTriangles];
+	h_n2 = new glm::aligned_vec3[numTriangles];
+	h_n3 = new glm::aligned_vec3[numTriangles];
 
 	h_materialIndex = new int[numTriangles];
 	h_transformationIndex = new int[numTriangles];
 
-	memset( h_v1, 0, sizeof(glm::vec3) * numTriangles);
-	memset( h_v2, 0, sizeof(glm::vec3) * numTriangles);
-	memset( h_v3, 0, sizeof(glm::vec3) * numTriangles);
+	memset( h_v1, 0, sizeof(glm::aligned_vec3) * numTriangles);
+	memset( h_v2, 0, sizeof(glm::aligned_vec3) * numTriangles);
+	memset( h_v3, 0, sizeof(glm::aligned_vec3) * numTriangles);
 
-	memset( h_n1, 0, sizeof(glm::vec3) * numTriangles);
-	memset( h_n2, 0, sizeof(glm::vec3) * numTriangles);
-	memset( h_n3, 0, sizeof(glm::vec3) * numTriangles);
+	memset( h_n1, 0, sizeof(glm::aligned_vec3) * numTriangles);
+	memset( h_n2, 0, sizeof(glm::aligned_vec3) * numTriangles);
+	memset( h_n3, 0, sizeof(glm::aligned_vec3) * numTriangles);
 
 	memset( h_materialIndex, 0, sizeof(int) * numTriangles);
 	memset( h_transformationIndex, 0, sizeof(int) * numTriangles);
@@ -338,26 +338,26 @@ HOST cudaTriangle_t* copyTriangles(Scene* h_scene){
 			exit(1);
 		}
 
-		h_v1[i] = h_Triangle->getV1();
-		h_v2[i] = h_Triangle->getV2();
-		h_v3[i] = h_Triangle->getV3();
+		h_v1[i] = glm::aligned_vec3(h_Triangle->getV1());
+		h_v2[i] = glm::aligned_vec3(h_Triangle->getV2());
+		h_v3[i] = glm::aligned_vec3(h_Triangle->getV3());
 
-		h_n1[i] = h_Triangle->getN1();
-		h_n2[i] = h_Triangle->getN2();
-		h_n3[i] = h_Triangle->getN3();
+		h_n1[i] = glm::aligned_vec3(h_Triangle->getN1());
+		h_n2[i] = glm::aligned_vec3(h_Triangle->getN2());
+		h_n3[i] = glm::aligned_vec3(h_Triangle->getN3());
 
 		h_materialIndex[i] = h_Triangle->getMaterialIndex();
 		h_transformationIndex[i] = h_Triangle->getTransformationIndex();
 	}
 
 
-	cudaErrorCheck( cudaMemcpy( d_v1, h_v1, sizeof(glm::vec3) * numTriangles, cudaMemcpyHostToDevice));
-	cudaErrorCheck( cudaMemcpy( d_v2, h_v2, sizeof(glm::vec3) * numTriangles, cudaMemcpyHostToDevice));
-	cudaErrorCheck( cudaMemcpy( d_v3, h_v3, sizeof(glm::vec3) * numTriangles, cudaMemcpyHostToDevice));
+	cudaErrorCheck( cudaMemcpy( d_v1, h_v1, sizeof(glm::aligned_vec3) * numTriangles, cudaMemcpyHostToDevice));
+	cudaErrorCheck( cudaMemcpy( d_v2, h_v2, sizeof(glm::aligned_vec3) * numTriangles, cudaMemcpyHostToDevice));
+	cudaErrorCheck( cudaMemcpy( d_v3, h_v3, sizeof(glm::aligned_vec3) * numTriangles, cudaMemcpyHostToDevice));
 
-	cudaErrorCheck( cudaMemcpy( d_n1, h_n1, sizeof(glm::vec3) * numTriangles, cudaMemcpyHostToDevice));
-	cudaErrorCheck( cudaMemcpy( d_n2, h_n2, sizeof(glm::vec3) * numTriangles, cudaMemcpyHostToDevice));
-	cudaErrorCheck( cudaMemcpy( d_n3, h_n3, sizeof(glm::vec3) * numTriangles, cudaMemcpyHostToDevice));
+	cudaErrorCheck( cudaMemcpy( d_n1, h_n1, sizeof(glm::aligned_vec3) * numTriangles, cudaMemcpyHostToDevice));
+	cudaErrorCheck( cudaMemcpy( d_n2, h_n2, sizeof(glm::aligned_vec3) * numTriangles, cudaMemcpyHostToDevice));
+	cudaErrorCheck( cudaMemcpy( d_n3, h_n3, sizeof(glm::aligned_vec3) * numTriangles, cudaMemcpyHostToDevice));
 
 	cudaErrorCheck( cudaMemcpy( d_materialIndex, h_materialIndex, sizeof(int) * numTriangles, cudaMemcpyHostToDevice));
 	cudaErrorCheck( cudaMemcpy( d_transformationIndex, h_transformationIndex, sizeof(int) * numTriangles, cudaMemcpyHostToDevice));
@@ -397,35 +397,35 @@ HOST cudaTriangle_t* copyTriangles(Scene* h_scene){
 
 HOST cudaMaterial_t* copyMaterials(Scene* h_scene){
 
-	glm::vec4* h_diffuse, *d_diffuse;
-	glm::vec4* h_specular,  *d_specular;
+	glm::aligned_vec4* h_diffuse, *d_diffuse;
+	glm::aligned_vec4* h_specular,  *d_specular;
 	float*     h_ambientIntensity, *d_ambientIntensity;
 	float*     h_reflectivity, *d_reflectivity;
 	int*       h_shininess, *d_shininess;
 
 	int numMaterials = h_scene->getNumMaterials();
 
-	cudaErrorCheck( cudaMalloc((void**) &d_diffuse, sizeof(glm::vec4) * numMaterials));
-	cudaErrorCheck( cudaMalloc((void**) &d_specular, sizeof(glm::vec4) * numMaterials));
+	cudaErrorCheck( cudaMalloc((void**) &d_diffuse, sizeof(glm::aligned_vec4) * numMaterials));
+	cudaErrorCheck( cudaMalloc((void**) &d_specular, sizeof(glm::aligned_vec4) * numMaterials));
 	cudaErrorCheck( cudaMalloc((void**) &d_ambientIntensity, sizeof(float) * numMaterials));
 	cudaErrorCheck( cudaMalloc((void**) &d_reflectivity, sizeof(float) * numMaterials));
 	cudaErrorCheck( cudaMalloc((void**) &d_shininess, sizeof(float) * numMaterials));
 
-	cudaErrorCheck( cudaMemset( d_diffuse, 0, sizeof(glm::vec4) * numMaterials));
-	cudaErrorCheck( cudaMemset(d_specular, 0, sizeof(glm::vec4) * numMaterials));
+	cudaErrorCheck( cudaMemset( d_diffuse, 0, sizeof(glm::aligned_vec4) * numMaterials));
+	cudaErrorCheck( cudaMemset(d_specular, 0, sizeof(glm::aligned_vec4) * numMaterials));
 	cudaErrorCheck( cudaMemset(d_ambientIntensity, 0, sizeof(float) * numMaterials));
 	cudaErrorCheck( cudaMemset(d_reflectivity, 0, sizeof(float) * numMaterials));
 	cudaErrorCheck( cudaMemset(d_shininess, 0, sizeof(int) * numMaterials));
 
 
-	h_diffuse  = new glm::vec4[numMaterials];
-	h_specular = new glm::vec4[numMaterials];
+	h_diffuse  = new glm::aligned_vec4[numMaterials];
+	h_specular = new glm::aligned_vec4[numMaterials];
 	h_ambientIntensity = new float[numMaterials];
 	h_reflectivity = new float[numMaterials];
 	h_shininess = new int[numMaterials];
 
-	memset( h_diffuse, 0, sizeof(glm::vec4) * numMaterials);
-	memset( h_specular, 0, sizeof(glm::vec4) * numMaterials);
+	memset( h_diffuse, 0, sizeof(glm::aligned_vec4) * numMaterials);
+	memset( h_specular, 0, sizeof(glm::aligned_vec4) * numMaterials);
 	memset( h_ambientIntensity, 0, sizeof(float) * numMaterials);
 	memset( h_reflectivity, 0, sizeof(float) * numMaterials);
 	memset( h_shininess, 0, sizeof(int) * numMaterials);
@@ -434,15 +434,15 @@ HOST cudaMaterial_t* copyMaterials(Scene* h_scene){
 
 		const Material& sceneMaterial = h_scene->getMaterialAtIndex(i);
 
-		h_diffuse[i]          = sceneMaterial.getDiffuseColor();
-		h_specular[i]         = sceneMaterial.getSpecularColor();
+		h_diffuse[i]          = glm::aligned_vec4( sceneMaterial.getDiffuseColor());
+		h_specular[i]         = glm::aligned_vec4( sceneMaterial.getSpecularColor());
 		h_ambientIntensity[i] = sceneMaterial.getAmbientIntensity();
 		h_reflectivity[i]     = sceneMaterial.getReflectiveIntensity();
 		h_shininess[i]        = sceneMaterial.getShininess();  
 	} 
 
-	cudaErrorCheck( cudaMemcpy( d_diffuse, h_diffuse, sizeof(glm::vec4) * numMaterials, cudaMemcpyHostToDevice));
-	cudaErrorCheck( cudaMemcpy( d_specular, h_specular, sizeof(glm::vec4) * numMaterials, cudaMemcpyHostToDevice));
+	cudaErrorCheck( cudaMemcpy( d_diffuse, h_diffuse, sizeof(glm::aligned_vec4) * numMaterials, cudaMemcpyHostToDevice));
+	cudaErrorCheck( cudaMemcpy( d_specular, h_specular, sizeof(glm::aligned_vec4) * numMaterials, cudaMemcpyHostToDevice));
 	cudaErrorCheck( cudaMemcpy( d_ambientIntensity, h_ambientIntensity, sizeof(float) * numMaterials, cudaMemcpyHostToDevice));
 	cudaErrorCheck( cudaMemcpy( d_reflectivity, h_reflectivity, sizeof(float) * numMaterials, cudaMemcpyHostToDevice));
 	cudaErrorCheck( cudaMemcpy( d_shininess, h_shininess, sizeof(int) * numMaterials, cudaMemcpyHostToDevice));

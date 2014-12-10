@@ -24,6 +24,8 @@
 #define _RAY_H
 
 #include <glm/glm.hpp>
+#include <glm/gtx/type_aligned.hpp>
+
 #include "cudaQualifiers.h"
 
 class Ray{
@@ -60,6 +62,42 @@ private:
 public:
 
 	int m_sign[3];				// sign for evey dimension
+};
+
+class cudaRay{
+
+public:
+	DEVICE HOST cudaRay():m_Origin(0.0f),m_Direction(0.0f),m_InvDirection(0.0f){}
+
+	DEVICE HOST cudaRay(const glm::aligned_vec3& origin, const glm::aligned_vec3& direction): m_Origin(origin), m_Direction(direction)
+	{
+		m_InvDirection = glm::aligned_vec3( 1.0 / direction.x, 1.0/ direction.y, 1.0/direction.z);
+
+		sign[0] = m_InvDirection.x < 0.0f;
+		sign[1] = m_InvDirection.y < 0.0f;
+		sign[2] = m_InvDirection.z < 0.0f;
+	}
+
+	DEVICE inline void setOrigin(const glm::aligned_vec3& origin) { m_Origin = origin; }
+	DEVICE inline void setDirection(const glm::aligned_vec3& direction) {
+		m_Direction = direction;
+		m_InvDirection = glm::aligned_vec3( 1.0f/ direction.x, 1.0f/direction.y, 1.0/direction.z);
+
+		sign[0] = m_InvDirection.x < 0.0f;
+		sign[1] = m_InvDirection.y < 0.0f;
+		sign[2] = m_InvDirection.z < 0.0f;
+	}
+
+	DEVICE inline const glm::aligned_vec3& getOrigin() const { return m_Origin;}
+	DEVICE inline const glm::aligned_vec3& getDirection() const { return m_Direction;}
+	DEVICE inline const glm::aligned_vec3& getInvDirection() const { return m_InvDirection;}
+
+private:
+	glm::aligned_vec3 m_Origin;
+	glm::aligned_vec3 m_Direction;
+	glm::aligned_vec3 m_InvDirection;
+public:
+	int sign[3];
 };
 
 #endif
