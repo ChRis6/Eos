@@ -83,6 +83,7 @@ private:
 
 
 	void buildTopDownHybrid(BvhNode** tree, Surface** surfaces, int start, int end);
+	void buildTopDownHybridControlledDepth(BvhNode** tree, Surface** surfaces, int start, int end, int depth);
 	bool intersectStackNearest(const Ray& ray, BvhNode* root, RayIntersection& intersection, Surface** surfaces) const;
 	bool intersectStackVisibility(const Ray& ray, BvhNode* root, Surface** surfaces) const;
 	

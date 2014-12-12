@@ -29,6 +29,7 @@
 #include "BVH.h"
 
 #define SAH_SURFACE_CEIL  3000
+#define MAX_BVH_DEPTH     20
 #define COST_TRAVERSAL    0.5f
 #define COST_INTERSECTION 1.0f
 
@@ -96,6 +97,7 @@ Box BVH::computeBoxWithCentroids(Surface** surfaces, int start , int end){
 void BVH::buildHierarchy(Surface** surfaces, int numSurfaces){
 	// build
 	this->buildTopDownHybrid(&m_Root, surfaces, 0, numSurfaces);
+	//this->buildTopDownHybridControlledDepth( &m_Root, surfaces, 0, numSurfaces, 0);
 	// flat
 	
 	m_FlatTreePointers.reserve(1000);
@@ -537,12 +539,70 @@ void BVH::buildTopDownHybrid(BvhNode** tree, Surface** surfaces, int start, int 
 		else{
 			node->type = BVH_NODE;
 
-			
 			// recursion
 			buildTopDownHybrid(&(node->leftChild), surfaces, start, splitIndex);
 			buildTopDownHybrid(&(node->rightChild), surfaces, splitIndex, end);
 		}
 	}
+}
+
+void BVH::buildTopDownHybridControlledDepth(BvhNode** tree, Surface** surfaces, int start, int end, int depth){
+
+
+	int splitIndex;
+	float costSplit;
+	int axis;
+	BvhNode* node = new BvhNode;
+	*tree = node;
+
+	node->aabb = this->computeBoxWithSurfaces(surfaces,  start,  end);
+	node->numSurfacesEncapulated = end - start;
+
+	if( depth >= MAX_BVH_DEPTH){
+		createLeaf( node, surfaces, start, end);
+		return;
+	}
+
+	if( end - start > SAH_SURFACE_CEIL ){
+
+		splitIndex = this->topDownSplitIndex(surfaces, node->aabb, start, end, &axis);
+		node->splitAxis = axis;
+		// is it a leaf ? Only one surface per leaf 
+		if( end - start < SURFACES_PER_LEAF ){
+			createLeaf(node, surfaces, start, end);
+			
+		}
+		else{
+
+			node->type = BVH_NODE;
+			//splitIndex = this->topDownSplitIndex(surfaces, node->aabb, start, end, &splitAxis);
+
+			// recursion
+			buildTopDownHybridControlledDepth( &(node->leftChild), surfaces, start, splitIndex, depth + 1);
+			buildTopDownHybridControlledDepth( &(node->rightChild),surfaces, splitIndex, end, depth + 1);
+		}
+	}
+	else{
+		// use SAH
+
+		splitIndex = topDownSplitIndexSAH(surfaces, node->aabb, costSplit, start, end, &axis);
+		node->splitAxis = axis;
+		if( end - start <= SURFACES_PER_LEAF){		
+			createLeaf(node, surfaces, start, end);
+			
+		}
+		else{
+			node->type = BVH_NODE;
+
+			
+			// recursion
+			buildTopDownHybridControlledDepth(&(node->leftChild), surfaces, start, splitIndex, depth + 1);
+			buildTopDownHybridControlledDepth(&(node->rightChild), surfaces, splitIndex, end, depth + 1);
+		}
+	}
+
+
+
 }
 
 
