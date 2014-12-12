@@ -25,6 +25,8 @@
 #include "BVH.h"
 
 
+#define threadID_mega (width * ( blockIdx.y * blockDim.y + threadIdx.y) + blockIdx.x * blockDim.x + threadIdx.x)
+
 
 /* ===============  KERNELS =================*/
 
@@ -32,106 +34,94 @@ __global__ void __rayTrace_MegaKernel( cudaScene_t* deviceScene, Camera* camera,
 
     int stack[128];
     intersection_t intersection;
-    cudaLightSource_t*     lights;
-    cudaMaterial_t*        materials;
     glm::vec4 color(0.0f);
-
-
-    lights = deviceScene->lights;
-    materials = deviceScene->materials;
-
-    const int pi = blockIdx.x * blockDim.x + threadIdx.x;
-    const int pj = blockIdx.y * blockDim.y + threadIdx.y;
-
-    const int threadID = width * pj + pi;
-    float minDistace = 99999.0f;
-
+    float intersectionFound_dot_minDistance;
+    int i;
+    uchar4 ucharColor;
     
+    const cudaLightSource_t* lights = deviceScene->lights;
+    const cudaMaterial_t* materials = deviceScene->materials;
+    const cudaBvhNode_t*  bvh = deviceScene->bvh;
+    const cudaTriangle_t* triangles = deviceScene->triangles;
+    const cudaTransformations_t* transformations = deviceScene->transformations;
+    int* stack_ptr = stack;
+
+    intersectionFound_dot_minDistance = 99999.0f;
+
     const cudaRay ray( glm::aligned_vec3(camera->getPosition()),
         glm::aligned_vec3(glm::normalize((((2.0f * (blockIdx.x * blockDim.x + threadIdx.x) - width) / (float) width) * camera->getRightVector() ) +
                         ( ((2.0f * (blockIdx.y * blockDim.y + threadIdx.y) - height) / (float) height) * camera->getUpVector())
                         + camera->getViewingDirection())));
     
-    //Ray ray;
-    //ray.setOrigin(camera->getPosition());
-    //ray.setDirection( glm::normalize((((2.0f * (blockIdx.x * blockDim.x + threadIdx.x) - width) / (float) width) * camera->getRightVector() ) + ( ((2.0f * (blockIdx.y * blockDim.y + threadIdx.y) - height) / (float) height) * camera->getUpVector()) + camera->getViewingDirection()));
-
 
     intersection.triIndex = -1;
-    //intersection.baryCoords = glm::vec3(0.0f);
-
     /*
      *
      * Tranverse BVH
      *
      */
 
-    int currNodeIndex = 0;
-
-    int* stack_ptr = stack;
-
-    if( __all(! (rayIntersectsCudaAABB(ray, deviceScene->bvh->minBoxBounds[ currNodeIndex], deviceScene->bvh->maxBoxBounds[currNodeIndex], minDistace)) )){
+    i = 0;
+    if( __all(! (rayIntersectsCudaAABB(ray, bvh->minBoxBounds[i], bvh->maxBoxBounds[i], intersectionFound_dot_minDistance)) )){
             //write to color to global memory
-        uchar4 ucharColor;
         ucharColor.x = 0;
         ucharColor.y = 0;
         ucharColor.z = 0;
         ucharColor.w = 255;
 
-        imageBuffer[threadID] = ucharColor;
+        imageBuffer[threadID_mega] = ucharColor;
         return;
     }
 
     // push -1
     *stack_ptr++ = -1;
 
-    while( currNodeIndex != -1){
+    while( i != -1){
 
-        if( deviceScene->bvh->type[ currNodeIndex] == BVH_NODE){
+        if( bvh->type[i] == BVH_NODE){
 
-            const int leftChildIndex  = deviceScene->bvh->leftChildIndex[currNodeIndex];
-            const int rightChildIndex = deviceScene->bvh->rightChildIndex[currNodeIndex];
+            const int leftChildIndex  = bvh->leftChildIndex[i];
+            const int rightChildIndex = bvh->rightChildIndex[i];
 
-            if( __any(rayIntersectsCudaAABB( ray, deviceScene->bvh->minBoxBounds[leftChildIndex], deviceScene->bvh->maxBoxBounds[leftChildIndex], minDistace))){
+            if( __any(rayIntersectsCudaAABB( ray, bvh->minBoxBounds[leftChildIndex], bvh->maxBoxBounds[leftChildIndex], intersectionFound_dot_minDistance))){
 
-                currNodeIndex = leftChildIndex;
-
-                if( __any(rayIntersectsCudaAABB( ray, deviceScene->bvh->minBoxBounds[rightChildIndex], deviceScene->bvh->maxBoxBounds[rightChildIndex], minDistace)))
+                if( __any(rayIntersectsCudaAABB( ray, bvh->minBoxBounds[rightChildIndex], bvh->maxBoxBounds[rightChildIndex], intersectionFound_dot_minDistance)))
                     *stack_ptr++ = rightChildIndex;
+                i = leftChildIndex;
             }
-            else if( __any(rayIntersectsCudaAABB( ray, deviceScene->bvh->minBoxBounds[rightChildIndex], deviceScene->bvh->maxBoxBounds[rightChildIndex], minDistace))){
-                currNodeIndex = rightChildIndex;
+            else if( __any(rayIntersectsCudaAABB( ray, bvh->minBoxBounds[rightChildIndex], bvh->maxBoxBounds[rightChildIndex], intersectionFound_dot_minDistance))){
+                i = rightChildIndex;
             }
             else{
                 //pop
-                currNodeIndex = *--stack_ptr;
+                i = *--stack_ptr;
             }
 
         }
-        else if( deviceScene->bvh->type[ currNodeIndex] == BVH_LEAF ){
+        else if( deviceScene->bvh->type[i] == BVH_LEAF ){
 
             intersectCudaRayWithCudaLeafRestricted(ray,// ray
-                                    currNodeIndex ,
-                                    deviceScene->bvh->numSurfacesEncapulated, deviceScene->bvh->surfacesIndices, deviceScene->transformations->inverseTransformation, // bvh
-                                    deviceScene->triangles->v1,deviceScene->triangles->v2, deviceScene->triangles->v3, // triangle vertices
-                                    deviceScene->triangles->transformationIndex,    // triangle transformations
-                                    &minDistace, &intersection, threadID );
+                                    i ,
+                                    bvh->numSurfacesEncapulated, bvh->surfacesIndices, transformations->inverseTransformation, // bvh
+                                    triangles->v1, triangles->v2, triangles->v3, // triangle vertices
+                                    triangles->transformationIndex,    // triangle transformations
+                                    &intersectionFound_dot_minDistance, &intersection, threadID_mega );
             // pop
-            currNodeIndex = *--stack_ptr;
+            i = *--stack_ptr;
         }
     }
 
     // store intersection
-    float intersectionFound = ( (float) ( (int)intersection.triIndex != -1)); 
+    intersectionFound_dot_minDistance = ( (float) ( (int)intersection.triIndex != -1)); 
 
     //if( threadIntersection.triIndex != -1){
-    const glm::vec4 intersectionPoint = intersectionFound * glm::vec4(ray.getOrigin() + intersection.baryCoords.x * ray.getDirection(), 1.0f); 
-    const int materialIndex = deviceScene->triangles->materialIndex[ ((int) intersection.triIndex != -1) * intersection.triIndex];
+    const glm::vec4 intersectionPoint = intersectionFound_dot_minDistance * glm::vec4(ray.getOrigin() + intersection.baryCoords.x * ray.getDirection(), 1.0f); 
+    const int materialIndex = triangles->materialIndex[ ((int) intersection.triIndex != -1) * intersection.triIndex];
     
     // find triangle normal.Interpolate vertex normals
-    glm::vec4 normal = intersectionFound * glm::vec4(glm::normalize(deviceScene->triangles->n1[intersection.triIndex] * ( 1.0f - intersection.baryCoords.y - intersection.baryCoords.z) + (deviceScene->triangles->n2[intersection.triIndex] * intersection.baryCoords.y) + (deviceScene->triangles->n3[intersection.triIndex] * intersection.baryCoords.z)), 0.0f);
+    glm::vec4 normal = intersectionFound_dot_minDistance * glm::vec4(glm::normalize( triangles->n1[intersection.triIndex] * ( 1.0f - intersection.baryCoords.y - intersection.baryCoords.z) + (deviceScene->triangles->n2[intersection.triIndex] * intersection.baryCoords.y) + (deviceScene->triangles->n3[intersection.triIndex] * intersection.baryCoords.z)), 0.0f);
     // transform normal
-    normal = deviceScene->transformations->inverseTransposeTransformation[ deviceScene->triangles->transformationIndex[ ((int) intersection.triIndex != -1) * intersection.triIndex]] * normal; 
+    normal = transformations->inverseTransposeTransformation[ triangles->transformationIndex[ ((int) intersection.triIndex != -1) * intersection.triIndex]] * normal; 
 
 
     /*
@@ -140,42 +130,37 @@ __global__ void __rayTrace_MegaKernel( cudaScene_t* deviceScene, Camera* camera,
      *
      */
 
-
     const glm::vec4& cameraPosVec4 = glm::vec4(camera->getPosition(), 1.0f);
-    const glm::vec4& intersectionPointInWorld  = intersectionPoint;
-    const glm::vec4& intersectionNormalInWorld = normal;
 
-    float dot;
-    const int numLights = lights->numLights;
-    for( int i = 0; i < numLights; i++){
+    for( i = 0; i < lights->numLights; i++){
             
-        const glm::vec4& intersectionToLight = glm::normalize(lights->positions[i] - intersectionPointInWorld);
-        const glm::vec4& reflectedVector     = glm::reflect( -intersectionToLight, intersectionNormalInWorld );
+        const glm::vec4& intersectionToLight = glm::normalize( lights->positions[i] - intersectionPoint);
+        const glm::vec4& reflectedVector     = glm::reflect( -intersectionToLight, normal );
 
-        dot = glm::dot(intersectionToLight, intersectionNormalInWorld);
-        if( dot > 0.0f){
-            color += dot * materials->diffuse[materialIndex] * lights->colors[i];
+        intersectionFound_dot_minDistance = glm::dot(intersectionToLight, normal);
+        if( intersectionFound_dot_minDistance > 0.0f){
+            color += intersectionFound_dot_minDistance * materials->diffuse[materialIndex] * lights->colors[i];
         }
 
-        dot = glm::dot( glm::normalize(cameraPosVec4 - intersectionPointInWorld), reflectedVector);
-        if( dot > 0.0f){
-            float specularTerm = glm::pow(dot, (float)materials->shininess[materialIndex]);
-            color += specularTerm * lights->colors[i] * materials->specular[materialIndex];
+        intersectionFound_dot_minDistance = glm::dot( glm::normalize(cameraPosVec4 - intersectionPoint), reflectedVector);
+        if( intersectionFound_dot_minDistance > 0.0f){
+            intersectionFound_dot_minDistance = glm::pow(intersectionFound_dot_minDistance, (float)materials->shininess[materialIndex]);
+            color += intersectionFound_dot_minDistance * lights->colors[i] * materials->specular[materialIndex];
         }
     }
 
 
     //write to color to global memory
-    uchar4 ucharColor;
     ucharColor.x = floor(color.x == 1.0 ? 255 : fminf(color.x * 256.0f, 255.0f));
     ucharColor.y = floor(color.y == 1.0 ? 255 : fminf(color.y * 256.0f, 255.0f));
     ucharColor.z = floor(color.z == 1.0 ? 255 : fminf(color.z * 256.0f, 255.0f));
     ucharColor.w = 255;
 
-    imageBuffer[threadID] = ucharColor;    
+    imageBuffer[threadID_mega] = ucharColor;    
 }
 
 /**** NOT WORKING *****/
+
 __global__ void __rayTrace_WarpShuffle_MegaKernel( cudaScene_t* deviceScene, Camera* camera, int width, int height, uchar4* imageBuffer){
 
 
@@ -878,6 +863,7 @@ DEVICE void traverseCudaTreeAndStore( cudaScene_t* deviceScene, const Ray& ray, 
     //intersectionBuffer->normals[threadID] = deviceScene->transformations->inverseTransposeTransformation[ deviceScene->triangles->transformationIndex[ minTriangleIndex]] * localIntersectionNormal;
     //intersectionBuffer->materialsIndices[threadID] = deviceScene->triangles->materialIndex[minTriangleIndex];
 }
+/*
 DEVICE FORCE_INLINE void  intersectCudaRayWithCudaLeafRestricted( const cudaRay& ray,// ray
                                     int bvhLeafIndex, int* __restrict__ numSurfacesEncapulated, int* __restrict__ surfacesIndices, glm::mat4* __restrict__ inverseTransformation, // bvh
                                     glm::aligned_vec3* __restrict__ v1, glm::aligned_vec3* __restrict__ v2, glm::aligned_vec3* __restrict__ v3, // triangle vertices
@@ -886,34 +872,22 @@ DEVICE FORCE_INLINE void  intersectCudaRayWithCudaLeafRestricted( const cudaRay&
 
     cudaRay localRay;
     glm::vec3 baryCoords(0.0f);
-    //cudaBvhNode_t* bvh;
-    //cudaTransformations_t* transformations;
-    //cudaTriangle_t*        triangles;
-    
-    //glm::vec4 localIntersectionPoint;
-    //glm::vec4 localIntersectionNormal;
+
     int minTriangleIndex;
     int i;
-    //bvh = deviceScene->bvh;
-    //transformations = deviceScene->transformations;
-    //triangles = deviceScene->triangles;
-
-
-    //numTrianglesInLeaf = bvh->numSurfacesEncapulated[bvhLeafIndex];
     minTriangleIndex = -1;
 
-    #pragma unroll 2
+    #pragma unroll 4
     for( i = 0; i < numSurfacesEncapulated[bvhLeafIndex]; i++){
         
 
-        /*
-         * transform Ray to local Triangle Coordinates
-         */
-
+        
+        // transform Ray to local Triangle Coordinates
+         
         // first get triangle index in the triangle buffer
         // every leaf has SURFACES_PER_LEAF(look at BVH.h) triangles
         // get triangle i
-        int triangleIndex = surfacesIndices[ bvhLeafIndex * SURFACES_PER_LEAF + i];
+        const int triangleIndex = surfacesIndices[ bvhLeafIndex * SURFACES_PER_LEAF + i];
 
         // get Transformation index
         //int triangleTransformationIndex = deviceScene->triangles->transformationIndex[ triangleIndex];
@@ -923,29 +897,20 @@ DEVICE FORCE_INLINE void  intersectCudaRayWithCudaLeafRestricted( const cudaRay&
         localRay.setDirection( glm::aligned_vec3( inverseTransformation[ triTransIndex[ triangleIndex]] * glm::vec4(ray.getDirection(), 0.0f)));
 
 
-        /*
-         * Now intersect Triangle with local ray
-         */
-        //bool triangleIntersected = rayIntersectsCudaTriangle( localRay, triangles->v1[triangleIndex], triangles->v2[triangleIndex], triangles->v3[triangleIndex], baryCoords);
         
+        // Now intersect Triangle with local ray
         if( rayIntersectsCudaTriangle( localRay, v1[triangleIndex], v2[triangleIndex], v3[triangleIndex], baryCoords) && baryCoords.x < *minDistace){
             // intersection is found
             minTriangleIndex = triangleIndex;
             *minDistace = baryCoords.x;
-
-            //localIntersectionPoint  = glm::vec4(localRay.getOrigin() + baryCoords.x * localRay.getDirection(), 1.0f);
-            //localIntersectionNormal = glm::vec4(glm::normalize(deviceScene->triangles->n1[triangleIndex] * ( 1.0f - baryCoords.y - baryCoords.z) + (deviceScene->triangles->n2[triangleIndex] * baryCoords.y) + (deviceScene->triangles->n3[triangleIndex] * baryCoords.z)), 0.0f);             
+            
             threadIntersection->triIndex = minTriangleIndex;
             threadIntersection->baryCoords = baryCoords;
         }// endif
 
     }// end for
-
-
-
-
 }
-
+*/
 
 
 DEVICE FORCE_INLINE void intersectRayWithCudaLeafRestricted( const Ray& ray,// ray

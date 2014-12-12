@@ -73,8 +73,6 @@ DEVICE FORCE_INLINE int rayIntersectsCudaAABB(const Ray& ray, const glm::aligned
 	float tmin = fmaxf(fmaxf(fminf(((lb.x - rayOrigin.x) * rayInvDirection.x), ((rt.x - rayOrigin.x) * rayInvDirection.x)), fminf(((lb.y - rayOrigin.y) * rayInvDirection.y), ((rt.y - rayOrigin.y) * rayInvDirection.y))), fminf(((lb.z - rayOrigin.z) * rayInvDirection.z), ((rt.z - rayOrigin.z) * rayInvDirection.z)));
 	float tmax = fminf(fminf(fmaxf(((lb.x - rayOrigin.x) * rayInvDirection.x), ((rt.x - rayOrigin.x) * rayInvDirection.x)), fmaxf(((lb.y - rayOrigin.y) * rayInvDirection.y), ((rt.y - rayOrigin.y) * rayInvDirection.y))), fmaxf(((lb.z - rayOrigin.z) * rayInvDirection.z), ((rt.z - rayOrigin.z) * rayInvDirection.z)));
 
-
-
 	return ((tmin < tmax && tmax > 0) && dist >= tmin);
 
 }
@@ -92,7 +90,6 @@ DEVICE FORCE_INLINE int rayIntersectsCudaAABB(const cudaRay& ray, const glm::ali
 
   return ((tmin < tmax && tmax > 0) && dist >= tmin);
 
-
 }
 
 
@@ -105,11 +102,6 @@ DEVICE FORCE_INLINE void  intersectRayWithCudaLeafRestricted( const Ray& ray,// 
                                     float* __restrict__ minDistace, intersection_t* __restrict__ threadIntersection, int threadID );
 
 
-DEVICE FORCE_INLINE void  intersectCudaRayWithCudaLeafRestricted( const cudaRay& ray,// ray
-                                    int bvhLeafIndex, int* __restrict__ numSurfacesEncapulated, int* __restrict__ surfacesIndices, glm::mat4* __restrict__ inverseTransformation, // bvh
-                                    glm::aligned_vec3* __restrict__ v1, glm::aligned_vec3* __restrict__ v2, glm::aligned_vec3* __restrict__ v3, // triangle vertices
-                                    int* __restrict__ triTransIndex,    // triangle transformations
-                                    float* __restrict__ minDistace, intersection_t* __restrict__ threadIntersection, int threadID );
 
 DEVICE FORCE_INLINE bool rayIntersectsCudaTriangle( const Ray& ray, const glm::aligned_vec3& v1, const glm::aligned_vec3& v2, const glm::aligned_vec3& v3, glm::vec3& baryCoords){
     const glm::aligned_vec3& P = glm::aligned_vec3(glm::cross(ray.getDirection(), v3 - v1));
@@ -153,6 +145,53 @@ DEVICE FORCE_INLINE bool rayIntersectsCudaTriangle( const cudaRay& ray, const gl
     //return true;
 
     return !((baryCoords.x < 0.0f) || (baryCoords.y < 0.0f || baryCoords.y > 1.0f) || ( baryCoords.z < 0.0f || baryCoords.y + baryCoords.z > 1.0f)) ;
+}
+
+
+
+DEVICE FORCE_INLINE void  intersectCudaRayWithCudaLeafRestricted( const cudaRay& ray,// ray
+                                    int bvhLeafIndex, int* __restrict__ numSurfacesEncapulated, int* __restrict__ surfacesIndices, glm::mat4* __restrict__ inverseTransformation, // bvh
+                                    glm::aligned_vec3* __restrict__ v1, glm::aligned_vec3* __restrict__ v2, glm::aligned_vec3* __restrict__ v3, // triangle vertices
+                                    int* __restrict__ triTransIndex,    // triangle transformations
+                                    float* __restrict__ minDistace, intersection_t* __restrict__ threadIntersection, int threadID ){
+
+    cudaRay localRay;
+    glm::vec3 baryCoords(0.0f);
+    int minTriangleIndex;
+    int i;
+    minTriangleIndex = -1;
+
+    #pragma unroll 4
+    for( i = 0; i < numSurfacesEncapulated[bvhLeafIndex]; i++){
+        
+
+        /*
+         * transform Ray to local Triangle Coordinates
+         */
+
+        // first get triangle index in the triangle buffer
+        // every leaf has SURFACES_PER_LEAF(look at BVH.h) triangles
+        // get triangle i
+        const int triangleIndex = surfacesIndices[ bvhLeafIndex * SURFACES_PER_LEAF + i];
+
+        // get Transformation index
+        //int triangleTransformationIndex = deviceScene->triangles->transformationIndex[ triangleIndex];
+
+        // transform ray origin and direction
+        localRay.setOrigin( glm::aligned_vec3( inverseTransformation[ triTransIndex[ triangleIndex]] * glm::vec4(ray.getOrigin(), 1.0f)));
+        localRay.setDirection( glm::aligned_vec3( inverseTransformation[ triTransIndex[ triangleIndex]] * glm::vec4(ray.getDirection(), 0.0f)));
+
+        // Now intersect Triangle with local ray
+        if( rayIntersectsCudaTriangle( localRay, v1[triangleIndex], v2[triangleIndex], v3[triangleIndex], baryCoords) && baryCoords.x < *minDistace){
+            // intersection is found
+            minTriangleIndex = triangleIndex;
+            *minDistace = baryCoords.x;
+
+            threadIntersection->triIndex = minTriangleIndex;
+            threadIntersection->baryCoords = baryCoords;
+        }// endif
+
+    }// end for
 }
 
 #endif
