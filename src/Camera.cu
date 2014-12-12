@@ -22,6 +22,7 @@
 
 #include "Camera.h"
 
+/*
 
 HOST DEVICE void Camera::setPosition(glm::vec3 pos){
 	m_Position = pos;
@@ -64,3 +65,4 @@ HOST DEVICE int Camera::getWidth() const{
 HOST DEVICE int Camera::getHeight() const{
 	return m_Height;
 }
+*/

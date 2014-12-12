@@ -37,19 +37,19 @@ public:
 	Ray computeRayFromPixel(int i, int j);
 
 
-	HOST DEVICE void setPosition(glm::vec3 pos);
-	HOST DEVICE void setViewingDirection(glm::vec3 dir);
-	HOST DEVICE void setRightVector(glm::vec3 right);
-	HOST DEVICE void setUpVector(glm::vec3 up);
-	HOST DEVICE void setWidth(int width);
-	HOST DEVICE void setHeight(int height);
+	HOST DEVICE FORCE_INLINE void setPosition(const glm::vec3& pos)               { m_Position = pos;}
+	HOST DEVICE FORCE_INLINE void setViewingDirection(const glm::vec3& dir)       { m_ViewingDirection = dir;}
+	HOST DEVICE FORCE_INLINE void setRightVector(const glm::vec3& right)          { m_RightVector = right;}
+	HOST DEVICE FORCE_INLINE void setUpVector(const glm::vec3& up)                { m_UpVector = up;}
+	HOST DEVICE FORCE_INLINE void setWidth(int width)							  { m_Width = width;}
+	HOST DEVICE FORCE_INLINE void setHeight(int height)							  { m_Height = height;}
 
-	HOST DEVICE const glm::vec3& getPosition() const;
-	HOST DEVICE const glm::vec3& getViewingDirection() const;
-	HOST DEVICE const glm::vec3& getRightVector() const;
-	HOST DEVICE const glm::vec3& getUpVector() const;
-	HOST DEVICE int getWidth() const;
-	HOST DEVICE int getHeight() const;
+	HOST DEVICE FORCE_INLINE const glm::vec3& getPosition() const				  { return m_Position;}
+	HOST DEVICE FORCE_INLINE const glm::vec3& getViewingDirection() const         { return m_ViewingDirection;}
+	HOST DEVICE FORCE_INLINE const glm::vec3& getRightVector() const              { return m_RightVector;}
+	HOST DEVICE FORCE_INLINE const glm::vec3& getUpVector() const                 { return m_UpVector;}
+	HOST DEVICE FORCE_INLINE int getWidth() const								  { return m_Width;}
+	HOST DEVICE FORCE_INLINE int getHeight() const                                { return m_Height;}
 
 
 private:
