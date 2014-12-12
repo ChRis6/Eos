@@ -31,12 +31,8 @@
 #include "cudaWrapper.h"
 #include "getTime.h"
 #include "Texture.h"
-#include "DeviceSceneHandler.h"
-#include "DScene.h"
 #include "DeviceRenderer.h"
 #include "DeviceCameraHandler.h"
-#include "DeviceRayTracerHandler.h"
-#include "DeviceRayIntersectionHandler.h"
 #include "cudaStructures.h"
 
 
@@ -446,12 +442,9 @@ int main(int argc, char **argv)
 
    // copy scene 
    std::cout << "Attemping to copy scene to device" << std::endl;
-   //DeviceSceneHandler sceneImporter(&scene);
-   //DScene* d_scene = sceneImporter.getDeviceSceneDevicePointer();
-   //DScene* h_DScene = sceneImporter.getDeviceSceneHostPointer();
+
    cudaPreferL1Cache();
 
-   // cudaScene
    cudaScene_t* cudaDeviceScene = createCudaScene(&scene);
    //debug_printCudaScene(cudaDeviceScene);
 
@@ -459,15 +452,11 @@ int main(int argc, char **argv)
    DeviceCameraHandler cameraHandler(&camera);
    Camera* d_camera = cameraHandler.getDeviceCamera();
 
-   //DeviceRayTracerHandler tracerHandler(&rayTracer);
-   //DRayTracer* d_tracer = tracerHandler.getDeviceTracer();
 
-   DeviceRenderer deviceRenderer(NULL, NULL, d_camera, WINDOW_WIDTH, WINDOW_HEIGHT);
-   deviceRenderer.allocateCudaIntersectionBuffer();
 
-   //DeviceRayIntersectionHandler intersectionHandler;
-   //DRayIntersection* d_IntersectionBuffer = intersectionHandler.createDRayIntersectionBuffer( WINDOW_WIDTH * WINDOW_HEIGHT);
-   //int dRayIntersectionBufferSize = intersectionHandler.getBufferSize();   
+   DeviceRenderer deviceRenderer( d_camera, WINDOW_WIDTH, WINDOW_HEIGHT);
+
+
 
    if( renderOnce && useDeviceRenderer){
       std::cout << "Rendering Once to Image file (GPU)..." << std::endl;
@@ -476,9 +465,6 @@ int main(int argc, char **argv)
       int hours,minutes,seconds;
       
       start = getRealTime();
-      //deviceRenderer.renderToHostBuffer(imageBuffer, WINDOW_WIDTH * WINDOW_HEIGHT * 4);
-      //deviceRenderer.renderSceneToHostBuffer(h_DScene, NULL, dRayIntersectionBufferSize, imageBuffer, WINDOW_WIDTH * WINDOW_HEIGHT * 4);
-      //deviceRenderer.renderCudaSceneToHostBuffer( cudaDeviceScene, imageBuffer);
       deviceRenderer.renderCudaSceneToHostBufferMegaKernel( cudaDeviceScene, imageBuffer);
       //deviceRenderer.renderCudaSceneToHostBufferWarpShuffleMegaKernel( cudaDeviceScene, imageBuffer);
 
@@ -517,8 +503,6 @@ int main(int argc, char **argv)
       seconds = ((int)diff) % 60;
       msecs = diff * 1000;
 
-      //write_ppm(WINDOW_WIDTH, WINDOW_HEIGHT, imageBuffer);
-
       // make image (0,0) top left corner
       // Start at the end of the image buffer and use negative stride
       stbi_write_png("rayTracedImageCPU.png", WINDOW_WIDTH, WINDOW_HEIGHT, 4, imageBuffer + WINDOW_WIDTH * WINDOW_HEIGHT * 4, -WINDOW_WIDTH*4);
@@ -548,9 +532,6 @@ int main(int argc, char **argv)
       else if( verticalAngle < -maxAbsoluteVerticalAngle)
          verticalAngle = -maxAbsoluteVerticalAngle;
 
-      //glm::vec3 viewDirection(cos(verticalAngle) * sin(horizontalAngle),
-      //                    sin(verticalAngle),
-      //                    cos(verticalAngle) * cos(horizontalAngle));
 
       glm::mat4 viewTransformationX = glm::rotate(glm::mat4(1.0f), horizontalAngle, glm::vec3(0.0f, 1.0f, 0.0f));
       glm::mat4 viewTransformation = glm::rotate(viewTransformationX, verticalAngle, glm::vec3(1.0f, 0.0f, 0.0f));
@@ -559,11 +540,6 @@ int main(int argc, char **argv)
       glm::vec3 rightDirection = glm::normalize( glm::cross(viewDirection, glm::vec3(0.0f, 1.0f, 0.0f)));
       glm::vec3 upDirection = glm::normalize(glm::cross(rightDirection, viewDirection)); 
 
-      // Right vector
-      //glm::vec3 rightDirection = glm::normalize(glm::vec3(sin(horizontalAngle - 3.1415f/2.0f),0, cos(horizontalAngle - 3.1415f/2.0f)));
-      //glm::vec3 upDirection    = glm::normalize(glm::cross( viewDirection, rightDirection));
-
-      //rightDirection   = glm::normalize(glm::cross(viewDirection, upDirection));
 
       glm::vec3 cameraPos = camera.getPosition();
       // Move forward
@@ -593,15 +569,11 @@ int main(int argc, char **argv)
 
 
       /* Raytracing */
-      //scene.render(camera, imageBuffer);
       if( useDeviceRenderer){
 
          cameraHandler.updateDeviceCamera(&camera);
-         //d_camera = cameraHandler.getDeviceCamera();
 
-         //deviceRenderer.renderToGLPixelBuffer(pbo);
-         //deviceRenderer.renderSceneToGLPixelBuffer(h_DScene, d_IntersectionBuffer, dRayIntersectionBufferSize, pbo );
-         deviceRenderer.renderCudaSceneToGLPixelBuffer( cudaDeviceScene, pbo);
+         //deviceRenderer.renderCudaSceneToGLPixelBuffer( cudaDeviceScene, pbo);
       }
       else{
          rayTracer.render(scene, camera, imageBuffer);

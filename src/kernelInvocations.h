@@ -34,33 +34,12 @@ typedef struct __align__(16) intr{
 }intersection_t;
 
 
-__global__ void __oneThreadPerPixel_kernel();
-__global__ void __renderToBuffer_kernel(char* buffer, unsigned int buffer_len, Camera* camera, DScene* scene, DRayTracer* rayTracer, int width, int height);
-__global__ void __calculateIntersections_kernel(Camera* camera, cudaIntersection_t* intersectionBuffer, int intersectionBufferSize, 
-	                                            DTriangle* trianglesBuffer, int trianglesBufferSize, BvhNode* bvh, int width, int height);
-__global__ void __shadeIntersectionsToBuffer_kernel(char* imageBuffer, unsigned int imageSize, DRayTracer* rayTracer, Camera* camera,
-													DLightSource* lights, int numLights,
-													cudaIntersection_t* intersectionBuffer, int intersectionBufferSize,
-													DMaterial* materialsBuffer, int materialsBufferSize, 
-										 			int width, int height);
-
 // new cuda Scene kernels
-__global__ void __calculateCudaSceneIntersections_kernel( cudaScene_t* deviceScene, Camera* camera, cudaIntersection_t* intersectionBuffer, int width, int height);
-__global__ void __shadeCudaSceneIntersections_kernel( cudaScene_t* deviceScene, Camera* camera, cudaIntersection_t* intersectionBuffer, int width, int height, uchar4* imageBuffer);
-
 __global__ void __rayTrace_MegaKernel( cudaScene_t* deviceScene, Camera* camera, int width, int height, uchar4* imageBuffer);
 __global__ void __rayTrace_WarpShuffle_MegaKernel( cudaScene_t* deviceScene, Camera* camera, int width, int height, uchar4* imageBuffer);
 
-DEVICE void traverseTreeAndStore(const Ray& ray, cudaIntersection_t* intersectionBuffer, int intersectionBufferSize, DTriangle* trianglesBuffer, int trianglesBufferSize, BvhNode* bvh, int threadID );
-DEVICE bool intersectRayWithLeafNode(const Ray& ray, BvhNode* node, cudaIntersection_t* intersection, float& distance, DTriangle* triangles, int threadID);
-
 
 // new cudaScene device functions
-DEVICE void traverseCudaTreeAndStore( cudaScene_t* deviceScene, const Ray& ray, cudaIntersection_t* intersectionBuffer, int threadID);
-DEVICE void traverseCudaTreeAndStoreSharedStack( int* sharedStack, int* sharedCurrNodeIndex, int* sharedVotes,
-												cudaScene_t* deviceScene, const Ray& ray, cudaIntersection_t* intersectionBuffer, int threadID, int threadBlockID);
-
-DEVICE void traverseCudaTreeAndStoreNew( cudaScene_t* deviceScene, const Ray& ray, cudaIntersection_t* intersectionBuffer, int threadID);
 
 DEVICE FORCE_INLINE int rayIntersectsCudaAABB(const Ray& ray, const glm::aligned_vec4& minBoxBounds, const glm::aligned_vec4& maxBoxBounds, float dist){
 

@@ -24,9 +24,7 @@
 #define _DEVICE_RENDERER_H
 
 #include "cudaQualifiers.h"
-#include "DScene.h"
 #include "Camera.h"
-#include "DRayTracer.h"
 #include "cudaStructures.h"
 
 
@@ -37,51 +35,24 @@ class DeviceRenderer{
 public:
 	
 	
-	HOST DeviceRenderer(DScene* scene, DRayTracer* tracer, Camera* camera, int width, int height):m_Dscene(scene),m_DrayTracer(tracer),m_Camera(camera),
-						m_Width(width),m_Height(height){}
+	HOST DeviceRenderer( Camera* camera, int width, int height):m_Camera(camera),m_Width(width),m_Height(height){}
 
-
-	HOST void allocateCudaIntersectionBuffer();
-
-	HOST void renderToGLPixelBuffer(GLuint pbo)const;
-	HOST void renderToHostBuffer(void* h_buffer, unsigned int buffer_len)const;	// call to render only once.
-
-
-	// h_Dscene pointer must be the one returned form DeviceSceneHandler::getDeviceSceneHostPointer()
-	// intersectionBuffer and bufferSize must be created from DeviceRayIntersectionHandler
-	HOST void renderSceneToGLPixelBuffer(DScene* h_Dscene, DRayIntersection* intersectionBuffer, int bufferSize, GLuint pbo) const; 
-	HOST void renderSceneToHostBuffer(DScene* h_Dscene, cudaIntersection_t* intersectionBuffer, int bufferSize, void* imageBuffer, int imageBufferSize);
-	HOST void renderCudaSceneToHostBuffer(cudaScene_t* deviceScene, void* imageBuffer);
-	HOST void renderCudaSceneToGLPixelBuffer( cudaScene_t* deviceScene, GLuint pbo);
+	
 	HOST void renderCudaSceneToHostBufferMegaKernel( cudaScene_t* deviceScene, void* imageBuffer);
 	HOST void renderCudaSceneToHostBufferWarpShuffleMegaKernel( cudaScene_t* deviceScene, void* imageBuffer);
 
 	HOST void setCamera(Camera* d_camera);	// d_camera must point to GPU memory
 	HOST int getWidth()const	{ return m_Width;}
 	HOST int getHeight()const   {return m_Height;}
-	HOST DScene* getDeviceScene() const { return m_Dscene;}
-	HOST DRayTracer* getDeviceRayTracer() const { return m_DrayTracer;}
 	HOST Camera* getDeviceCamera()const 	{return m_Camera;}
 
 private:
-	HOST DeviceRenderer():m_Dscene(NULL),m_DrayTracer(NULL),m_Camera(NULL){}
-	HOST void renderToCudaBuffer(void* d_buffer, unsigned int buffer_len)const;
+	HOST DeviceRenderer():m_Camera(NULL),m_Width(0),m_Height(0){}
 private:
-	/* 
-	 * all the pointers MUST point to GPU memory.Each one has to be allocated
-	 * by the appropriate device handler.
-	 * DO NOT DEREFERENCE ON HOST
-	 */
-	DScene*     m_Dscene;		
-	DRayTracer* m_DrayTracer;
 	Camera*     m_Camera;
-
-
 	int m_Width;
 	int m_Height;
 
-	cudaIntersection_t* m_CudaHostIntersection;	// points to host struct containing device buffers
-	cudaIntersection_t* m_CudaDeviceIntersection;	// points to device struct containing device buffers
 };
 
 #endif

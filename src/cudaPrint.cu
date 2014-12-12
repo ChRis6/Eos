@@ -48,63 +48,14 @@ __global__ void printHelloFromGPUKernel(){
 
 }
 
-__global__ void printDeviceSceneGPUKernel(DScene* d_scene){
-	int numLights;
-	int numTriangles;
-	int i;
-
-	numLights = d_scene->getNumLights();
-	numTriangles = d_scene->getNumTriangles();
-	printf("Printing Message From GPU...\n");
-	printf("There are %d lights and %d triangles on the CUDA-enabled scene !!!\n\n\n", numLights, numTriangles);
-
-	for( i = 0 ; i < numLights; i++){
-		DLightSource* light = d_scene->getLightSource(i);
-		glm::vec4 pos = light->getPosition();
-		glm::vec4 color = light->getColor();
-
-		printf("LightSource: %d\n", i+1);
-		printf("pos: %f %f %f\n", pos.x, pos.y, pos.z);
-		printf("color: %f %f %f\n\n",color.x, color.y, color.z);
-	}
-
-	for( i = 0 ; i < numTriangles; i++){
-
-		DTriangle* tri = d_scene->getTriangle(i);
-		glm::vec3 v1 = tri->m_V1;
-		glm::vec3 v2 = tri->m_V2;
-		glm::vec3 v3 = tri->m_V3;
-
-		glm::vec3 n1 = tri->m_N1;
-		glm::vec3 n2 = tri->m_N2;
-		glm::vec3 n3 = tri->m_N3;
-
-		printf("Triangle: %d\n", i+1);
-		printf("V1: %f %f %f\n", v1.x, v1.y, v1.z);
-		printf("V2: %f %f %f\n", v2.x, v2.y, v2.z);
-		printf("V3: %f %f %f\n\n", v3.x, v3.y, v3.z);
-
-		printf("N1: %f %f %f\n", n1.x, n1.y, n1.z);
-		printf("N2: %f %f %f\n", n2.x, n2.y, n2.z);
-		printf("N3: %f %f %f\n\n", n3.x, n3.y, n3.z);
-
-	}
-
-
-
-}
 
 __global__ void __debug_printCudaScene_kernel(cudaScene_t* deviceScene){
 
     cudaBvhNode_t*         bvh;
-    cudaLightSource_t*     lights;
-    cudaTransformations_t* transformations;
     cudaTriangle_t*        triangles;
-    cudaMaterial_t*        materials;
+
 
     bvh = deviceScene->bvh;
-    lights = deviceScene->lights;
-    transformations = deviceScene->transformations;
     triangles = deviceScene->triangles;
 
     int numPrintableNodes = 15;
@@ -175,10 +126,6 @@ void printHelloGPU(){
 	cudaDeviceSynchronize();
 }
 
-void printDeviceScene(DScene* d_scene){
-	printDeviceSceneGPUKernel<<<1,1>>>(d_scene);
-	cudaDeviceSynchronize();
-}
 
 void resetDevice(){
 	cudaDeviceReset();
