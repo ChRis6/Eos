@@ -29,7 +29,7 @@
 #include "BVH.h"
 
 #define SAH_SURFACE_CEIL  3000
-#define MAX_BVH_DEPTH     20
+#define MAX_BVH_DEPTH     18
 #define COST_TRAVERSAL    0.5f
 #define COST_INTERSECTION 1.0f
 
@@ -96,8 +96,8 @@ Box BVH::computeBoxWithCentroids(Surface** surfaces, int start , int end){
 
 void BVH::buildHierarchy(Surface** surfaces, int numSurfaces){
 	// build
-	this->buildTopDownHybrid(&m_Root, surfaces, 0, numSurfaces);
-	//this->buildTopDownHybridControlledDepth( &m_Root, surfaces, 0, numSurfaces, 0);
+	//this->buildTopDownHybrid(&m_Root, surfaces, 0, numSurfaces);
+	this->buildTopDownHybridControlledDepth( &m_Root, surfaces, 0, numSurfaces, 0);
 	// flat
 	
 	m_FlatTreePointers.reserve(1000);
@@ -355,7 +355,7 @@ bool BVH::intersectRayWithLeaf(const Ray& ray, BvhNode* leaf, RayIntersection& i
 	
 
 	for( i = 0 ; i < numSurfaces; i++){
-		int surfaceIndex = leaf->surfacesIndices[i];
+		int surfaceIndex = leaf->surfacesIndices[0] + i;
 		Surface* surface = surfaces[surfaceIndex];
 
 		// Transform ray to local coordinates

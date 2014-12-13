@@ -41,6 +41,7 @@ typedef struct cudaBvh{
 	int* leftChildIndex;
 
 	int* surfacesIndices;
+	int* firstTriangleIndex;
 }cudaBvhNode_t;
 
 // lights

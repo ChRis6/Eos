@@ -29,7 +29,7 @@
 #include "RayIntersection.h"
 #include <vector>
 
-#define SURFACES_PER_LEAF 5
+#define SURFACES_PER_LEAF 6
 
 enum{
 	BVH_NODE = 0,

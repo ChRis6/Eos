@@ -45,6 +45,7 @@ HOST cudaBvhNode_t* copyBVH(Scene* h_scene){
 	int* h_rightChildIndex, *d_rightChildIndex;
 	int* h_leftChildIndex, *d_leftChildIndex;
 	int* h_surfacesIndices, *d_surfacesIndices;
+	int* h_firstTriangleIndex, *d_firstTriangleIndex;;
 
 
 	const BVH& sceneBVH = h_scene->getBVH();
@@ -71,6 +72,7 @@ HOST cudaBvhNode_t* copyBVH(Scene* h_scene){
 	// leaf surface indices. Too many maybe? Profile memory later
 	cudaErrorCheck( cudaMalloc((void**)&d_surfacesIndices, sizeof(int) * numBvhNodes * SURFACES_PER_LEAF)); // <------------------------------------------
 
+	cudaErrorCheck( cudaMalloc((void**) &d_firstTriangleIndex, sizeof(int) * numBvhNodes));
 
 	// set to zero
 	cudaErrorCheck( cudaMemset( d_Bvh_type, 0, sizeof(int) * numBvhNodes));
@@ -81,7 +83,7 @@ HOST cudaBvhNode_t* copyBVH(Scene* h_scene){
 	cudaErrorCheck( cudaMemset( d_leftChildIndex, 0, sizeof(int) * numBvhNodes));
 	cudaErrorCheck( cudaMemset( d_rightChildIndex, 0, sizeof(int) * numBvhNodes));
 	cudaErrorCheck( cudaMemset( d_surfacesIndices, 0, sizeof(int) * numBvhNodes * SURFACES_PER_LEAF));
-
+	cudaErrorCheck( cudaMemset( d_firstTriangleIndex, 0, sizeof(int) * numBvhNodes));
 
 	// create temp buffers on host
  	h_Bvh_type = new int[numBvhNodes];
@@ -92,6 +94,7 @@ HOST cudaBvhNode_t* copyBVH(Scene* h_scene){
  	h_leftChildIndex = new int[numBvhNodes];
  	h_rightChildIndex = new int[numBvhNodes];
  	h_surfacesIndices = new int[ numBvhNodes * SURFACES_PER_LEAF];
+ 	h_firstTriangleIndex = new int[numBvhNodes];
 
  	memset( h_Bvh_type, 0, sizeof(int) * numBvhNodes);
  	memset( h_minBoxBounds, 0, sizeof(glm::aligned_vec4) * numBvhNodes);
@@ -101,6 +104,7 @@ HOST cudaBvhNode_t* copyBVH(Scene* h_scene){
  	memset( h_leftChildIndex, 0, sizeof(int) * numBvhNodes);
  	memset( h_rightChildIndex, 0, sizeof(int) * numBvhNodes);
  	memset( h_surfacesIndices, 0, sizeof(int) * numBvhNodes * SURFACES_PER_LEAF);
+ 	memset( h_firstTriangleIndex, 0, sizeof(int) * numBvhNodes);
 
  	BvhNode* h_bvhTree = sceneBVH.getNodesBuffer();
  	for( int i = 0; i < numBvhNodes; i++){
@@ -112,6 +116,7 @@ HOST cudaBvhNode_t* copyBVH(Scene* h_scene){
  		h_numSurfacesEncapulated[i] = h_bvhTree[i].numSurfacesEncapulated;
  		h_leftChildIndex[i] = h_bvhTree[i].leftChildIndex;
  		h_rightChildIndex[i] = h_bvhTree[i].rightChildIndex;
+ 		h_firstTriangleIndex[i] = h_bvhTree[i].surfacesIndices[0];
  		for( int j = 0; j < SURFACES_PER_LEAF; j++)
  			h_surfacesIndices[i * SURFACES_PER_LEAF + j] = h_bvhTree[i].surfacesIndices[j];
 
@@ -132,6 +137,8 @@ HOST cudaBvhNode_t* copyBVH(Scene* h_scene){
  	cudaErrorCheck( cudaMemcpy(d_rightChildIndex, h_rightChildIndex, sizeof(int) * numBvhNodes, cudaMemcpyHostToDevice));
  	// surface indices
  	cudaErrorCheck( cudaMemcpy(d_surfacesIndices, h_surfacesIndices, sizeof(int) * numBvhNodes * SURFACES_PER_LEAF, cudaMemcpyHostToDevice));
+ 	// copy first triangle index
+ 	cudaErrorCheck( cudaMemcpy(d_firstTriangleIndex, h_firstTriangleIndex, sizeof(int) * numBvhNodes, cudaMemcpyHostToDevice));
 
  	// deallocate temp
  	delete[] h_Bvh_type;
@@ -142,6 +149,7 @@ HOST cudaBvhNode_t* copyBVH(Scene* h_scene){
  	delete[] h_leftChildIndex;
  	delete[] h_rightChildIndex;
  	delete[] h_surfacesIndices;
+ 	delete[] h_firstTriangleIndex;
 
  	cudaBvhNode_t* h_cudaBvhNode = new cudaBvhNode_t;
  	memset( h_cudaBvhNode, 0, sizeof(cudaBvhNode_t));
@@ -157,6 +165,7 @@ HOST cudaBvhNode_t* copyBVH(Scene* h_scene){
  	h_cudaBvhNode->rightChildIndex = d_rightChildIndex;
  	h_cudaBvhNode->leftChildIndex  = d_leftChildIndex;
  	h_cudaBvhNode->surfacesIndices = d_surfacesIndices;
+ 	h_cudaBvhNode->firstTriangleIndex = d_firstTriangleIndex;
  	cudaErrorCheck( cudaMemcpy(d_bvh, h_cudaBvhNode, sizeof(cudaBvhNode_t), cudaMemcpyHostToDevice));
 
  	delete h_cudaBvhNode;

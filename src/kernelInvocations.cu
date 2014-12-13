@@ -102,10 +102,10 @@ __global__ void __rayTrace_MegaKernel( cudaScene_t* deviceScene, Camera* camera,
 
             intersectCudaRayWithCudaLeafRestricted(ray,// ray
                                     i ,
-                                    bvh->numSurfacesEncapulated, bvh->surfacesIndices, transformations->inverseTransformation, // bvh
+                                    bvh->numSurfacesEncapulated, /*bvh->surfacesIndices,*/ transformations->inverseTransformation, // bvh
                                     triangles->v1, triangles->v2, triangles->v3, // triangle vertices
                                     triangles->transformationIndex,    // triangle transformations
-                                    &intersectionFound_dot_minDistance, &intersection, threadID_mega );
+                                    &intersectionFound_dot_minDistance, &intersection, bvh->firstTriangleIndex[i], threadID_mega );
             // pop
             i = *--stack_ptr;
         }
@@ -261,7 +261,7 @@ __global__ void __rayTrace_WarpShuffle_MegaKernel( cudaScene_t* deviceScene, Cam
             rightVotes = 0;
         }
         else if( deviceScene->bvh->type[ currNodeIndex] == BVH_LEAF ){
-
+            //intersectCudaRayWithCudaLeafRestricted(ray,
             intersectRayWithCudaLeafRestricted(ray,// ray
                                     currNodeIndex ,
                                     deviceScene->bvh->numSurfacesEncapulated, deviceScene->bvh->surfacesIndices, deviceScene->transformations->inverseTransformation, // bvh

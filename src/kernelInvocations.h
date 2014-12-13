@@ -129,10 +129,10 @@ DEVICE FORCE_INLINE bool rayIntersectsCudaTriangle( const cudaRay& ray, const gl
 
 
 DEVICE FORCE_INLINE void  intersectCudaRayWithCudaLeafRestricted( const cudaRay& ray,// ray
-                                    int bvhLeafIndex, int* __restrict__ numSurfacesEncapulated, int* __restrict__ surfacesIndices, glm::mat4* __restrict__ inverseTransformation, // bvh
+                                    int bvhLeafIndex, int* __restrict__ numSurfacesEncapulated, /*int* __restrict__ surfacesIndices,*/ glm::mat4* __restrict__ inverseTransformation, // bvh
                                     glm::aligned_vec3* __restrict__ v1, glm::aligned_vec3* __restrict__ v2, glm::aligned_vec3* __restrict__ v3, // triangle vertices
                                     int* __restrict__ triTransIndex,    // triangle transformations
-                                    float* __restrict__ minDistace, intersection_t* __restrict__ threadIntersection, int threadID ){
+                                    float* __restrict__ minDistace, intersection_t* __restrict__ threadIntersection, int firstTri, int threadID ){
 
     cudaRay localRay;
     glm::vec3 baryCoords(0.0f);
@@ -151,7 +151,8 @@ DEVICE FORCE_INLINE void  intersectCudaRayWithCudaLeafRestricted( const cudaRay&
         // first get triangle index in the triangle buffer
         // every leaf has SURFACES_PER_LEAF(look at BVH.h) triangles
         // get triangle i
-        const int triangleIndex = surfacesIndices[ bvhLeafIndex * SURFACES_PER_LEAF + i];
+        //const int triangleIndex = surfacesIndices[ bvhLeafIndex * SURFACES_PER_LEAF + i];
+        const int triangleIndex = i + firstTri;
 
         // get Transformation index
         //int triangleTransformationIndex = deviceScene->triangles->transformationIndex[ triangleIndex];
