@@ -29,5 +29,7 @@
 // new cudaScene kernels
 extern "C" void rayTrace_MegaKernel( cudaScene_t* deviceScene, Camera* camera, int width, int height, uchar4* imageBuffer, int blockdim[], int tpblock[]);
 extern "C" void rayTrace_WarpShuffle_MegaKernel( cudaScene_t* deviceScene, Camera* camera, int width, int height, uchar4* imageBuffer, int blockdim[], int tpblock);
-
+extern "C" void rayTrace_MultiMegaKernel( cudaScene_t* deviceScene, Camera* camera, int width, int height, uchar4* imageBuffer,
+	                                      int numGPUS, int gpuID,
+	                                      int blockdimp[], int tpblock[]);
 #endif

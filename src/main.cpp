@@ -32,6 +32,7 @@
 #include "getTime.h"
 #include "Texture.h"
 #include "DeviceRenderer.h"
+#include "MultiDeviceRenderer.h"
 #include "DeviceCameraHandler.h"
 #include "cudaStructures.h"
 
@@ -196,6 +197,7 @@ int main(int argc, char **argv)
    
    bool renderOnce = true;
    bool useDeviceRenderer = true;
+   bool useMutipleGPUS = false;
 
    srand((int) time(NULL));
    double cpu_time = 0.0;
@@ -445,7 +447,7 @@ int main(int argc, char **argv)
 
    cudaPreferL1Cache();
 
-   cudaScene_t* cudaDeviceScene = createCudaScene(&scene);
+   //cudaScene_t* cudaDeviceScene = createCudaScene(&scene);
    //debug_printCudaScene(cudaDeviceScene);
 
    // copy camera
@@ -454,8 +456,8 @@ int main(int argc, char **argv)
 
 
 
-   DeviceRenderer deviceRenderer( d_camera, WINDOW_WIDTH, WINDOW_HEIGHT);
-
+   //DeviceRenderer deviceRenderer( d_camera, WINDOW_WIDTH, WINDOW_HEIGHT);
+   MultiDeviceRenderer deviceRenderer( &scene, WINDOW_WIDTH, WINDOW_HEIGHT);
 
 
    if( renderOnce && useDeviceRenderer){
@@ -465,7 +467,8 @@ int main(int argc, char **argv)
       int hours,minutes,seconds;
       
       start = getRealTime();
-      deviceRenderer.renderCudaSceneToHostBufferMegaKernel( cudaDeviceScene, imageBuffer);
+      //deviceRenderer.renderCudaSceneToHostBufferMegaKernel( cudaDeviceScene, imageBuffer);
+      deviceRenderer.renderSceneToHostBuffer( imageBuffer, d_camera);
       //deviceRenderer.renderCudaSceneToHostBufferWarpShuffleMegaKernel( cudaDeviceScene, imageBuffer);
 
       end = getRealTime();

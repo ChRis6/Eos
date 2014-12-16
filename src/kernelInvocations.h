@@ -36,6 +36,7 @@ typedef struct __align__(16) intr{
 
 // new cuda Scene kernels
 __global__ void __rayTrace_MegaKernel( cudaScene_t* deviceScene, Camera* camera, int width, int height, uchar4* imageBuffer);
+__global__ void __rayTrace_MultiMegaKernel( cudaScene_t* deviceScene, Camera* camera, int width, int height, uchar4* imageBuffer, int numGPUS, int gpuID);
 __global__ void __rayTrace_WarpShuffle_MegaKernel( cudaScene_t* deviceScene, Camera* camera, int width, int height, uchar4* imageBuffer);
 
 
