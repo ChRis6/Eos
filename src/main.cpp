@@ -9,7 +9,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <time.h>
-
+#include <string>
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 
@@ -371,7 +371,7 @@ int main(int argc, char **argv)
    float refletionIntensity = 0.4f;
 
 
-   Material triangleMeshMaterial(0.1f, glm::vec4(0.75f, 0.75f, 0.75f, 0.0f), glm::vec4(1.0f), 120);
+   Material triangleMeshMaterial(0.1f, glm::vec4(0.87f, 0.3f, 0.5f, 0.0f), glm::vec4(1.0f), 120);
    triangleMeshMaterial.setTransparent(false);
    triangleMeshMaterial.setReflective(false);
    triangleMeshMaterial.setReflectionIntensity(refletionIntensity);
@@ -383,8 +383,7 @@ int main(int argc, char **argv)
    LightSource* lightSource1 = new LightSource(glm::vec4(-20.0f, 10.0f, 10.0f, 1.0f), glm::vec4(1.0f));
    //LightSource* lightSource2 = new LightSource(glm::vec4(2000.0f, 0.0f, 40.0f, 1.0f), glm::vec4(1.0f));
 
- 
-   char* triangleMeshFileName = "objmodels/bunny.obj";
+   std::string triangleMeshFileName("objmodels/bunny.obj");
    TriangleMesh* mesh = new TriangleMesh();
    glm::mat4 meshTransformation = glm::translate(glm::mat4(1.0f), glm::vec3(2.0f, -2.0f, -2.0f));
    //glm::mat4 meshTransformation = glm::translate(glm::mat4(1.0f), glm::vec3(1.5f, -1.8f, 3.0f));
@@ -400,7 +399,7 @@ int main(int argc, char **argv)
    
    mesh->setMaterialIndex(triangleMeshMaterialIndex);
 
-   mesh->loadFromFile(triangleMeshFileName);
+   mesh->loadFromFile(triangleMeshFileName.c_str());
    scene.addTriangleMesh(mesh);
    
 
@@ -450,14 +449,9 @@ int main(int argc, char **argv)
    //cudaScene_t* cudaDeviceScene = createCudaScene(&scene);
    //debug_printCudaScene(cudaDeviceScene);
 
-   // copy camera
-   DeviceCameraHandler cameraHandler(&camera);
-   Camera* d_camera = cameraHandler.getDeviceCamera();
-
-
 
    //DeviceRenderer deviceRenderer( d_camera, WINDOW_WIDTH, WINDOW_HEIGHT);
-   MultiDeviceRenderer deviceRenderer( &scene, WINDOW_WIDTH, WINDOW_HEIGHT);
+   MultiDeviceRenderer deviceRenderer( &scene, &camera, WINDOW_WIDTH, WINDOW_HEIGHT);
 
 
    if( renderOnce && useDeviceRenderer){
@@ -468,7 +462,7 @@ int main(int argc, char **argv)
       
       start = getRealTime();
       //deviceRenderer.renderCudaSceneToHostBufferMegaKernel( cudaDeviceScene, imageBuffer);
-      deviceRenderer.renderSceneToHostBuffer( imageBuffer, d_camera);
+      deviceRenderer.renderSceneToHostBuffer( imageBuffer, &camera);
       //deviceRenderer.renderCudaSceneToHostBufferWarpShuffleMegaKernel( cudaDeviceScene, imageBuffer);
 
       end = getRealTime();
@@ -574,7 +568,7 @@ int main(int argc, char **argv)
       /* Raytracing */
       if( useDeviceRenderer){
 
-         cameraHandler.updateDeviceCamera(&camera);
+         //cameraHandler.updateDeviceCamera(&camera);
 
          //deviceRenderer.renderCudaSceneToGLPixelBuffer( cudaDeviceScene, pbo);
       }
